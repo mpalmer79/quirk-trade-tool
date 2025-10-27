@@ -25,17 +25,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          # don't use the default npm/yarn lockfile cache
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      - name: Install deps (workspace)
-        run: pnpm -w install --frozen-lockfile
+      # No lockfile required; install workspace deps
+      - name: Install deps (pnpm)
+        run: pnpm -w install --no-frozen-lockfile
 
       - name: Build static export for Pages
+        working-directory: frontend
         env:
+          GITHUB_PAGES: "true"
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
         run: pnpm run build:pages
 
