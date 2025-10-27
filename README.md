@@ -1,26 +1,53 @@
 # Quirk Trade Tool
 
-Multi-source vehicle valuation **demo** for Quirk Auto Dealers. Frontend (Next.js) + Orchestrator (Express). Uses simulated adapters for Black Book, KBB, NADA, and Manheim and computes a trimmed-mean range with a confidence indicator. Stores an immutable “Appraisal Receipt” JSON for auditability.
+Multi-source vehicle valuation **demo** for Quirk Auto Dealers. The app is organized as a minimal monorepo:
 
-> **Legal note**: This demo does not call licensed providers. Do not imply live aggregation until you wire actual APIs under license.
+- **frontend/** — Next.js 14 UI (TypeScript, Tailwind, React Hook Form, Zod)
+- **orchestrator/** — Express + TypeScript API that:
+  - normalizes provider quotes (demo adapters provided)
+  - aggregates values (outlier drop + trimmed mean + confidence band)
+  - decodes VINs via **NHTSA VPIC** fallback
+  - writes an immutable **Appraisal Receipt** (JSON) and can render a PDF on demand
+
+> **Legal/production note:** This repo ships **demo provider adapters** (BlackBook/KBB/NADA/Manheim/Auction) that simulate results. For production, you must implement licensed provider integrations under `orchestrator/src/adapters/providers/*` and wire them in. Do **not** imply live aggregation until licensed APIs are connected and validated.
 
 ---
 
-## Quick start
+## Repo layout
 
-**Requirements:** Node 20+, pnpm
+├─ frontend/ # Next.js 14 app
+│ ├─ app/ # page.tsx renders form + results
+│ ├─ components/ # ValuationForm, ValuationResults, etc.
+│ ├─ hooks/useVehicleData.ts # NHTSA-backed make/model/year helpers
+│ └─ … # Tailwind/PostCSS/tsconfig
+├─ orchestrator/ # Express + TS API
+│ ├─ src/routes/ # /api/appraise, /api/vin, /api/receipt
+│ ├─ src/adapters/ # demo* adapters + provider stubs
+│ ├─ src/valuation/ # outlier handling + trimmed mean
+│ ├─ src/vin/ # NHTSA VPIC fallback decoder
+│ └─ src/util/ # receipts + PDF generation
+├─ data/receipts/ # Appraisal receipts are written here at runtime
+├─ package.json # pnpm workspaces (frontend, orchestrator)
+└─ pnpm-workspace.yaml
+
+
+---
+
+## Requirements
+
+- **Node 20+**
+- **pnpm** (Corepack recommended)
+
+---
+
+## Quick start (local dev)
 
 ```bash
+# install everything
 pnpm install
-cp .env.example .env
-pnpm dev    # runs frontend on :3000 and orchestrator on :4000
 
-.
-├─ frontend/         # Next.js 14 UI (TypeScript, Tailwind, RHF, Zod)
-│  └─ app/           # page.tsx includes VIN field + Decode button
-├─ orchestrator/     # Express + TS; adapters, normalization, receipts
-│  ├─ src/routes/    # /api/appraise, /api/vin/decode
-│  ├─ src/adapters/  # demo* adapters + provider stubs
-│  ├─ src/vin/       # NHTSA VPIC fallback decoder
-│  └─ src/valuation/ # heuristic + aggregate (trimmed mean + confidence)
-└─ data/receipts/    # Appraisal receipts (JSON), created at runtime
+# frontend: point to the API
+cp frontend/.env.local frontend/.env.local   # already points to http://localhost:4000
+
+# run both apps (frontend :3000, API :4000)
+pnpm dev
