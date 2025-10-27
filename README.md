@@ -12,3 +12,10 @@ Requirements: Node 20+, pnpm
 pnpm install
 cp .env.example .env
 pnpm dev    # runs frontend:3000 and orchestrator:4000
+
+## VIN Decode
+
+POST `http://localhost:4000/api/vin/decode`
+```json
+{ "vin": "1G1ZT62812F113456" }
+
