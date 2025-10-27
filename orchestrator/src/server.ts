@@ -3,6 +3,9 @@ import express from 'express';
 import helmet from 'helmet';
 import pino from 'pino';
 import appraiseRoute from './routes/appraise.js';
+import vinRoute from './routes/vin.js';
+// ...
+app.use('/api/vin', vinRoute);
 
 const log = pino({ transport: { target: 'pino-pretty' } });
 const app = express();
