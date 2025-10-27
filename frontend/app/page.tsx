@@ -4,9 +4,10 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DollarSign, TrendingUp, AlertCircle } from "lucide-react";
+import { DollarSign, TrendingUp, AlertCircle, ScanLine } from "lucide-react";
 
 const FormSchema = z.object({
+  vin: z.string().optional(),
   year: z.coerce.number().min(1990).max(new Date().getFullYear()),
   make: z.string().min(1),
   model: z.string().min(1),
@@ -47,16 +48,9 @@ const modelsByMake: Record<string, string[]> = {
 };
 
 const optionsList = [
-  'Navigation System',
-  'Sunroof/Moonroof',
-  'Leather Seats',
-  'Premium Sound System',
-  'Third Row Seating',
-  'All-Wheel Drive',
-  'Adaptive Cruise Control',
-  'Heated Seats',
-  'Backup Camera',
-  'Towing Package'
+  'Navigation System','Sunroof/Moonroof','Leather Seats','Premium Sound System',
+  'Third Row Seating','All-Wheel Drive','Adaptive Cruise Control','Heated Seats',
+  'Backup Camera','Towing Package'
 ];
 
 const conditionDescriptions: Record<number, string> = {
@@ -73,17 +67,20 @@ export default function Page() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
-  const { register, handleSubmit, watch, formState: { errors, isSubmitting } } =
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
     useForm<FormData>({ resolver: zodResolver(FormSchema), defaultValues: { condition: 3, options: [] } });
 
   const make = watch("make");
   const condition = watch("condition");
+  const vin = watch("vin");
 
+  const [decoding, setDecoding] = React.useState(false);
   const [quotes, setQuotes] = React.useState<SourceQuote[] | null>(null);
   const [summary, setSummary] = React.useState<{ low:number; high:number; avg:number; confidence:string } | null>(null);
 
+  const availableModels = make ? modelsByMake[make] || [] : [];
+
   const onSubmit = async (data: FormData) => {
-    // In production you might call the orchestrator at http://localhost:4000/api/appraise
     const res = await fetch("http://localhost:4000/api/appraise", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -98,7 +95,30 @@ export default function Page() {
     setSummary(payload.summary);
   };
 
-  const availableModels = make ? modelsByMake[make] || [] : [];
+  const onDecodeVin = async () => {
+    if (!vin || vin.length < 11) {
+      alert("Enter at least 11 characters of a VIN.");
+      return;
+    }
+    setDecoding(true);
+    try {
+      const res = await fetch("http://localhost:4000/api/vin/decode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vin })
+      });
+      if (!res.ok) throw new Error("decode_failed");
+      const decoded = await res.json();
+      if (decoded.year) setValue("year", decoded.year);
+      if (decoded.make) setValue("make", decoded.make);
+      if (decoded.model) setValue("model", decoded.model);
+      if (decoded.trim) setValue("trim", decoded.trim);
+    } catch (e) {
+      alert("VIN decode failed. Try again.");
+    } finally {
+      setDecoding(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
@@ -116,6 +136,25 @@ export default function Page() {
                 Demo uses simulated valuations. Real integrations with licensed providers (Black Book, KBB, NADA, Manheim) are available.
               </p>
             </div>
+          </div>
+
+          {/* VIN + Decode */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">VIN (optional)</label>
+            <div className="flex gap-2">
+              <input
+                {...register("vin")}
+                placeholder="e.g., 1G1ZT62812F113456"
+                className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase"
+              />
+              <button type="button"
+                onClick={onDecodeVin}
+                disabled={decoding || !vin}
+                className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+                {decoding ? 'Decoding...' : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC. In production, commercial decoders can be added.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
@@ -139,10 +178,10 @@ export default function Page() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-              <select {...register("model")} disabled={!make}
+              <select {...register("model")} disabled={!watch("make")}
                 className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
-                <option value="">{make ? 'Select Model' : 'Select Make First'}</option>
-                {availableModels.map(m => <option key={m} value={m}>{m}</option>)}
+                <option value="">{watch("make") ? 'Select Model' : 'Select Make First'}</option>
+                {(watch("make") ? (modelsByMake[watch("make")!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
               </select>
               {errors.model && <p className="text-sm text-red-600 mt-1">{errors.model.message as string}</p>}
             </div>
