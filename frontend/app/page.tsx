@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DollarSign, AlertCircle, TrendingUp } from 'lucide-react';
+import { DollarSign, AlertCircle, TrendingUp, History } from 'lucide-react';
+import Link from 'next/link';
 
 export default function Page() {
   const [vin, setVin] = useState('');
@@ -83,6 +84,27 @@ export default function Page() {
       
       const data = await response.json();
       setValuation(data);
+      
+      // Save to history
+      const appraisalRecord = {
+        id: `${Date.now()}-${Math.random()}`,
+        timestamp: new Date().toISOString(),
+        vin: vin || '',
+        year,
+        make,
+        model,
+        trim: trim || '',
+        mileage: parseInt(mileage),
+        averageValue: data.averageValue,
+        minValue: data.minValue,
+        maxValue: data.maxValue,
+      };
+      
+      const existing = localStorage.getItem('appraisal_history');
+      const history = existing ? JSON.parse(existing) : [];
+      history.unshift(appraisalRecord); // Add to beginning
+      localStorage.setItem('appraisal_history', JSON.stringify(history.slice(0, 300))); // Keep last 300
+      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -121,9 +143,18 @@ export default function Page() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
       <div className="max-w-4xl mx-auto">
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8">
-          <div className="flex items-center gap-3 mb-6">
-            <DollarSign className="w-10 h-10 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-800">Multi-Source Vehicle Valuation (Demo)</h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <DollarSign className="w-10 h-10 text-indigo-600" />
+              <h1 className="text-3xl font-bold text-gray-800">Multi-Source Vehicle Valuation (Demo)</h1>
+            </div>
+            <Link
+              href="/history"
+              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 font-medium"
+            >
+              <History className="w-5 h-5" />
+              Search History
+            </Link>
           </div>
 
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
