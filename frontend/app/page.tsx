@@ -24,6 +24,7 @@ export default function Page() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear + 1 - 1995 + 1 }, (_, i) => 1995 + i).reverse();
 
+  // Fetch automotive and select motorcycle makes only
   useEffect(() => {
     const fetchMakes = async () => {
       setLoadingMakes(true);
@@ -40,14 +41,65 @@ export default function Page() {
           mpvRes.json()
         ]);
 
+        // Combine all makes
         const allMakes = [
           ...carsData.Results.map((item: any) => item.MakeName),
           ...motorcyclesData.Results.map((item: any) => item.MakeName),
           ...mpvData.Results.map((item: any) => item.MakeName)
         ];
 
-        const uniqueMakes = Array.from(new Set(allMakes)).sort();
-        setMakes(uniqueMakes);
+        // Filter out non-automotive manufacturers
+        const filteredMakes = allMakes.filter((make: string) => {
+          const makeLower = make.toLowerCase();
+          
+          // Exclude obvious non-automotive terms
+          const excludeTerms = [
+            'custom', 'kustom', 'trailer', 'trailers', 'cart', 'carts',
+            'coach', 'manufacturing', 'enterprises', 'industries',
+            'specialty', 'conversions', 'motorhomes', 'rv',
+            'golf', 'utility', 'off', 'llc', 'inc', 'ltd',
+            'chopper', 'cycles', 'street', 'performance',
+            'fabrication', 'design', 'concepts', 'creations'
+          ];
+          
+          // Check if make contains any exclude terms
+          const shouldExclude = excludeTerms.some(term => {
+            // Exclude if term is the whole word or a significant part
+            return makeLower.includes(term) && 
+                   (makeLower === term || 
+                    makeLower.startsWith(term + ' ') || 
+                    makeLower.endsWith(' ' + term) ||
+                    makeLower.includes(' ' + term + ' '));
+          });
+          
+          if (shouldExclude) return false;
+          
+          // Exclude makes that are just numbers or very short
+          if (makeLower.length < 3) return false;
+          if (/^\d+$/.test(makeLower)) return false;
+          
+          return true;
+        });
+
+        // Whitelist of motorcycle brands we want to keep
+        const motorcycleBrands = ['harley-davidson', 'indian', 'harley davidson'];
+        
+        // Get final list: filtered automotive + select motorcycles
+        const motorcycleResults = motorcyclesData.Results
+          .map((item: any) => item.MakeName)
+          .filter((make: string) => 
+            motorcycleBrands.some(brand => 
+              make.toLowerCase().includes(brand)
+            )
+          );
+        
+        // Combine filtered automotive with select motorcycles
+        const finalMakes = [...new Set([...filteredMakes, ...motorcycleResults])];
+        
+        // Sort and set
+        const sortedMakes = Array.from(finalMakes).sort();
+        setMakes(sortedMakes);
+        
       } catch (e) {
         console.error('Failed to fetch makes:', e);
       } finally {
