@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { DollarSign, AlertCircle, TrendingUp } from 'lucide-react';
 
 export default function Page() {
   const [vin, setVin] = useState('');
