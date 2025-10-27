@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { DollarSign, AlertCircle, TrendingUp } from 'lucide-react';
 
 export default function Page() {
@@ -14,10 +13,6 @@ export default function Page() {
   const [decodedMake, setDecodedMake] = useState('');
   const [decodedModel, setDecodedModel] = useState('');
   const [decodedTrim, setDecodedTrim] = useState('');
-
-  const searchParams = useSearchParams();
-  const make = searchParams.get('make') || '';
-  const model = searchParams.get('model') || '';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,7 +111,7 @@ export default function Page() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Make</label>
             <input
               type="text"
-              value={decodedMake || make}
+              value={decodedMake}
               onChange={(e) => setDecodedMake(e.target.value)}
               placeholder="e.g., Toyota"
               required
@@ -129,7 +124,7 @@ export default function Page() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Model</label>
             <input
               type="text"
-              value={decodedModel || model}
+              value={decodedModel}
               onChange={(e) => setDecodedModel(e.target.value)}
               placeholder="e.g., Camry"
               required
