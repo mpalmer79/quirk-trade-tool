@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DollarSign, AlertCircle, TrendingUp, History } from 'lucide-react';
+import { DollarSign, AlertCircle, TrendingUp, History, Car, Zap, Shield, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Page() {
@@ -21,16 +21,13 @@ export default function Page() {
   const [loadingMakes, setLoadingMakes] = useState(false);
   const [loadingModels, setLoadingModels] = useState(false);
 
-  // Generate years from 1995 to current year + 1
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear + 1 - 1995 + 1 }, (_, i) => 1995 + i).reverse();
 
-  // Fetch automotive and motorcycle makes only
   useEffect(() => {
     const fetchMakes = async () => {
       setLoadingMakes(true);
       try {
-        // Fetch makes for Passenger Cars (type 2), Motorcycles (type 3), and MPVs/Trucks (type 7)
         const [carsRes, motorcyclesRes, mpvRes] = await Promise.all([
           fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/passenger%20car?format=json'),
           fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json'),
@@ -43,7 +40,6 @@ export default function Page() {
           mpvRes.json()
         ]);
 
-        // Combine and deduplicate makes
         const allMakes = [
           ...carsData.Results.map((item: any) => item.MakeName),
           ...motorcyclesData.Results.map((item: any) => item.MakeName),
@@ -61,7 +57,6 @@ export default function Page() {
     fetchMakes();
   }, []);
 
-  // Fetch models when make and year are selected
   useEffect(() => {
     if (make && year) {
       const fetchModels = async () => {
@@ -103,7 +98,6 @@ export default function Page() {
       const data = await response.json();
       setValuation(data);
       
-      // Save to history
       const appraisalRecord = {
         id: `${Date.now()}-${Math.random()}`,
         timestamp: new Date().toISOString(),
@@ -120,8 +114,8 @@ export default function Page() {
       
       const existing = localStorage.getItem('appraisal_history');
       const history = existing ? JSON.parse(existing) : [];
-      history.unshift(appraisalRecord); // Add to beginning
-      localStorage.setItem('appraisal_history', JSON.stringify(history.slice(0, 300))); // Keep last 300
+      history.unshift(appraisalRecord);
+      localStorage.setItem('appraisal_history', JSON.stringify(history.slice(0, 300)));
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -158,28 +152,80 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-10 h-10 text-indigo-600" />
-              <h1 className="text-3xl font-bold text-gray-800">Multi-Source Vehicle Valuation (Demo)</h1>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-700 to-blue-800">
+      {/* Header */}
+      <header className="bg-white/10 backdrop-blur-md border-b border-white/20">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <DollarSign className="w-8 h-8 text-white" />
+            <h1 className="text-2xl font-bold text-white">Quirk Trade Tool</h1>
+          </div>
+          <nav className="flex items-center gap-6">
+            <Link href="/" className="text-white hover:text-blue-200 transition-colors font-medium">
+              Home
+            </Link>
             <Link
               href="/history"
-              className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors text-gray-700 font-medium"
+              className="flex items-center gap-2 px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors text-white font-medium"
             >
-              <History className="w-5 h-5" />
-              Search History
+              <History className="w-4 h-4" />
+              History
             </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-6 pt-16 pb-12 text-center">
+        <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+          Accelerate Your Trade-In Process with
+          <br />
+          <span className="text-blue-200">Fast, Accurate Valuations</span>
+        </h2>
+        <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+          Get real-time vehicle valuations powered by industry-leading data providers including Black Book, KBB, NADA, and Manheim.
+        </p>
+      </div>
+
+      {/* Features Grid */}
+      <div className="max-w-7xl mx-auto px-6 pb-16">
+        <div className="grid md:grid-cols-4 gap-6 mb-12">
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+            <Zap className="w-10 h-10 text-blue-200 mb-3" />
+            <h3 className="text-lg font-semibold text-white mb-2">Instant Results</h3>
+            <p className="text-sm text-blue-100">Get valuations in seconds with our streamlined process</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+            <Shield className="w-10 h-10 text-blue-200 mb-3" />
+            <h3 className="text-lg font-semibold text-white mb-2">Multi-Source Data</h3>
+            <p className="text-sm text-blue-100">Aggregated data from trusted industry providers</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+            <BarChart3 className="w-10 h-10 text-blue-200 mb-3" />
+            <h3 className="text-lg font-semibold text-white mb-2">Market Insights</h3>
+            <p className="text-sm text-blue-100">See value ranges and market confidence levels</p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+            <Car className="w-10 h-10 text-blue-200 mb-3" />
+            <h3 className="text-lg font-semibold text-white mb-2">VIN Decode</h3>
+            <p className="text-sm text-blue-100">Automatic vehicle details from VIN number</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Valuation Form */}
+      <div className="max-w-4xl mx-auto px-6 pb-16">
+        <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 md:p-10">
+          <div className="flex items-center gap-3 mb-8">
+            <DollarSign className="w-10 h-10 text-blue-600" />
+            <h3 className="text-3xl font-bold text-gray-800">Get Vehicle Valuation</h3>
           </div>
 
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-blue-800">
-                Demo uses simulated valuations. Real integrations with licensed providers (Black Book, KBB, NADA, Manheim) are available.
+                This demo uses simulated valuations. Production version integrates with licensed providers (Black Book, KBB, NADA, Manheim).
               </p>
             </div>
           </div>
@@ -193,77 +239,94 @@ export default function Page() {
                 value={vin}
                 onChange={(e) => setVin(e.target.value.toUpperCase())}
                 placeholder="e.g., 1G1ZT62812F113456"
-                className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase"
+                className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
               />
               <button
                 type="button"
                 onClick={onDecodeVin}
                 disabled={!vin || vin.length < 17 || isDecoding}
-                className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
               >
                 {isDecoding ? 'Decoding...' : 'Decode'}
               </button>
             </div>
             {year && make && (
-              <p className="text-sm text-green-600 mt-2">
-                Decoded: {year} {make} {model} {trim}
+              <p className="text-sm text-green-600 mt-2 font-medium">
+                ✓ Decoded: {year} {make} {model} {trim}
               </p>
             )}
           </div>
 
-          {/* Year */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Year</label>
-            <select
-              value={year}
-              onChange={(e) => setYear(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
-            >
-              <option value="">Select Year</option>
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            {/* Year */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
+              <select
+                value={year}
+                onChange={(e) => setYear(e.target.value)}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="">Select Year</option>
+                {years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Make */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Make *</label>
+              <select
+                value={make}
+                onChange={(e) => {
+                  setMake(e.target.value);
+                  setModel('');
+                }}
+                required
+                disabled={loadingMakes}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:opacity-50"
+              >
+                <option value="">{loadingMakes ? 'Loading...' : 'Select Make'}</option>
+                {makes.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Make */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Make</label>
-            <select
-              value={make}
-              onChange={(e) => {
-                setMake(e.target.value);
-                setModel(''); // Reset model when make changes
-              }}
-              required
-              disabled={loadingMakes}
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white disabled:opacity-50"
-            >
-              <option value="">{loadingMakes ? 'Loading makes...' : 'Select Make'}</option>
-              {makes.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-          </div>
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
+              <select
+                value={model}
+                onChange={(e) => setModel(e.target.value)}
+                required
+                disabled={!make || !year || loadingModels}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:opacity-50"
+              >
+                <option value="">
+                  {!make || !year ? 'Select year & make first' : loadingModels ? 'Loading...' : 'Select Model'}
+                </option>
+                {models.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
 
-          {/* Model */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Model</label>
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              required
-              disabled={!make || !year || loadingModels}
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white disabled:opacity-50"
-            >
-              <option value="">
-                {!make || !year ? 'Select year and make first' : loadingModels ? 'Loading models...' : 'Select Model'}
-              </option>
-              {models.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
+            {/* Mileage */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Mileage *</label>
+              <input
+                type="number"
+                value={mileage}
+                onChange={(e) => setMileage(e.target.value)}
+                placeholder="e.g., 45000"
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
           </div>
 
           {/* Trim */}
@@ -273,58 +336,45 @@ export default function Page() {
               type="text"
               value={trim}
               onChange={(e) => setTrim(e.target.value)}
-              placeholder="e.g., XLE"
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          {/* Mileage */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Mileage</label>
-            <input
-              type="number"
-              value={mileage}
-              onChange={(e) => setMileage(e.target.value)}
-              placeholder="e.g., 45000"
-              required
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              placeholder="e.g., XLE, Sport, Limited"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {error && (
             <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-sm text-red-700 font-medium">{error}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
+            className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
           >
-            {isLoading ? 'Valuating...' : 'Get Multi-Source Valuation'}
+            {isLoading ? 'Getting Valuation...' : 'Get Multi-Source Valuation'}
           </button>
         </form>
 
         {valuation && (
-          <div className="mt-8 bg-white rounded-2xl shadow-2xl p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
-              <TrendingUp className="w-7 h-7 text-green-600" />
+          <div className="mt-8 bg-white rounded-2xl shadow-2xl p-8 md:p-10">
+            <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
+              <TrendingUp className="w-8 h-8 text-green-600" />
               Valuation Results
             </h2>
 
             {/* Summary Card */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 mb-6 border border-green-200">
-              <div className="flex items-center justify-between">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-8 mb-8 border-2 border-green-200">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm font-medium text-gray-600 mb-1">Average Retail Value</p>
-                  <p className="text-4xl font-bold text-green-700">
+                  <p className="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Average Retail Value</p>
+                  <p className="text-5xl font-bold text-green-700">
                     ${valuation.averageValue?.toLocaleString() || 'N/A'}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-600 mb-1">Value Range</p>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-sm font-semibold text-gray-600 mb-2 uppercase tracking-wide">Value Range</p>
+                  <p className="text-2xl font-bold text-gray-800">
                     ${valuation.minValue?.toLocaleString()} - ${valuation.maxValue?.toLocaleString()}
                   </p>
                 </div>
@@ -332,12 +382,12 @@ export default function Page() {
             </div>
 
             {/* Source Breakdown */}
-            <div className="grid md:grid-cols-2 gap-4 mb-6">
+            <div className="grid md:grid-cols-2 gap-4 mb-8">
               {valuation.sources?.map((source: any, idx: number) => (
-                <div key={idx} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-gray-800">{source.provider}</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
+                <div key={idx} className="border-2 border-gray-200 rounded-lg p-6 hover:shadow-lg hover:border-blue-300 transition-all">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-bold text-lg text-gray-800">{source.provider}</h3>
+                    <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
                       source.confidence === 'high' ? 'bg-green-100 text-green-700' :
                       source.confidence === 'medium' ? 'bg-yellow-100 text-yellow-700' :
                       'bg-gray-100 text-gray-700'
@@ -345,7 +395,7 @@ export default function Page() {
                       {source.confidence} confidence
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-indigo-600 mb-1">
+                  <p className="text-3xl font-bold text-blue-600 mb-2">
                     ${source.value?.toLocaleString()}
                   </p>
                   <p className="text-xs text-gray-500">Retrieved {new Date(source.timestamp).toLocaleString()}</p>
@@ -354,40 +404,61 @@ export default function Page() {
             </div>
 
             {/* Vehicle Info */}
-            <div className="border-t pt-6">
-              <h3 className="font-semibold text-gray-800 mb-3">Vehicle Details</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="border-t-2 pt-6">
+              <h3 className="font-bold text-xl text-gray-800 mb-4">Vehicle Details</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div>
-                  <p className="text-sm text-gray-500">VIN</p>
-                  <p className="font-medium text-gray-800">{valuation.vehicle?.vin || 'N/A'}</p>
+                  <p className="text-sm text-gray-500 mb-1 font-medium">VIN</p>
+                  <p className="font-semibold text-gray-800">{valuation.vehicle?.vin || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Year/Make/Model</p>
-                  <p className="font-medium text-gray-800">{valuation.vehicle?.year} {valuation.vehicle?.make} {valuation.vehicle?.model}</p>
+                  <p className="text-sm text-gray-500 mb-1 font-medium">Vehicle</p>
+                  <p className="font-semibold text-gray-800">{valuation.vehicle?.year} {valuation.vehicle?.make} {valuation.vehicle?.model}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Trim</p>
-                  <p className="font-medium text-gray-800">{valuation.vehicle?.trim || 'N/A'}</p>
+                  <p className="text-sm text-gray-500 mb-1 font-medium">Trim</p>
+                  <p className="font-semibold text-gray-800">{valuation.vehicle?.trim || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Mileage</p>
-                  <p className="font-medium text-gray-800">{valuation.vehicle?.mileage?.toLocaleString()} mi</p>
+                  <p className="text-sm text-gray-500 mb-1 font-medium">Mileage</p>
+                  <p className="font-semibold text-gray-800">{valuation.vehicle?.mileage?.toLocaleString()} mi</p>
                 </div>
               </div>
             </div>
 
             {/* Disclaimer */}
-            <div className="mt-6 bg-gray-50 rounded-lg p-4">
+            <div className="mt-8 bg-gray-50 rounded-lg p-4 border border-gray-200">
               <p className="text-xs text-gray-600 leading-relaxed">
                 <strong>Demo Disclaimer:</strong> This valuation uses simulated data for demonstration purposes. 
                 Production integration requires API credentials and licenses from valuation providers. Values shown 
-                are illustrative only and should not be used for actual transactions. Contact your provider representatives 
-                for production access.
+                are illustrative only and should not be used for actual transactions.
               </p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white/10 backdrop-blur-md border-t border-white/20 mt-16">
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <DollarSign className="w-8 h-8 text-white" />
+                <h3 className="text-xl font-bold text-white">Quirk Trade Tool</h3>
+              </div>
+              <p className="text-blue-100 text-sm">
+                Fast, accurate vehicle valuations powered by industry-leading data providers.
+              </p>
+            </div>
+            <div className="text-right">
+              <h4 className="text-white font-semibold mb-2">Contact Us</h4>
+              <p className="text-blue-100 text-sm">Manchester, New Hampshire</p>
+              <p className="text-blue-100 text-sm">Quirk Automotive Group</p>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
