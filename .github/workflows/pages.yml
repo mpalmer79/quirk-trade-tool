@@ -25,14 +25,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # don't use the default npm/yarn lockfile cache
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9
 
-      # No lockfile required; install workspace deps
       - name: Install deps (pnpm)
         run: pnpm -w install --no-frozen-lockfile
 
