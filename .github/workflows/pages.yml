@@ -21,17 +21,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node 20 + Corepack
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Enable pnpm via Corepack
+        run: |
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm --version
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Install deps (pnpm)
+      - name: Install deps (workspace)
         run: pnpm -w install --no-frozen-lockfile
 
       - name: Build static export for Pages
