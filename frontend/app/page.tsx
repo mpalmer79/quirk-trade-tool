@@ -78,6 +78,7 @@ export default function Page() {
   const [decoding, setDecoding] = React.useState(false);
   const [quotes, setQuotes] = React.useState<SourceQuote[] | null>(null);
   const [summary, setSummary] = React.useState<{ low:number; high:number; avg:number; confidence:string } | null>(null);
+  const [appraisalId, setAppraisalId] = React.useState<string | null>(null);
 
   const availableModels = make ? modelsByMake[make] || [] : [];
 
@@ -94,6 +95,7 @@ export default function Page() {
     const payload = await res.json();
     setQuotes(payload.quotes);
     setSummary(payload.summary);
+    setAppraisalId(payload.id ?? null); // <-- capture receipt ID
   };
 
   const onDecodeVin = async () => {
@@ -179,7 +181,7 @@ export default function Page() {
                 <option value="">Select Make</option>
                 {makes.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
-              {errors.make && <p className="text-sm text-red-600 mt-1">{errors.make.message as string}</p>}
+              {errors.make && <p className="text-sm text-red-600 mt-1}>{errors.make.message as string}</p>}
             </div>
 
             <div>
@@ -275,7 +277,19 @@ export default function Page() {
               </div>
 
               <div className="bg-gray-50 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">Source Breakdown (Simulated)</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-gray-800">Source Breakdown (Simulated)</h3>
+                  {appraisalId && (
+                    <a
+                      href={apiUrl(`/api/receipt/pdf/${appraisalId}`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center px-3 py-2 rounded-md text-sm font-semibold bg-indigo-600 text-white hover:bg-indigo-700"
+                    >
+                      Download PDF
+                    </a>
+                  )}
+                </div>
                 <div className="space-y-3">
                   {quotes.map((q, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
