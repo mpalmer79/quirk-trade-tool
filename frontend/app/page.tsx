@@ -25,15 +25,33 @@ export default function Page() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear + 1 - 1995 + 1 }, (_, i) => 1995 + i).reverse();
 
-  // Fetch all makes on component mount
+  // Fetch automotive and motorcycle makes only
   useEffect(() => {
     const fetchMakes = async () => {
       setLoadingMakes(true);
       try {
-        const response = await fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetAllMakes?format=json');
-        const data = await response.json();
-        const makeNames = data.Results.map((item: any) => item.Make_Name).sort();
-        setMakes(makeNames);
+        // Fetch makes for Passenger Cars (type 2), Motorcycles (type 3), and MPVs/Trucks (type 7)
+        const [carsRes, motorcyclesRes, mpvRes] = await Promise.all([
+          fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/passenger%20car?format=json'),
+          fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json'),
+          fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/truck?format=json')
+        ]);
+
+        const [carsData, motorcyclesData, mpvData] = await Promise.all([
+          carsRes.json(),
+          motorcyclesRes.json(),
+          mpvRes.json()
+        ]);
+
+        // Combine and deduplicate makes
+        const allMakes = [
+          ...carsData.Results.map((item: any) => item.MakeName),
+          ...motorcyclesData.Results.map((item: any) => item.MakeName),
+          ...mpvData.Results.map((item: any) => item.MakeName)
+        ];
+
+        const uniqueMakes = Array.from(new Set(allMakes)).sort();
+        setMakes(uniqueMakes);
       } catch (e) {
         console.error('Failed to fetch makes:', e);
       } finally {
