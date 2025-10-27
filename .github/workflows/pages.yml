@@ -25,14 +25,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Enable pnpm via Corepack
         run: |
           corepack enable
           corepack prepare pnpm@9 --activate
           pnpm --version
 
+      # Install all workspace deps
       - name: Install deps (workspace)
         run: pnpm -w install --no-frozen-lockfile
+
+      # Ensure frontend/node_modules exists (some pnpm configs may skip if invalid JSON was fixed mid-run)
+      - name: Install deps (frontend)
+        working-directory: frontend
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build static export for Pages
         working-directory: frontend
