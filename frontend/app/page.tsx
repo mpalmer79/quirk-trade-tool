@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { DollarSign, TrendingUp, AlertCircle, ScanLine } from "lucide-react";
+import { apiUrl } from "./lib/api";
 
 const FormSchema = z.object({
   vin: z.string().optional(),
@@ -81,7 +82,7 @@ export default function Page() {
   const availableModels = make ? modelsByMake[make] || [] : [];
 
   const onSubmit = async (data: FormData) => {
-    const res = await fetch("http://localhost:4000/api/appraise", {
+    const res = await fetch(apiUrl("/api/appraise"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
@@ -102,7 +103,7 @@ export default function Page() {
     }
     setDecoding(true);
     try {
-      const res = await fetch("http://localhost:4000/api/vin/decode", {
+      const res = await fetch(apiUrl("/api/vin/decode"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vin })
@@ -147,11 +148,16 @@ export default function Page() {
                 placeholder="e.g., 1G1ZT62812F113456"
                 className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase"
               />
-              <button type="button"
+              <button
+                type="button"
                 onClick={onDecodeVin}
                 disabled={decoding || !vin}
                 className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
-                {decoding ? 'Decoding...' : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
+                {decoding ? 'Decoding...' : (
+                  <span className="inline-flex items-center gap-2">
+                    <ScanLine className="w-4 h-4" /> Decode
+                  </span>
+                )}
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC. In production, commercial decoders can be added.</p>
@@ -178,7 +184,9 @@ export default function Page() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-              <select {...register("model")} disabled={!watch("make")}
+              <select
+                {...register("model")}
+                disabled={!watch("make")}
                 className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
                 <option value="">{watch("make") ? 'Select Model' : 'Select Make First'}</option>
                 {(watch("make") ? (modelsByMake[watch("make")!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
@@ -188,14 +196,21 @@ export default function Page() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Trim</label>
-              <input {...register("trim")} placeholder="e.g., LE, Sport, Limited"
-                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              <input
+                {...register("trim")}
+                placeholder="e.g., LE, Sport, Limited"
+                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              />
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Mileage *</label>
-              <input type="number" {...register("mileage")} placeholder="Enter mileage"
-                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              <input
+                type="number"
+                {...register("mileage")}
+                placeholder="Enter mileage"
+                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+              />
               {errors.mileage && <p className="text-sm text-red-600 mt-1">{errors.mileage.message as string}</p>}
             </div>
           </div>
@@ -204,8 +219,13 @@ export default function Page() {
             <label className="block text-sm font-semibold text-gray-700 mb-3">
               Vehicle Condition: {condition}
             </label>
-            <input type="range" min={1} max={5} {...register("condition")}
-              className="w-full h-2 bg-gray-200 rounded-lg accent-indigo-600" />
+            <input
+              type="range"
+              min={1}
+              max={5}
+              {...register("condition")}
+              className="w-full h-2 bg-gray-200 rounded-lg accent-indigo-600"
+            />
             <div className="flex justify-between text-xs text-gray-600 mt-2">
               <span>Poor</span><span>Fair</span><span>Good</span><span>Very Good</span><span>Excellent</span>
             </div>
@@ -219,15 +239,20 @@ export default function Page() {
             <div className="grid grid-cols-2 gap-3">
               {optionsList.map(o => (
                 <label key={o} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" value={o} {...register("options")}
-                         className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500" />
+                  <input
+                    type="checkbox"
+                    value={o}
+                    {...register("options")}
+                    className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500"
+                  />
                   <span className="text-sm text-gray-700">{o}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          <button disabled={isSubmitting}
+          <button
+            disabled={isSubmitting}
             className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
             {isSubmitting ? 'Calculating...' : 'Get Wholesale Value'}
           </button>
@@ -240,8 +265,12 @@ export default function Page() {
                   <h2 className="text-2xl font-bold">Estimated Wholesale Value</h2>
                 </div>
                 <div className="text-center">
-                  <p className="text-4xl font-bold mb-2">${summary.low.toLocaleString()} - ${summary.high.toLocaleString()}</p>
-                  <p className="text-indigo-100">Average: ${summary.avg.toLocaleString()} · Confidence: {summary.confidence}</p>
+                  <p className="text-4xl font-bold mb-2">
+                    ${summary.low.toLocaleString()} - ${summary.high.toLocaleString()}
+                  </p>
+                  <p className="text-indigo-100">
+                    Average: ${summary.avg.toLocaleString()} · Confidence: {summary.confidence}
+                  </p>
                 </div>
               </div>
 
@@ -251,7 +280,9 @@ export default function Page() {
                   {quotes.map((q, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
                       <span className="font-medium text-gray-700">{q.source}</span>
-                      <span className="text-lg font-bold text-indigo-600">${q.value.toLocaleString()}</span>
+                      <span className="text-lg font-bold text-indigo-600">
+                        ${q.value.toLocaleString()}
+                      </span>
                     </div>
                   ))}
                 </div>
