@@ -1,18 +1,71 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DollarSign, AlertCircle, TrendingUp } from 'lucide-react';
 
 export default function Page() {
   const [vin, setVin] = useState('');
+  const [year, setYear] = useState('');
+  const [make, setMake] = useState('');
+  const [model, setModel] = useState('');
+  const [trim, setTrim] = useState('');
   const [mileage, setMileage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [valuation, setValuation] = useState<any>(null);
   const [isDecoding, setDecoding] = useState(false);
-  const [decodedMake, setDecodedMake] = useState('');
-  const [decodedModel, setDecodedModel] = useState('');
-  const [decodedTrim, setDecodedTrim] = useState('');
+  
+  const [makes, setMakes] = useState<string[]>([]);
+  const [models, setModels] = useState<string[]>([]);
+  const [loadingMakes, setLoadingMakes] = useState(false);
+  const [loadingModels, setLoadingModels] = useState(false);
+
+  // Generate years from 1995 to current year + 1
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear + 1 - 1995 + 1 }, (_, i) => 1995 + i).reverse();
+
+  // Fetch all makes on component mount
+  useEffect(() => {
+    const fetchMakes = async () => {
+      setLoadingMakes(true);
+      try {
+        const response = await fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetAllMakes?format=json');
+        const data = await response.json();
+        const makeNames = data.Results.map((item: any) => item.Make_Name).sort();
+        setMakes(makeNames);
+      } catch (e) {
+        console.error('Failed to fetch makes:', e);
+      } finally {
+        setLoadingMakes(false);
+      }
+    };
+    fetchMakes();
+  }, []);
+
+  // Fetch models when make and year are selected
+  useEffect(() => {
+    if (make && year) {
+      const fetchModels = async () => {
+        setLoadingModels(true);
+        try {
+          const response = await fetch(
+            `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`
+          );
+          const data = await response.json();
+          const modelNames = data.Results.map((item: any) => item.Model_Name).sort();
+          setModels(modelNames);
+        } catch (e) {
+          console.error('Failed to fetch models:', e);
+          setModels([]);
+        } finally {
+          setLoadingModels(false);
+        }
+      };
+      fetchModels();
+    } else {
+      setModels([]);
+    }
+  }, [make, year]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +76,7 @@ export default function Page() {
       const response = await fetch('/api/valuate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vin, mileage: parseInt(mileage) }),
+        body: JSON.stringify({ vin, year, make, model, trim, mileage: parseInt(mileage) }),
       });
       
       if (!response.ok) throw new Error('Valuation failed');
@@ -38,6 +91,8 @@ export default function Page() {
   };
 
   const onDecodeVin = async () => {
+    if (!vin || vin.length < 17) return;
+    
     setDecoding(true);
     try {
       const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
@@ -45,15 +100,16 @@ export default function Page() {
       
       const results = data.Results;
       const decoded = {
+        year: results.find((r: any) => r.Variable === "Model Year")?.Value || "",
         make: results.find((r: any) => r.Variable === "Make")?.Value || "",
         model: results.find((r: any) => r.Variable === "Model")?.Value || "",
-        year: results.find((r: any) => r.Variable === "Model Year")?.Value || "",
         trim: results.find((r: any) => r.Variable === "Trim")?.Value || ""
       };
       
-      if (decoded.make) setDecodedMake(decoded.make);
-      if (decoded.model) setDecodedModel(decoded.model);
-      if (decoded.trim) setDecodedTrim(decoded.trim);
+      if (decoded.year) setYear(decoded.year);
+      if (decoded.make) setMake(decoded.make);
+      if (decoded.model) setModel(decoded.model);
+      if (decoded.trim) setTrim(decoded.trim);
     } catch (e) {
       alert("VIN decode failed. Try again.");
     } finally {
@@ -99,37 +155,66 @@ export default function Page() {
                 {isDecoding ? 'Decoding...' : 'Decode'}
               </button>
             </div>
-            {decodedMake && (
+            {year && make && (
               <p className="text-sm text-green-600 mt-2">
-                Decoded: {decodedMake} {decodedModel} {decodedTrim}
+                Decoded: {year} {make} {model} {trim}
               </p>
             )}
+          </div>
+
+          {/* Year */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-2">Year</label>
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white"
+            >
+              <option value="">Select Year</option>
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
           </div>
 
           {/* Make */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">Make</label>
-            <input
-              type="text"
-              value={decodedMake}
-              onChange={(e) => setDecodedMake(e.target.value)}
-              placeholder="e.g., Toyota"
+            <select
+              value={make}
+              onChange={(e) => {
+                setMake(e.target.value);
+                setModel(''); // Reset model when make changes
+              }}
               required
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
+              disabled={loadingMakes}
+              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white disabled:opacity-50"
+            >
+              <option value="">{loadingMakes ? 'Loading makes...' : 'Select Make'}</option>
+              {makes.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
 
           {/* Model */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">Model</label>
-            <input
-              type="text"
-              value={decodedModel}
-              onChange={(e) => setDecodedModel(e.target.value)}
-              placeholder="e.g., Camry"
+            <select
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
               required
-              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-            />
+              disabled={!make || !year || loadingModels}
+              className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 bg-white disabled:opacity-50"
+            >
+              <option value="">
+                {!make || !year ? 'Select year and make first' : loadingModels ? 'Loading models...' : 'Select Model'}
+              </option>
+              {models.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
           </div>
 
           {/* Trim */}
@@ -137,8 +222,8 @@ export default function Page() {
             <label className="block text-sm font-semibold text-gray-700 mb-2">Trim (optional)</label>
             <input
               type="text"
-              value={decodedTrim}
-              onChange={(e) => setDecodedTrim(e.target.value)}
+              value={trim}
+              onChange={(e) => setTrim(e.target.value)}
               placeholder="e.g., XLE"
               className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
             />
@@ -228,8 +313,8 @@ export default function Page() {
                   <p className="font-medium text-gray-800">{valuation.vehicle?.vin || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Make/Model</p>
-                  <p className="font-medium text-gray-800">{valuation.vehicle?.make} {valuation.vehicle?.model}</p>
+                  <p className="text-sm text-gray-500">Year/Make/Model</p>
+                  <p className="font-medium text-gray-800">{valuation.vehicle?.year} {valuation.vehicle?.make} {valuation.vehicle?.model}</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Trim</p>
