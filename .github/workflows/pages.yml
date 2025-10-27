@@ -26,16 +26,18 @@ jobs:
         with:
           node-version: 20
 
-      # Frontend install/build/export
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - name: Install deps (workspace)
-        run: npm ci
-      - name: Build (Pages)
-        working-directory: frontend
+        run: pnpm -w install --frozen-lockfile
+
+      - name: Build static export for Pages
         env:
-          GITHUB_PAGES: "true"
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
-        run: |
-          npm run build:pages
+        run: pnpm run build:pages
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
