@@ -14,3 +14,13 @@ Multi-source vehicle valuation **demo** for Quirk Auto Dealers. Frontend (Next.j
 pnpm install
 cp .env.example .env
 pnpm dev    # runs frontend on :3000 and orchestrator on :4000
+
+.
+├─ frontend/         # Next.js 14 UI (TypeScript, Tailwind, RHF, Zod)
+│  └─ app/           # page.tsx includes VIN field + Decode button
+├─ orchestrator/     # Express + TS; adapters, normalization, receipts
+│  ├─ src/routes/    # /api/appraise, /api/vin/decode
+│  ├─ src/adapters/  # demo* adapters + provider stubs
+│  ├─ src/vin/       # NHTSA VPIC fallback decoder
+│  └─ src/valuation/ # heuristic + aggregate (trimmed mean + confidence)
+└─ data/receipts/    # Appraisal receipts (JSON), created at runtime
