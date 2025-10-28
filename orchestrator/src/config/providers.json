@@ -1,12 +1,14 @@
-const ALLOW = [
-  "https://mpalmer79.github.io",
-  "https://mpalmer79.github.io/quirk-trade-tool"
-];
-app.use((req, res, next) => {
-  const o = req.headers.origin as string | undefined;
-  if (o && ALLOW.includes(o)) res.setHeader("Access-Control-Allow-Origin", o);
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  if (req.method === "OPTIONS") return res.sendStatus(204);
-  next();
-});
+{
+  "default": {
+    "valuationAdapters": ["blackbook", "kbb", "nada", "manheim"],
+    "timeoutMs": 3500
+  },
+  "byStore": {
+    "quirk-chevy-braintree": {
+      "valuationAdapters": ["blackbook", "nada", "manheim"]
+    },
+    "quirk-ford-quincy": {
+      "valuationAdapters": ["kbb", "nada", "manheim"]
+    }
+  }
+}
