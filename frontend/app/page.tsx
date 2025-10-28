@@ -145,3 +145,45 @@ export default function Page() {
     </div>
   );
 }
+// ADD
+import { DEALERSHIPS } from "./lib/dealerships";
+
+// ... existing zod schema:
+const FormSchema = z.object({
+  storeId: z.string().min(1, "Select a dealership"),  // <— NEW
+  vin: z.string().optional(),
+  year: z.coerce.number().min(1990).max(new Date().getFullYear()),
+  make: z.string().min(1),
+  model: z.string().min(1),
+  trim: z.string().optional().default(""),
+  mileage: z.coerce.number().int().min(0).max(1_000_000),
+  condition: z.coerce.number().int().min(1).max(5),
+  options: z.array(z.string()).default([]),
+  zip: z.string().regex(/^\d{5}$/).optional()
+});
+type FormData = z.infer<typeof FormSchema>;
+
+// in useForm defaultValues:
+useForm<FormData>({
+  resolver: zodResolver(FormSchema),
+  defaultValues: { storeId: DEALERSHIPS[0]?.id ?? "", condition: 3, options: [] }
+});
+
+// ---------- UI: add a new Select above the VIN field ----------
+<div className="mb-6">
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Dealership *
+  </label>
+  <select
+    {...register("storeId")}
+    className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+  >
+    <option value="">Select a dealership</option>
+    {DEALERSHIPS.map(d => (
+      <option key={d.id} value={d.id}>{d.name}</option>
+    ))}
+  </select>
+  {errors.storeId && (
+    <p className="text-sm text-red-600 mt-1">{errors.storeId.message as string}</p>
+  )}
+</div>
