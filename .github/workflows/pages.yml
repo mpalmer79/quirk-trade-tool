@@ -19,19 +19,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 20 + Corepack
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: corepack enable
 
-      - name: Enable pnpm via Corepack
-        run: corepack prepare pnpm@9.15.0 --activate
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
 
-      - name: Install deps (workspace)
-        run: pnpm -w install --no-frozen-lockfile
+      # install workspace deps
+      - name: Install workspace deps
+        run: pnpm install --frozen-lockfile=false
 
-      # >>> The critical part: inject NEXT_PUBLIC_API_BASE into the build <<<
+      # install frontend deps explicitly
+      - name: Install frontend deps
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile=false
+
       - name: Build static export for Pages
         working-directory: frontend
         env:
@@ -39,7 +43,7 @@ jobs:
           GITHUB_PAGES: "true"
         run: |
           echo "Using API ${NEXT_PUBLIC_API_BASE}"
-          pnpm build:pages
+          pnpm run build:pages
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
