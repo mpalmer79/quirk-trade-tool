@@ -47,7 +47,6 @@ Multi-source vehicle valuation **demo** for Quirk Auto Dealers. The app is organ
 pnpm install
 
 # frontend: point to the API
-cp frontend/.env.local frontend/.env.local   # already points to http://localhost:4000
 
 # run both apps (frontend :3000, API :4000)
 pnpm dev
