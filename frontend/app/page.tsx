@@ -151,6 +151,28 @@ export default function Page() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
+  // Auto-decode when VIN is 17 characters (standard VIN length)
+  React.useEffect(() => {
+    if (vin && vin.length === 17 && !decoding) {
+      console.log('📍 Auto-decoding VIN:', vin);
+      (async () => {
+        setDecoding(true);
+        try {
+          const decoded = await decodeVinWithNhtsa(vin);
+          if (decoded) {
+            if (decoded.year) setValue('year', decoded.year);
+            if (decoded.make) {
+              setValue('make', decoded.make);
+              setPendingData(decoded);
+            }
+          }
+        } finally {
+          setDecoding(false);
+        }
+      })();
+    }
+  }, [vin, decoding, setValue]);
+
   // When make changes AND we have pending data, apply the model and trim
   React.useEffect(() => {
     if (pendingData && make === pendingData.make) {
@@ -237,7 +259,7 @@ export default function Page() {
                 {decoding ? 'Decoding...' : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC. In production, commercial decoders can be added.</p>
+            <p className="text-xs text-gray-500 mt-1">Automatically decodes when 17 characters entered. Or click Decode button.</p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6 mb-6">
