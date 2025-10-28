@@ -95,7 +95,6 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
 
     console.log('🔍 NHTSA Response:', row);
 
-    // Normalize Make: convert "HYUNDAI" to "Hyundai", "MERCEDES-BENZ" to "Mercedes-Benz"
     let make = row.Make || undefined;
     if (make) {
       make = make
@@ -104,7 +103,6 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
         .join(' ');
     }
 
-    // Normalize Model: "ELANTRA" to "Elantra", "S-CLASS" to "S-Class"
     let model = row.Model || undefined;
     if (model) {
       model = model
@@ -184,8 +182,12 @@ export default function Page() {
       }
       if (decoded.year) setValue('year', decoded.year);
       if (decoded.make) setValue('make', decoded.make);
-      if (decoded.model) setValue('model', decoded.model);
-      if (decoded.trim) setValue('trim', decoded.trim);
+      
+      // Delay setting model and trim to ensure make is rendered first
+      setTimeout(() => {
+        if (decoded.model) setValue('model', decoded.model);
+        if (decoded.trim) setValue('trim', decoded.trim);
+      }, 100);
     } finally {
       setDecoding(false);
     }
