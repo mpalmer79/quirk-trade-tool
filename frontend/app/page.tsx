@@ -95,9 +95,18 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
 
     console.log('🔍 NHTSA Response:', row);
 
+    // Normalize Make: convert "MERCEDES-BENZ" to "Mercedes-Benz"
+    let make = row.Make || undefined;
+    if (make) {
+      make = make
+        .split(' ')
+        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    }
+
     return {
       year: Number(row.ModelYear) || undefined,
-      make: row.Make || undefined,
+      make: make,
       model: row.Model || undefined,
       trim: row.Trim || undefined,
     };
