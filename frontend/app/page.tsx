@@ -6,7 +6,6 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { DollarSign, TrendingUp, AlertCircle, ScanLine } from 'lucide-react';
 
-// ---- Dealership list (Quirk multi-store) ----
 type Dealership = { id: string; name: string; brand?: string };
 const DEALERSHIPS: Dealership[] = [
   { id: 'quirk-chevy-braintree',  name: 'Quirk Chevrolet – Braintree, MA',  brand: 'Chevrolet' },
@@ -19,7 +18,6 @@ const DEALERSHIPS: Dealership[] = [
   { id: 'quirk-mazda-quincy',     name: 'Quirk Mazda – Quincy, MA',         brand: 'Mazda' }
 ];
 
-// ---- Schema / types ----
 const FormSchema = z.object({
   storeId: z.string().min(1, 'Select a dealership'),
   vin: z.string().optional(),
@@ -73,11 +71,7 @@ const modelsByMake: Record<string, string[]> = {
   Volvo: ['S60','S90','V60','V90','XC40','XC60','XC90','C40']
 };
 
-const optionsList = [
-  'Navigation System','Sunroof/Moonroof','Leather Seats','Premium Sound System',
-  'Third Row Seating','All-Wheel Drive','Adaptive Cruise Control','Heated Seats',
-  'Backup Camera','Towing Package'
-];
+const optionsList = ['Navigation System','Sunroof/Moonroof','Leather Seats','Premium Sound System','Third Row Seating','All-Wheel Drive','Adaptive Cruise Control','Heated Seats','Backup Camera','Towing Package'];
 
 const conditionDescriptions: Record<number, string> = {
   1: 'Poor - Significant damage, needs major repairs',
@@ -87,15 +81,12 @@ const conditionDescriptions: Record<number, string> = {
   5: 'Excellent - Like new, pristine condition'
 };
 
-// NHTSA VIN Decoder (direct, no backend)
 async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
   const cleaned = (vin || '').trim().toUpperCase();
   if (cleaned.length < 11) return null;
 
   try {
-    const response = await fetch(
-      `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(cleaned)}?format=json`
-    );
+    const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(cleaned)}?format=json`);
     if (!response.ok) return null;
     
     const data = await response.json();
@@ -120,8 +111,10 @@ export default function Page() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
-    useForm<FormData>({ resolver: zodResolver(FormSchema), defaultValues: { storeId: DEALERSHIPS[0]?.id ?? '', condition: 3, options: [] } });
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
+    resolver: zodResolver(FormSchema),
+    defaultValues: { storeId: DEALERSHIPS[0]?.id ?? '', condition: 3, options: [] }
+  });
 
   const make = watch('make');
   const condition = watch('condition');
@@ -131,8 +124,6 @@ export default function Page() {
   const [quotes, setQuotes] = React.useState<SourceQuote[] | null>(null);
   const [summary, setSummary] = React.useState<Summary | null>(null);
   const [lastId, setLastId] = React.useState<string | null>(null);
-
-  const availableModels = make ? modelsByMake[make] || [] : [];
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
@@ -189,13 +180,10 @@ export default function Page() {
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
             <div className="flex items-start gap-2">
               <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-800">
-                Demo uses simulated valuations. Real integrations with licensed providers (Black Book, KBB, NADA, Manheim) are available.
-              </p>
+              <p className="text-sm text-blue-800">Demo uses simulated valuations. Real integrations with licensed providers (Black Book, KBB, NADA, Manheim) are available.</p>
             </div>
           </div>
 
-          {/* Dealership */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">Dealership *</label>
             <select {...register('storeId')} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
@@ -205,26 +193,17 @@ export default function Page() {
             {errors.storeId && <p className="text-sm text-red-600 mt-1">{errors.storeId.message as string}</p>}
           </div>
 
-          {/* VIN + Decode */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-2">VIN (optional)</label>
             <div className="flex gap-2">
-              <input
-                {...register('vin')}
-                placeholder="e.g., 1G1ZT62812F113456"
-                className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase"
-              />
-              <button type="button"
-                onClick={onDecodeVin}
-                disabled={decoding || !vin}
-                className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+              <input {...register('vin')} placeholder="e.g., 1G1ZT62812F113456" className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase" />
+              <button type="button" onClick={onDecodeVin} disabled={decoding || !vin} className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
                 {decoding ? 'Decoding...' : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
               </button>
             </div>
             <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC. In production, commercial decoders can be added.</p>
           </div>
 
-          {/* Vehicle fields */}
           <div className="grid md:grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
@@ -246,8 +225,7 @@ export default function Page() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-              <select {...register('model')} disabled={!watch('make')}
-                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
+              <select {...register('model')} disabled={!watch('make')} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
                 <option value="">{watch('make') ? 'Select Model' : 'Select Make First'}</option>
                 {(watch('make') ? (modelsByMake[watch('make')!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -256,54 +234,41 @@ export default function Page() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Trim</label>
-              <input {...register('trim')} placeholder="e.g., LE, Sport, Limited"
-                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              <input {...register('trim')} placeholder="e.g., LE, Sport, Limited" className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
             </div>
 
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700 mb-2">Mileage *</label>
-              <input type="number" {...register('mileage')} placeholder="Enter mileage"
-                className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+              <input type="number" {...register('mileage')} placeholder="Enter mileage" className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
               {errors.mileage && <p className="text-sm text-red-600 mt-1">{errors.mileage.message as string}</p>}
             </div>
           </div>
 
-          {/* Condition */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Vehicle Condition: {condition}
-            </label>
-            <input type="range" min={1} max={5} {...register('condition')}
-              className="w-full h-2 bg-gray-200 rounded-lg accent-indigo-600" />
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Vehicle Condition: {condition}</label>
+            <input type="range" min={1} max={5} {...register('condition')} className="w-full h-2 bg-gray-200 rounded-lg accent-indigo-600" />
             <div className="flex justify-between text-xs text-gray-600 mt-2">
               <span>Poor</span><span>Fair</span><span>Good</span><span>Very Good</span><span>Excellent</span>
             </div>
-            <p className="text-sm text-gray-600 mt-2 italic">
-              {conditionDescriptions[Number(condition) || 3]}
-            </p>
+            <p className="text-sm text-gray-600 mt-2 italic">{conditionDescriptions[Number(condition) || 3]}</p>
           </div>
 
-          {/* Options */}
           <div className="mb-8">
             <label className="block text-sm font-semibold text-gray-700 mb-3">Additional Options</label>
             <div className="grid grid-cols-2 gap-3">
               {optionsList.map(o => (
                 <label key={o} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" value={o} {...register('options')}
-                         className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500" />
+                  <input type="checkbox" value={o} {...register('options')} className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500" />
                   <span className="text-sm text-gray-700">{o}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* Submit */}
-          <button disabled={isSubmitting}
-            className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
+          <button disabled={isSubmitting} className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
             {isSubmitting ? 'Calculating...' : 'Get Wholesale Value'}
           </button>
 
-          {/* Results */}
           {summary && quotes && (
             <div className="mt-8 space-y-6">
               <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-8 text-white shadow-xl">
@@ -321,11 +286,7 @@ export default function Page() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-800">Source Breakdown (Simulated)</h3>
                   {!!lastId && API_BASE && (
-                    
-                      className="text-sm font-semibold px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
-                      href={`${API_BASE}/api/receipt/pdf/${lastId}`}
-                      target="_blank" rel="noreferrer"
-                    >
+                    <a className="text-sm font-semibold px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700" href={`${API_BASE}/api/receipt/pdf/${lastId}`} target="_blank" rel="noreferrer">
                       Download PDF
                     </a>
                   )}
@@ -341,9 +302,7 @@ export default function Page() {
               </div>
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> Demo tool. Real provider quotes require licensed integrations and may differ materially.
-                </p>
+                <p className="text-sm text-yellow-800"><strong>Note:</strong> Demo tool. Real provider quotes require licensed integrations and may differ materially.</p>
               </div>
             </div>
           )}
