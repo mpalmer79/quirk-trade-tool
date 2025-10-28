@@ -38,6 +38,13 @@ type SourceQuote = { source: string; value: number };
 type Summary = { low: number; high: number; avg: number; confidence: string };
 type AppraiseResponse = { id: string; quotes: SourceQuote[]; summary: Summary; store?: Dealership; note?: string };
 
+type DecodedVin = {
+  year?: number;
+  make?: string;
+  model?: string;
+  trim?: string;
+};
+
 const makes = ['Acura','Audi','BMW','Cadillac','Chevrolet','Chrysler','Dodge','Ford','GMC','Honda','Hyundai','Jeep','Kia','Lexus','Mazda','Mercedes-Benz','Nissan','Ram','Subaru','Tesla','Toyota','Volkswagen','Volvo'];
 
 const modelsByMake: Record<string, string[]> = {
@@ -80,6 +87,33 @@ const conditionDescriptions: Record<number, string> = {
   5: 'Excellent - Like new, pristine condition'
 };
 
+// NHTSA VIN Decoder (direct, no backend)
+async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
+  const cleaned = (vin || '').trim().toUpperCase();
+  if (cleaned.length < 11) return null;
+
+  try {
+    const response = await fetch(
+      `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(cleaned)}?format=json`
+    );
+    if (!response.ok) return null;
+    
+    const data = await response.json();
+    const row = data?.Results?.[0];
+    if (!row) return null;
+
+    return {
+      year: Number(row.ModelYear) || undefined,
+      make: row.Make || undefined,
+      model: row.Model || undefined,
+      trim: row.Trim || undefined,
+    };
+  } catch (e) {
+    console.error('VIN decode failed:', e);
+    return null;
+  }
+}
+
 export default function Page() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
@@ -98,16 +132,20 @@ export default function Page() {
 
   const availableModels = make ? modelsByMake[make] || [] : [];
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
   const onSubmit = async (data: FormData) => {
+    if (!API_BASE) {
+      alert('API endpoint not configured.');
+      return;
+    }
     const res = await fetch(`${API_BASE}/api/appraise`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
     if (!res.ok) {
-      alert('Appraisal failed. Check orchestrator logs.');
+      alert('Appraisal failed. Check logs.');
       return;
     }
     const payload: AppraiseResponse = await res.json();
@@ -123,19 +161,15 @@ export default function Page() {
     }
     setDecoding(true);
     try {
-      const res = await fetch(`${API_BASE}/api/vin/decode`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ vin })
-      });
-      if (!res.ok) throw new Error('decode_failed');
-      const decoded = await res.json();
+      const decoded = await decodeVinWithNhtsa(vin);
+      if (!decoded) {
+        alert('VIN decode failed. Try again.');
+        return;
+      }
       if (decoded.year) setValue('year', decoded.year);
       if (decoded.make) setValue('make', decoded.make);
       if (decoded.model) setValue('model', decoded.model);
       if (decoded.trim) setValue('trim', decoded.trim);
-    } catch {
-      alert('VIN decode failed. Try again.');
     } finally {
       setDecoding(false);
     }
@@ -284,7 +318,7 @@ export default function Page() {
               <div className="bg-gray-50 rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-800">Source Breakdown (Simulated)</h3>
-                  {!!lastId && (
+                  {!!lastId && API_BASE && (
                     <a
                       className="text-sm font-semibold px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
                       href={`${API_BASE}/api/receipt/pdf/${lastId}`}
