@@ -95,7 +95,7 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
 
     console.log('🔍 NHTSA Response:', row);
 
-    // Normalize Make: convert "MERCEDES-BENZ" to "Mercedes-Benz"
+    // Normalize Make: convert "HYUNDAI" to "Hyundai", "MERCEDES-BENZ" to "Mercedes-Benz"
     let make = row.Make || undefined;
     if (make) {
       make = make
@@ -104,10 +104,24 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
         .join(' ');
     }
 
+    // Normalize Model: "ELANTRA" to "Elantra", "S-CLASS" to "S-Class"
+    let model = row.Model || undefined;
+    if (model) {
+      model = model
+        .split('-')
+        .map((part: string) => 
+          part
+            .split(' ')
+            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+            .join(' ')
+        )
+        .join('-');
+    }
+
     return {
       year: Number(row.ModelYear) || undefined,
       make: make,
-      model: row.Model || undefined,
+      model: model,
       trim: row.Trim || undefined,
     };
   } catch (e) {
