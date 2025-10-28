@@ -1,9 +1,7 @@
 name: Deploy Frontend to GitHub Pages
-
 on:
   push:
-    branches: [ "main" ]
-  workflow_dispatch:
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -12,7 +10,7 @@ permissions:
 
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -25,41 +23,35 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - run: corepack enable
 
       - name: Enable pnpm via Corepack
-        run: |
-          corepack enable
-          corepack prepare pnpm@9 --activate
-          pnpm --version
+        run: corepack prepare pnpm@9.15.0 --activate
 
-      # Install all workspace deps
       - name: Install deps (workspace)
         run: pnpm -w install --no-frozen-lockfile
 
-      # Ensure frontend/node_modules exists (some pnpm configs may skip if invalid JSON was fixed mid-run)
-      - name: Install deps (frontend)
-        working-directory: frontend
-        run: pnpm install --no-frozen-lockfile
-
+      # >>> The critical part: inject NEXT_PUBLIC_API_BASE into the build <<<
       - name: Build static export for Pages
         working-directory: frontend
         env:
-          GITHUB_PAGES: "true"
           NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE }}
-        run: pnpm run build:pages
+          GITHUB_PAGES: "true"
+        run: |
+          echo "Using API ${NEXT_PUBLIC_API_BASE}"
+          pnpm build:pages
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./frontend/out
+          path: frontend/out
 
   deploy:
-    needs: build
-    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - id: deployment
         uses: actions/deploy-pages@v4
