@@ -12,8 +12,6 @@ type DecodedVin = {
   fuelTypePrimary?: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE?.trim();
-
 export function useVehicleData() {
   const [makes, setMakes] = useState<string[]>([]);
   const [models, setModels] = useState<string[]>([]);
@@ -91,35 +89,14 @@ export function useVehicleData() {
   };
 
   /**
-   * Decode VIN:
-   * 1) Try your orchestrator (if NEXT_PUBLIC_API_BASE is set)
-   * 2) Fallback to VPIC "DecodeVinValuesExtended" (browser-friendly CORS)
+   * Decode VIN using NHTSA VPIC API (public, no backend required)
    */
   const decodeVin = async (vin: string): Promise<DecodedVin | null> => {
     const cleaned = (vin || '').trim().toUpperCase();
     // VPIC can decode partials; allow 11+ like your UI, but ignore obviously short inputs
     if (cleaned.length < 11) return null;
 
-    // 1) Orchestrator path (if configured & reachable)
-    if (API_BASE) {
-      try {
-        const r = await fetch(`${API_BASE}/api/vin/decode`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ vin: cleaned })
-        });
-        if (r.ok) {
-          const json = await r.json();
-          // Expecting { year, make, model, trim, ... }
-          return json as DecodedVin;
-        }
-      } catch (e) {
-        // Fall through to VPIC
-        console.warn('Orchestrator VIN decode failed, falling back to VPIC:', e);
-      }
-    }
-
-    // 2) Public VPIC fallback (works on GitHub Pages)
+    // Public VPIC API (works on frontend-only, no backend needed)
     try {
       const vpic = await fetch(
         `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(
