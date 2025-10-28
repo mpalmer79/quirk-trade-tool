@@ -66,47 +66,58 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   const vin = watch("vin");
   const availableModels = make ? modelsByMake[make] || [] : [];
 
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
   const onSubmit = async (data: FormData) => {
+    setErrorMsg(null);
     const res = await fetch(`${apiBase}/api/appraise`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
     });
-    if (!res.ok) return alert("Appraisal failed. Check orchestrator logs.");
+    if (!res.ok) {
+      console.error("Appraise error", res.status, res.statusText);
+      setErrorMsg("Appraisal failed. Please try again or contact support.");
+      return;
+    }
     const payload: AppraiseResponse = await res.json();
     onAppraised(payload);
   };
 
   const [decoding, setDecoding] = React.useState(false);
 
-  // --- VIN decode with server-first, NHTSA fallback ---
   const onDecodeVin = async () => {
+    setErrorMsg(null);
     if (!vin || vin.length < 11) {
-      alert("Enter at least 11 characters of a VIN.");
+      setErrorMsg("Enter at least 11 characters of a VIN.");
       return;
     }
     setDecoding(true);
     try {
-      // Primary: your orchestrator
+      // Primary: orchestrator
+      console.log("VIN decode: trying server", `${apiBase}/api/vin/decode`);
       const res = await fetch(`${apiBase}/api/vin/decode`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vin })
       });
-      if (!res.ok) throw new Error("server_decode_failed");
+      if (!res.ok) throw new Error(`server_decode_failed:${res.status}`);
       const decoded = await res.json();
       if (decoded.year) setValue("year", decoded.year);
       if (decoded.make) setValue("make", decoded.make);
       if (decoded.model) setValue("model", decoded.model);
       if (decoded.trim) setValue("trim", decoded.trim);
+      console.log("VIN decode via server OK", decoded);
       return;
-    } catch {
-      // Fallback: public NHTSA VPIC (client-side)
+    } catch (e) {
+      console.warn("VIN server decode failed, falling back to NHTSA", e);
+      // Fallback: NHTSA VPIC
       try {
         const v = vin.trim().toUpperCase();
-        const vp = await fetch(
-          `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(v)}?format=json`
-        );
+        const url = `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(v)}?format=json`;
+        console.log("VIN decode: calling NHTSA", url);
+        const vp = await fetch(url, { mode: "cors" });
+        if (!vp.ok) throw new Error(`nhtsa_http_${vp.status}`);
         const data = await vp.json();
         const row = data?.Results?.[0] || {};
         const yr = Number(row.ModelYear) || undefined;
@@ -119,10 +130,11 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         if (mdl) setValue("model", mdl);
         if (trm) setValue("trim", trm);
 
-        console.info("VIN decoded via NHTSA fallback");
+        console.log("VIN decode via NHTSA OK", { yr, mk, mdl, trm });
         return;
-      } catch {
-        alert("VIN decode failed. Try again.");
+      } catch (err) {
+        console.error("VIN decode fallback failed", err);
+        setErrorMsg("VIN decode failed. Try again.");
       }
     } finally {
       setDecoding(false);
@@ -139,6 +151,12 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
           </p>
         </div>
       </div>
+
+      {errorMsg && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {errorMsg}
+        </div>
+      )}
 
       {/* Dealership */}
       <div className="mb-6">
