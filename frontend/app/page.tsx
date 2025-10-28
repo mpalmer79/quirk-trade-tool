@@ -102,6 +102,8 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
     const row = data?.Results?.[0];
     if (!row) return null;
 
+    console.log('🔍 NHTSA Response:', row);
+
     return {
       year: Number(row.ModelYear) || undefined,
       make: row.Make || undefined,
@@ -319,7 +321,7 @@ export default function Page() {
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-bold text-gray-800">Source Breakdown (Simulated)</h3>
                   {!!lastId && API_BASE && (
-                    <a
+                    
                       className="text-sm font-semibold px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700"
                       href={`${API_BASE}/api/receipt/pdf/${lastId}`}
                       target="_blank" rel="noreferrer"
