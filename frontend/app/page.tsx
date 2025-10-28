@@ -4,7 +4,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DollarSign, TrendingUp, AlertCircle, ScanLine } from 'lucide-react';
+import { DollarSign, TrendingUp, AlertCircle, ScanLine, CheckCircle2, ArrowRight } from 'lucide-react';
 
 type Dealership = { id: string; name: string; brand?: string };
 const DEALERSHIPS: Dealership[] = [
@@ -95,7 +95,6 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
 
     console.log('🔍 NHTSA Response:', row);
 
-    // Normalize Make: convert "HYUNDAI" to "Hyundai", "MERCEDES-BENZ" to "Mercedes-Benz"
     let make = row.Make || undefined;
     if (make) {
       make = make
@@ -104,7 +103,6 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
         .join(' ');
     }
 
-    // Normalize Model: "ELANTRA" to "Elantra", "S-CLASS" to "S-Class"
     let model = row.Model || undefined;
     if (model) {
       model = model
@@ -130,9 +128,14 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
   }
 }
 
+const WaveDivider = () => (
+  <svg className="w-full h-24" viewBox="0 0 1200 120" preserveAspectRatio="none">
+    <path d="M0,50 Q300,10 600,50 T1200,50 L1200,120 L0,120 Z" fill="white" />
+  </svg>
+);
+
 export default function Page() {
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(FormSchema),
@@ -151,7 +154,6 @@ export default function Page() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
-  // Auto-decode when VIN is 17 characters (standard VIN length)
   React.useEffect(() => {
     if (vin && vin.length === 17 && !decoding) {
       console.log('📍 Auto-decoding VIN:', vin);
@@ -173,7 +175,6 @@ export default function Page() {
     }
   }, [vin, decoding, setValue]);
 
-  // When make changes AND we have pending data, apply the model and trim
   React.useEffect(() => {
     if (pendingData && make === pendingData.make) {
       console.log('✅ Applying pending model/trim:', pendingData);
@@ -218,7 +219,6 @@ export default function Page() {
       if (decoded.year) setValue('year', decoded.year);
       if (decoded.make) {
         setValue('make', decoded.make);
-        // Store model/trim to be set after make updates
         setPendingData(decoded);
       }
     } finally {
@@ -227,144 +227,222 @@ export default function Page() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="max-w-4xl mx-auto">
-        <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-2xl p-8">
-          <div className="flex items-center gap-3 mb-8">
-            <DollarSign className="w-10 h-10 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-800">Multi-Source Vehicle Valuation (Demo)</h1>
-          </div>
+    <div className="w-full overflow-hidden bg-gray-50">
+      {/* HERO SECTION */}
+      <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white pt-20 pb-32 relative">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            Get Accurate Trade Values<br />
+            <span className="text-[#00d9a3]">Instantly</span>
+          </h1>
+          <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
+            Real-time integration with Black Book, Quincy Auto Auction, Auction Edge, Manheim, KBB, and NADA for accurate appraisal values powered by Quirk AI.
+          </p>
+        </div>
+      </div>
 
-          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-800">Demo uses simulated valuations. Real integrations with licensed providers (Black Book, KBB, NADA, Manheim) are available.</p>
-            </div>
-          </div>
+      {/* WAVE DIVIDER */}
+      <div className="relative -mt-12 bg-white">
+        <div className="absolute inset-0 bg-white" style={{ clipPath: 'polygon(0 20%, 100% 0, 100% 100%, 0 100%)' }}></div>
+        <div className="h-20"></div>
+      </div>
 
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Dealership *</label>
-            <select {...register('storeId')} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-              <option value="">Select a dealership</option>
-              {DEALERSHIPS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
-            {errors.storeId && <p className="text-sm text-red-600 mt-1">{errors.storeId.message as string}</p>}
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">VIN (optional)</label>
-            <div className="flex gap-2">
-              <input {...register('vin')} placeholder="e.g., 1G1ZT62812F113456" className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase" />
-              <button type="button" onClick={onDecodeVin} disabled={decoding || !vin} className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
-                {decoding ? 'Decoding...' : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">Automatically decodes when 17 characters entered. Or click Decode button.</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
-              <select {...register('year')} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <option value="">Select Year</option>
-                {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}</option>)}
+      {/* FORM SECTION */}
+      <div className="relative bg-white py-16 px-6">
+        <div className="max-w-5xl mx-auto">
+          <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-xl p-10">
+            {/* DEALERSHIP */}
+            <div className="mb-8">
+              <label className="block text-sm font-semibold text-gray-800 mb-3">Select Your Dealership *</label>
+              <select {...register('storeId')} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800">
+                <option value="">Choose a dealership...</option>
+                {DEALERSHIPS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
-              {errors.year && <p className="text-sm text-red-600 mt-1">{errors.year.message as string}</p>}
+              {errors.storeId && <p className="text-red-600 text-sm mt-2">{errors.storeId.message as string}</p>}
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Make *</label>
-              <select {...register('make')} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <option value="">Select Make</option>
-                {makes.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-              {errors.make && <p className="text-sm text-red-600 mt-1">{errors.make.message as string}</p>}
+            {/* VIN INPUT */}
+            <div className="mb-8">
+              <label className="block text-sm font-semibold text-gray-800 mb-3">Vehicle VIN (optional)</label>
+              <div className="flex gap-3">
+                <input 
+                  {...register('vin')} 
+                  placeholder="Enter VIN (e.g., 1G1ZT62812F113456)" 
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] uppercase bg-white text-gray-800"
+                />
+                <button 
+                  type="button" 
+                  onClick={onDecodeVin} 
+                  disabled={decoding || !vin}
+                  className="px-6 py-3 bg-[#00d9a3] hover:bg-[#00b87d] text-white font-semibold rounded-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  <ScanLine className="w-4 h-4" />
+                  {decoding ? 'Decoding...' : 'Decode'}
+                </button>
+              </div>
+              <p className="text-gray-500 text-xs mt-2">Auto-decodes when 17 characters are entered</p>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-              <select {...register('model')} disabled={!watch('make')} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
-                <option value="">{watch('make') ? 'Select Model' : 'Select Make First'}</option>
-                {(watch('make') ? (modelsByMake[watch('make')!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-              {errors.model && <p className="text-sm text-red-600 mt-1">{errors.model.message as string}</p>}
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Trim</label>
-              <input {...register('trim')} placeholder="e.g., LE, Sport, Limited" className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
-            </div>
-
-            <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Mileage *</label>
-              <input type="number" {...register('mileage')} placeholder="Enter mileage" className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
-              {errors.mileage && <p className="text-sm text-red-600 mt-1">{errors.mileage.message as string}</p>}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Vehicle Condition: {condition}</label>
-            <input type="range" min={1} max={5} {...register('condition')} className="w-full h-2 bg-gray-200 rounded-lg accent-indigo-600" />
-            <div className="flex justify-between text-xs text-gray-600 mt-2">
-              <span>Poor</span><span>Fair</span><span>Good</span><span>Very Good</span><span>Excellent</span>
-            </div>
-            <p className="text-sm text-gray-600 mt-2 italic">{conditionDescriptions[Number(condition) || 3]}</p>
-          </div>
-
-          <div className="mb-8">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Additional Options</label>
-            <div className="grid grid-cols-2 gap-3">
-              {optionsList.map(o => (
-                <label key={o} className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" value={o} {...register('options')} className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500" />
-                  <span className="text-sm text-gray-700">{o}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button disabled={isSubmitting} className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? 'bg-gray-400' : 'bg-indigo-600 hover:bg-indigo-700'}`}>
-            {isSubmitting ? 'Calculating...' : 'Get Wholesale Value'}
-          </button>
-
-          {summary && quotes && (
-            <div className="mt-8 space-y-6">
-              <div className="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-8 text-white shadow-xl">
-                <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="w-6 h-6" />
-                  <h2 className="text-2xl font-bold">Estimated Wholesale Value</h2>
-                </div>
-                <div className="text-center">
-                  <p className="text-4xl font-bold mb-2">${summary.low.toLocaleString()} - ${summary.high.toLocaleString()}</p>
-                  <p className="text-indigo-100">Average: ${summary.avg.toLocaleString()} · Confidence: {summary.confidence}</p>
-                </div>
+            {/* VEHICLE DETAILS GRID */}
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Year *</label>
+                <select {...register('year')} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800">
+                  <option value="">Select Year</option>
+                  {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                {errors.year && <p className="text-red-600 text-sm mt-2">{errors.year.message as string}</p>}
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-gray-800">Source Breakdown (Simulated)</h3>
-                  {!!lastId && API_BASE && (
-                    <a className="text-sm font-semibold px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700" href={`${API_BASE}/api/receipt/pdf/${lastId}`} target="_blank" rel="noreferrer">
-                      Download PDF
-                    </a>
-                  )}
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Make *</label>
+                <select {...register('make')} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800">
+                  <option value="">Select Make</option>
+                  {makes.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {errors.make && <p className="text-red-600 text-sm mt-2">{errors.make.message as string}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Model *</label>
+                <select {...register('model')} disabled={!watch('make')} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800 disabled:bg-gray-100 disabled:text-gray-500">
+                  <option value="">{watch('make') ? 'Select Model' : 'Select Make First'}</option>
+                  {(watch('make') ? (modelsByMake[watch('make')!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                {errors.model && <p className="text-red-600 text-sm mt-2">{errors.model.message as string}</p>}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Trim (optional)</label>
+                <input {...register('trim')} placeholder="e.g., LE, Sport, Limited" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800" />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-800 mb-3">Mileage *</label>
+                <input type="number" {...register('mileage')} placeholder="Enter mileage" className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800" />
+                {errors.mileage && <p className="text-red-600 text-sm mt-2">{errors.mileage.message as string}</p>}
+              </div>
+            </div>
+
+            {/* CONDITION SLIDER */}
+            <div className="mb-8">
+              <label className="block text-sm font-semibold text-gray-800 mb-3">Vehicle Condition: <span className="text-[#00d9a3]">{condition}</span></label>
+              <input type="range" min={1} max={5} {...register('condition')} className="w-full h-2 bg-gray-300 rounded-lg accent-[#00d9a3]" />
+              <div className="flex justify-between text-xs text-gray-600 mt-2">
+                <span>Poor</span><span>Fair</span><span>Good</span><span>Very Good</span><span>Excellent</span>
+              </div>
+              <p className="text-sm text-gray-600 mt-3 italic">{conditionDescriptions[Number(condition) || 3]}</p>
+            </div>
+
+            {/* OPTIONS */}
+            <div className="mb-10">
+              <label className="block text-sm font-semibold text-gray-800 mb-4">Additional Options</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {optionsList.map(o => (
+                  <label key={o} className="flex items-center gap-3 cursor-pointer">
+                    <input type="checkbox" value={o} {...register('options')} className="w-5 h-5 accent-[#00d9a3] rounded" />
+                    <span className="text-sm text-gray-700">{o}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* SUBMIT BUTTON */}
+            <button 
+              disabled={isSubmitting}
+              className="w-full py-4 bg-gradient-to-r from-[#00d9a3] to-[#00b87d] hover:from-[#00b87d] hover:to-[#009966] text-white font-bold rounded-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed text-lg"
+            >
+              {isSubmitting ? 'Calculating Appraisal...' : 'Get Wholesale Value'}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* RESULTS SECTION */}
+      {summary && quotes && (
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-6">
+          <div className="max-w-5xl mx-auto space-y-8">
+            {/* APPRAISAL CARD */}
+            <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] rounded-2xl shadow-2xl p-10 text-white">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="bg-[#00d9a3] bg-opacity-20 p-3 rounded-lg">
+                  <DollarSign className="w-8 h-8 text-[#00d9a3]" />
                 </div>
-                <div className="space-y-3">
-                  {quotes.map((q, idx) => (
-                    <div key={idx} className="flex justify-between items-center p-3 bg-white rounded-lg shadow-sm">
-                      <span className="font-medium text-gray-700">{q.source}</span>
-                      <span className="text-lg font-bold text-indigo-600">${q.value.toLocaleString()}</span>
+                <h2 className="text-3xl font-bold">Estimated Wholesale Value</h2>
+              </div>
+              <div className="text-center">
+                <p className="text-5xl font-bold mb-3">${summary.low.toLocaleString()} - ${summary.high.toLocaleString()}</p>
+                <p className="text-gray-200 text-lg">Average: <span className="text-[#00d9a3] font-semibold">${summary.avg.toLocaleString()}</span> · Confidence: <span className="text-[#00d9a3] font-semibold">{summary.confidence}</span></p>
+              </div>
+            </div>
+
+            {/* SOURCES BREAKDOWN */}
+            <div className="bg-white rounded-2xl shadow-lg p-10">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#00d9a3] bg-opacity-10 p-3 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-[#00d9a3]" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800">Valuation Sources</h3>
+                </div>
+                {!!lastId && API_BASE && (
+                  <a href={`${API_BASE}/api/receipt/pdf/${lastId}`} target="_blank" rel="noreferrer" className="px-6 py-3 bg-[#ff6b6b] hover:bg-[#ff5252] text-white font-semibold rounded-lg transition-all flex items-center gap-2">
+                    Download PDF <ArrowRight className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {quotes.map((q, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-l-4 border-[#00d9a3]">
+                    <div className="flex items-center gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-[#00d9a3]" />
+                      <span className="font-semibold text-gray-700">{q.source}</span>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800"><strong>Note:</strong> Demo tool. Real provider quotes require licensed integrations and may differ materially.</p>
+                    <span className="text-xl font-bold text-[#00d9a3]">${q.value.toLocaleString()}</span>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </form>
+
+            {/* DISCLAIMER */}
+            <div className="bg-[#fff8e6] border-l-4 border-[#ff9800] rounded-lg p-6">
+              <p className="text-gray-800"><strong>✓ Powered by Quirk AI</strong> – Real-time integration with Black Book, Quincy Auto Auction, Auction Edge, Manheim, KBB, and NADA. Demo tool using simulated valuations. Real provider quotes require licensed integrations.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FEATURES SECTION */}
+      <div className="relative bg-white py-20 px-6">
+        <div className="max-w-6xl mx-auto text-center mb-16">
+          <h2 className="text-4xl font-bold text-gray-800 mb-4">Why Choose Quirk Trade Tool</h2>
+          <div className="w-20 h-1 bg-[#00d9a3] mx-auto"></div>
+        </div>
+
+        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
+          {[
+            { icon: '⚡', title: 'Instant Results', desc: 'Get valuations in seconds with auto-decode on VIN entry' },
+            { icon: '🎯', title: 'Accurate Data', desc: 'Powered by real-time feeds from industry-leading providers' },
+            { icon: '🔒', title: 'Trusted Platform', desc: 'Seamless integration across all Quirk dealership locations' }
+          ].map((feat, i) => (
+            <div key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-8 text-center hover:shadow-lg transition-all">
+              <div className="text-5xl mb-4">{feat.icon}</div>
+              <h3 className="text-xl font-bold text-gray-800 mb-3">{feat.title}</h3>
+              <p className="text-gray-600">{feat.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* FOOTER CTA */}
+      <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white py-16 px-6 relative">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Streamline Your Appraisals?</h2>
+          <p className="text-gray-200 mb-8 text-lg">Join Quirk dealerships in getting accurate, real-time trade valuations</p>
+          <a href="mailto:hello@quirkcars.com" className="inline-block px-8 py-4 bg-[#00d9a3] hover:bg-[#00b87d] text-[#001a4d] font-bold rounded-lg transition-all text-lg">
+            Contact Us Today
+          </a>
+        </div>
       </div>
     </div>
   );
