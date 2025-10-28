@@ -78,6 +78,8 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   };
 
   const [decoding, setDecoding] = React.useState(false);
+
+  // --- VIN decode with server-first, NHTSA fallback ---
   const onDecodeVin = async () => {
     if (!vin || vin.length < 11) {
       alert("Enter at least 11 characters of a VIN.");
@@ -85,19 +87,43 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
     }
     setDecoding(true);
     try {
+      // Primary: your orchestrator
       const res = await fetch(`${apiBase}/api/vin/decode`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vin })
       });
-      if (!res.ok) throw new Error("decode_failed");
+      if (!res.ok) throw new Error("server_decode_failed");
       const decoded = await res.json();
       if (decoded.year) setValue("year", decoded.year);
       if (decoded.make) setValue("make", decoded.make);
       if (decoded.model) setValue("model", decoded.model);
       if (decoded.trim) setValue("trim", decoded.trim);
+      return;
     } catch {
-      alert("VIN decode failed. Try again.");
+      // Fallback: public NHTSA VPIC (client-side)
+      try {
+        const v = vin.trim().toUpperCase();
+        const vp = await fetch(
+          `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(v)}?format=json`
+        );
+        const data = await vp.json();
+        const row = data?.Results?.[0] || {};
+        const yr = Number(row.ModelYear) || undefined;
+        const mk = row.Make || undefined;
+        const mdl = row.Model || undefined;
+        const trm = row.Trim || row.Series || undefined;
+
+        if (yr) setValue("year", yr);
+        if (mk) setValue("make", mk);
+        if (mdl) setValue("model", mdl);
+        if (trm) setValue("trim", trm);
+
+        console.info("VIN decoded via NHTSA fallback");
+        return;
+      } catch {
+        alert("VIN decode failed. Try again.");
+      }
     } finally {
       setDecoding(false);
     }
@@ -133,14 +159,16 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
             placeholder="e.g., 1G1ZT62812F113456"
             className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase"
           />
-          <button type="button"
+          <button
+            type="button"
             onClick={onDecodeVin}
             disabled={decoding || !vin}
-            className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}>
+            className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}
+          >
             {decoding ? "Decoding..." : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC. In production, commercial decoders can be added.</p>
+        <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC if server is unavailable.</p>
       </div>
 
       {/* Vehicle fields */}
@@ -149,7 +177,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
           <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
           <select {...register("year")} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
             <option value="">Select Year</option>
-            {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}</option>)}
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           {errors.year && <p className="text-sm text-red-600 mt-1">{errors.year.message as string}</p>}
         </div>
