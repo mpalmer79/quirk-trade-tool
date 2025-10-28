@@ -9,7 +9,13 @@
     "isolatedModules": true,
     "strict": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": ["app/components/*"],
+      "@lib/*": ["app/lib/*"]
+    }
   },
   "include": ["app/**/*", "next-env.d.ts"]
 }
