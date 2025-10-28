@@ -95,6 +95,7 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
 
     console.log('🔍 NHTSA Response:', row);
 
+    // Normalize Make: convert "HYUNDAI" to "Hyundai", "MERCEDES-BENZ" to "Mercedes-Benz"
     let make = row.Make || undefined;
     if (make) {
       make = make
@@ -103,6 +104,7 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
         .join(' ');
     }
 
+    // Normalize Model: "ELANTRA" to "Elantra", "S-CLASS" to "S-Class"
     let model = row.Model || undefined;
     if (model) {
       model = model
@@ -142,11 +144,22 @@ export default function Page() {
   const vin = watch('vin');
 
   const [decoding, setDecoding] = React.useState(false);
+  const [pendingData, setPendingData] = React.useState<DecodedVin | null>(null);
   const [quotes, setQuotes] = React.useState<SourceQuote[] | null>(null);
   const [summary, setSummary] = React.useState<Summary | null>(null);
   const [lastId, setLastId] = React.useState<string | null>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+
+  // When make changes AND we have pending data, apply the model and trim
+  React.useEffect(() => {
+    if (pendingData && make === pendingData.make) {
+      console.log('✅ Applying pending model/trim:', pendingData);
+      if (pendingData.model) setValue('model', pendingData.model);
+      if (pendingData.trim) setValue('trim', pendingData.trim);
+      setPendingData(null);
+    }
+  }, [make, pendingData, setValue]);
 
   const onSubmit = async (data: FormData) => {
     if (!API_BASE) {
@@ -181,13 +194,11 @@ export default function Page() {
         return;
       }
       if (decoded.year) setValue('year', decoded.year);
-      if (decoded.make) setValue('make', decoded.make);
-      
-      // Delay setting model and trim to ensure make is rendered first
-      setTimeout(() => {
-        if (decoded.model) setValue('model', decoded.model);
-        if (decoded.trim) setValue('trim', decoded.trim);
-      }, 100);
+      if (decoded.make) {
+        setValue('make', decoded.make);
+        // Store model/trim to be set after make updates
+        setPendingData(decoded);
+      }
     } finally {
       setDecoding(false);
     }
