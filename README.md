@@ -51,3 +51,8 @@ cp frontend/.env.local frontend/.env.local   # already points to http://localhos
 
 # run both apps (frontend :3000, API :4000)
 pnpm dev
+
+## Multi-store support
+- Frontend shows a Dealership dropdown sourced from `frontend/app/lib/dealerships.ts`.
+- Orchestrator validates `storeId` against `src/config/dealerships.json` and stamps it on the receipt (JSON + PDF).
+- To add or rename stores, edit both files and redeploy (no code changes required).
