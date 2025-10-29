@@ -25,17 +25,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const storedUser = localStorage.getItem("quirk_user");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          // Convert date strings back to Date objects
-          parsedUser.createdAt = new Date(parsedUser.createdAt);
-          parsedUser.updatedAt = new Date(parsedUser.updatedAt);
-          setUser(parsedUser);
+        // Only access localStorage in browser environment
+        if (typeof window !== 'undefined') {
+          const storedUser = localStorage.getItem("quirk_user");
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            // Convert date strings back to Date objects
+            parsedUser.createdAt = new Date(parsedUser.createdAt);
+            parsedUser.updatedAt = new Date(parsedUser.updatedAt);
+            setUser(parsedUser);
+          }
         }
       } catch (error) {
         console.error("Failed to load user:", error);
-        localStorage.removeItem("quirk_user");
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem("quirk_user");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -66,7 +71,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       userData.updatedAt = new Date(userData.updatedAt);
       
       setUser(userData);
-      localStorage.setItem("quirk_user", JSON.stringify(userData));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("quirk_user", JSON.stringify(userData));
+      }
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -81,7 +88,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error("Logout error:", error);
     } finally {
       setUser(null);
-      localStorage.removeItem("quirk_user");
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem("quirk_user");
+      }
     }
   };
 
@@ -89,7 +98,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (user) {
       const updatedUser = { ...user, ...updates, updatedAt: new Date() };
       setUser(updatedUser);
-      localStorage.setItem("quirk_user", JSON.stringify(updatedUser));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem("quirk_user", JSON.stringify(updatedUser));
+      }
     }
   };
 
@@ -118,7 +129,7 @@ export function useRequireAuth() {
   const { user, isLoading } = useAuth();
   
   useEffect(() => {
-    if (!isLoading && !user) {
+    if (!isLoading && !user && typeof window !== 'undefined') {
       // Redirect to login page
       window.location.href = "/login";
     }
