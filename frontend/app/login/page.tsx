@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/app/lib/auth-context";
 import { UserRole } from "@/app/lib/auth-types";
 import { ShieldCheck, User as UserIcon, Lock, LogIn, AlertCircle } from "lucide-react";
@@ -245,12 +246,12 @@ export default function LoginPage() {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <a
+          <Link
             href="/"
             className="text-sm text-gray-600 hover:text-gray-900 transition"
           >
             ← Back to Trade Tool
-          </a>
+          </Link>
         </div>
       </div>
     </div>
