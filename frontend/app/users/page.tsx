@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -98,6 +97,14 @@ export default function UsersPage() {
     setShowForm(true);
   };
 
+  const handleFormSubmit = async (data: CreateUserInput | Partial<User>) => {
+    if (editingUser) {
+      await handleUpdateUser(data as Partial<User>);
+    } else {
+      await handleCreateUser(data as CreateUserInput);
+    }
+  };
+
   const handleCancelForm = () => {
     setShowForm(false);
     setEditingUser(undefined);
@@ -142,7 +149,7 @@ export default function UsersPage() {
           <UserForm
             user={editingUser}
             dealerships={DEALERSHIPS}
-            onSubmit={editingUser ? handleUpdateUser : handleCreateUser}
+            onSubmit={handleFormSubmit}
             onCancel={handleCancelForm}
           />
         ) : (
