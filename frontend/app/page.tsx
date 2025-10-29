@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -222,7 +223,7 @@ export default function Page() {
       <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white pt-20 pb-32 relative">
         {/* Admin Link */}
         <div className="absolute top-6 right-6">
-          <a
+          <Link
             href="/login"
             className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-lg transition text-white font-medium text-sm backdrop-blur-sm"
           >
@@ -230,7 +231,7 @@ export default function Page() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
             </svg>
             <span>Admin Login</span>
-          </a>
+          </Link>
         </div>
         
         <div className="max-w-6xl mx-auto px-6 text-center">
