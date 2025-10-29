@@ -7,6 +7,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { hasPermission } from "@/app/lib/permissions";
 import { Permission } from "@/app/lib/auth-types";
 import { Home, LayoutDashboard, Users, LogOut } from "lucide-react";
+import { navigateWithBasePath } from "@/utils/basePath";
 
 export function AdminNav() {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export function AdminNav() {
   // Redirect to login if not authenticated
   React.useEffect(() => {
     if (!user && typeof window !== 'undefined') {
-      window.location.href = "/login";
+      navigateWithBasePath("/login");
     }
   }, [user]);
 
@@ -23,7 +24,7 @@ export function AdminNav() {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/login";
+    navigateWithBasePath("/login");
   };
 
   const navItems = [
