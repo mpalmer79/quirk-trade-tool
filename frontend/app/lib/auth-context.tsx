@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "./auth-types";
+import { navigateWithBasePath } from "@/utils/basePath";
 
 interface AuthContextType {
   user: User | null;
@@ -131,7 +132,7 @@ export function useRequireAuth() {
   useEffect(() => {
     if (!isLoading && !user && typeof window !== 'undefined') {
       // Redirect to login page
-      window.location.href = "/login";
+      navigateWithBasePath("/login");
     }
   }, [user, isLoading]);
 
