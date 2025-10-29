@@ -6,6 +6,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { UserRole } from "@/app/lib/auth-types";
 import { ShieldCheck, User as UserIcon, Lock, LogIn, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { navigateWithBasePath } from "@/utils/basePath";
 
 // Mock test users for development
 const TEST_USERS = [
@@ -90,7 +91,7 @@ export default function LoginPage() {
     
     // Reload to trigger auth context
     setTimeout(() => {
-      window.location.href = "/admin";
+      navigateWithBasePath("/admin");
     }, 300);
   };
 
@@ -116,7 +117,7 @@ export default function LoginPage() {
       
       // Redirect to admin
       setTimeout(() => {
-        window.location.href = "/admin";
+        navigateWithBasePath("/admin");
       }, 300);
     } catch (err) {
       setError("Login failed. Please try again.");
