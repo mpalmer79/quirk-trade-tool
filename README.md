@@ -7,7 +7,7 @@ Multi-source vehicle valuation **demo** for Quirk Auto Dealers. The app is organ
   - normalizes provider quotes (demo adapters provided)
   - aggregates values (outlier drop + trimmed mean + confidence band)
   - decodes VINs via **NHTSA VPIC** fallback
-  - writes an immutable **Appraisal Receipt** (JSON) and can render a PDF on demand
+  - writes an immutable **Appraisal Receipt** (JSON) and can render a PDF on demand.
 
 > **Legal/production note:** This repo ships **demo provider adapters** (BlackBook/KBB/NADA/Manheim/Auction) that simulate results. For production, you must implement licensed provider integrations under `orchestrator/src/adapters/providers/*` and wire them in. Do **not** imply live aggregation until licensed APIs are connected and validated
 
