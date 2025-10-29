@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "@/app/lib/auth-context";
 import { User, CreateUserInput, Permission } from "@/app/lib/auth-types";
 import { PermissionGuard } from "@/components/PermissionGuard";
+import { AdminNav } from "@/components/AdminNav";
 import { UserList } from "@/components/UserList";
 import { UserForm } from "@/components/UserForm";
 import { DEALERSHIPS } from "@/app/dealerships";
@@ -129,6 +130,7 @@ export default function UsersPage() {
         </div>
       }
     >
+      <AdminNav />
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold">User Management</h1>
