@@ -282,7 +282,7 @@ export default function Page() {
             {/* Right side: logo */}
             <div className="flex-shrink-0">
               <Image
-                src="/assets/Quirk logo.png"
+                src="/assets/quirk.png"
                 alt="Quirk Logo"
                 width={150}
                 height={60}
