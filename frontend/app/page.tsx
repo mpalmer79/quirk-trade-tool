@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -281,13 +280,10 @@ export default function Page() {
 
             {/* Right side: logo */}
             <div className="flex-shrink-0">
-              <Image
+              <img
                 src="/assets/quirk.png"
                 alt="Quirk Logo"
-                width={150}
-                height={60}
-                className="h-16 w-auto object-contain"
-                priority
+                className="h-16 w-auto"
               />
             </div>
           </div>
