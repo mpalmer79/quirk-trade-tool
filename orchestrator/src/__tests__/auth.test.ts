@@ -56,7 +56,7 @@ describe('AuthService', () => {
     it('should generate access and refresh tokens', () => {
       const user: User = {
         id: 'user-123',
-        email: 'test@quirk.com',
+        email: 'test@quirkcars.com',
         name: 'Test User',
         role: UserRoleEnum.SALES_MANAGER,
         dealershipIds: ['quirk-chevy-manchester'],
@@ -77,7 +77,7 @@ describe('AuthService', () => {
     it('should encode user data in access token', () => {
       const user: User = {
         id: 'user-456',
-        email: 'manager@quirk.com',
+        email: 'manager@quirkcars.com',
         name: 'Manager User',
         role: UserRoleEnum.GENERAL_MANAGER,
         dealershipIds: ['quirk-chevy-manchester', 'quirk-ford-quincy'],
@@ -101,7 +101,7 @@ describe('AuthService', () => {
     it('should verify valid token', () => {
       const user: User = {
         id: 'user-789',
-        email: 'test@quirk.com',
+        email: 'admin@quirkcars.com',
         name: 'Test User',
         role: UserRoleEnum.ADMIN,
         dealershipIds: [],
@@ -144,7 +144,7 @@ describe('AuthorizationService', () => {
     it('should grant admin all permissions', () => {
       const admin: User = {
         id: 'admin-1',
-        email: 'admin@quirk.com',
+        email: 'admin@quirkcars.com',
         name: 'Admin',
         role: UserRoleEnum.ADMIN,
         dealershipIds: [],
@@ -162,7 +162,7 @@ describe('AuthorizationService', () => {
     it('should grant sales manager limited permissions', () => {
       const salesMgr: User = {
         id: 'sales-1',
-        email: 'sales@quirk.com',
+        email: 'sales@quirkcars.com',
         name: 'Sales Manager',
         role: UserRoleEnum.SALES_MANAGER,
         dealershipIds: ['quirk-chevy-manchester'],
@@ -180,7 +180,7 @@ describe('AuthorizationService', () => {
     it('should grant general manager medium permissions', () => {
       const gm: User = {
         id: 'gm-1',
-        email: 'gm@quirk.com',
+        email: 'gm@quirkcars.com',
         name: 'General Manager',
         role: UserRoleEnum.GENERAL_MANAGER,
         dealershipIds: ['quirk-chevy-manchester', 'quirk-ford-quincy'],
@@ -200,7 +200,7 @@ describe('AuthorizationService', () => {
     it('should allow admin access to any dealership', () => {
       const admin: User = {
         id: 'admin-1',
-        email: 'admin@quirk.com',
+        email: 'admin@quirkcars.com',
         name: 'Admin',
         role: UserRoleEnum.ADMIN,
         dealershipIds: [],
@@ -216,7 +216,7 @@ describe('AuthorizationService', () => {
     it('should restrict non-admin to assigned dealerships', () => {
       const user: User = {
         id: 'user-1',
-        email: 'user@quirk.com',
+        email: 'user@quirkcars.com',
         name: 'User',
         role: UserRoleEnum.SALES_MANAGER,
         dealershipIds: ['quirk-chevy-manchester', 'quirk-ford-quincy'],
@@ -235,7 +235,7 @@ describe('AuthorizationService', () => {
     it('should check if user has any of given permissions', () => {
       const gm: User = {
         id: 'gm-1',
-        email: 'gm@quirk.com',
+        email: 'gm@quirkcars.com',
         name: 'General Manager',
         role: UserRoleEnum.GENERAL_MANAGER,
         dealershipIds: ['quirk-chevy-manchester'],
