@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { DollarSign, TrendingUp, AlertCircle, ScanLine, CheckCircle2, ArrowRight } from 'lucide-react';
+import { 
+  DollarSign, TrendingUp, TrendingDown, AlertCircle, ScanLine, 
+  CheckCircle2, ArrowRight, Info 
+} from 'lucide-react';
 import { DEALERSHIPS } from './dealerships';
 import type { Dealership } from '@/app/lib/types';
 
@@ -23,9 +26,41 @@ const FormSchema = z.object({
 });
 type FormData = z.infer<typeof FormSchema>;
 
+// ✅ NEW: Depreciation data type
+type DepreciationData = {
+  baseWholesaleValue: number;
+  conditionRating: number;
+  conditionLabel: string;
+  depreciationFactor: number;
+  depreciationPercentage: number;
+  depreciationAmount: number;
+  finalWholesaleValue: number;
+  breakdown: {
+    excellent: number;
+    veryGood: number;
+    good: number;
+    fair: number;
+    poor: number;
+  };
+};
+
 type SourceQuote = { source: string; value: number };
-type Summary = { low: number; high: number; avg: number; confidence: string };
-type AppraiseResponse = { id: string; quotes: SourceQuote[]; summary: Summary; store?: Dealership; note?: string };
+type Summary = { 
+  low: number; 
+  high: number; 
+  avg: number; 
+  confidence: string;
+  base: number;  // ✅ NEW
+  depreciation: DepreciationData;  // ✅ NEW
+};
+type AppraiseResponse = { 
+  id: string; 
+  quotes: SourceQuote[]; 
+  summary: Summary; 
+  store?: Dealership; 
+  note?: string;
+  depreciation: DepreciationData;  // ✅ NEW
+};
 
 type DecodedVin = {
   year?: number;
@@ -41,23 +76,23 @@ const modelsByMake: Record<string, string[]> = {
   Audi: ['A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','e-tron','R8','TT'],
   BMW: ['2 Series','3 Series','4 Series','5 Series','7 Series','X1','X3','X5','X7','i4','iX'],
   Cadillac: ['CT4','CT5','Escalade','XT4','XT5','XT6','Lyriq'],
-  Chevrolet: ['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado','Suburban','Tahoe','Trailblazer','Traverse','Trax','Silverado 1500 Regular Cab','Silverado 1500 Extended Cab','Silverado 1500 Crew Cab','Silverado 2500 Regular Cab','Silverado 2500 Crew Cab','Silverado 3500 Regular Cab','Silverado 3500 Crew Cab','Colorado Crew Cab','Colorado Extended Cab'],
+  Chevrolet: ['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado','Suburban','Tahoe','Trailblazer','Traverse','Trax'],
   Chrysler: ['300','Pacifica'],
   Dodge: ['Challenger','Charger','Durango','Hornet'],
-  Ford: ['Bronco','Bronco Sport','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Maverick','Mustang','Ranger','F-150 Regular Cab','F-150 SuperCab','F-150 SuperCrew','F-250 Regular Cab','F-250 SuperCab','F-250 Crew Cab','F-350 Regular Cab','F-350 SuperCab','F-350 Crew Cab','Ranger SuperCab','Ranger SuperCrew'],
-  GMC: ['Acadia','Canyon','Sierra 1500','Sierra 2500','Sierra 3500','Terrain','Yukon','Yukon XL','Canyon Crew Cab','Canyon Extended Cab','Sierra 1500 Regular Cab','Sierra 1500 Double Cab','Sierra 1500 Crew Cab','Sierra 2500 Regular Cab','Sierra 2500 Crew Cab','Sierra 3500 Regular Cab','Sierra 3500 Crew Cab'],
+  Ford: ['Bronco','Bronco Sport','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Maverick','Mustang','Ranger'],
+  GMC: ['Acadia','Canyon','Sierra 1500','Sierra 2500','Sierra 3500','Terrain','Yukon','Yukon XL'],
   Honda: ['Accord','Civic','CR-V','HR-V','Odyssey','Passport','Pilot','Ridgeline'],
   Hyundai: ['Elantra','Sonata','Tucson','Santa Fe','Palisade','Kona','Venue','Ioniq 5','Ioniq 6'],
-  Jeep: ['Cherokee','Compass','Gladiator','Grand Cherokee','Grand Wagoneer','Renegade','Wagoneer','Wrangler','Wrangler 2-Door','Wrangler 4-Door','Wrangler Unlimited'],
+  Jeep: ['Cherokee','Compass','Gladiator','Grand Cherokee','Grand Wagoneer','Renegade','Wagoneer','Wrangler'],
   Kia: ['Forte','K5','Sportage','Sorento','Telluride','Seltos','Soul','EV6','Carnival'],
   Lexus: ['ES','IS','LS','GX','LX','NX','RX','UX','TX'],
   Mazda: ['Mazda3','Mazda6','CX-30','CX-5','CX-50','CX-9','CX-90','MX-5 Miata'],
   'Mercedes-Benz': ['A-Class','C-Class','E-Class','S-Class','GLA','GLB','GLC','GLE','GLS','EQB','EQE','EQS'],
-  Nissan: ['Altima','Maxima','Sentra','Versa','Ariya','Kicks','Rogue','Murano','Pathfinder','Armada','Frontier','Titan','Z','Frontier Crew Cab','Frontier King Cab','Titan Crew Cab','Titan King Cab'],
-  Ram: ['1500','2500','3500','ProMaster','1500 Regular Cab','1500 Quad Cab','1500 Crew Cab','2500 Regular Cab','2500 Crew Cab','3500 Regular Cab','3500 Crew Cab'],
+  Nissan: ['Altima','Maxima','Sentra','Versa','Ariya','Kicks','Rogue','Murano','Pathfinder','Armada','Frontier','Titan','Z'],
+  Ram: ['1500','2500','3500','ProMaster'],
   Subaru: ['Impreza','Legacy','Outback','Crosstrek','Forester','Ascent','WRX','BRZ','Solterra'],
   Tesla: ['Model 3','Model S','Model X','Model Y'],
-  Toyota: ['Camry','Corolla','Avalon','Prius','RAV4','Highlander','4Runner','Sequoia','Tacoma','Tundra','Sienna','bZ4X','GR86','Supra','Tacoma Access Cab','Tacoma Double Cab','Tundra Regular Cab','Tundra Double Cab','Tundra CrewMax'],
+  Toyota: ['Camry','Corolla','Avalon','Prius','RAV4','Highlander','4Runner','Sequoia','Tacoma','Tundra','Sienna','bZ4X','GR86','Supra'],
   Volkswagen: ['Jetta','Passat','Arteon','Taos','Tiguan','Atlas','ID.4','Golf GTI'],
   Volvo: ['S60','S90','V60','V90','XC40','XC60','XC90','C40']
 };
@@ -72,6 +107,14 @@ const conditionDescriptions: Record<number, string> = {
   5: 'Excellent - Like new, pristine condition'
 };
 
+const conditionLabels: Record<number, string> = {
+  1: 'Poor',
+  2: 'Fair',
+  3: 'Good',
+  4: 'Very Good',
+  5: 'Excellent'
+};
+
 async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
   const cleaned = (vin || '').trim().toUpperCase();
   if (cleaned.length < 11) return null;
@@ -83,8 +126,6 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
     const data = await response.json();
     const row = data?.Results?.[0];
     if (!row) return null;
-
-    console.log('🔍 NHTSA Response:', row);
 
     let make = row.Make || undefined;
     if (make) {
@@ -141,159 +182,161 @@ export default function Page() {
   const [pendingData, setPendingData] = React.useState<DecodedVin | null>(null);
   const [quotes, setQuotes] = React.useState<SourceQuote[] | null>(null);
   const [summary, setSummary] = React.useState<Summary | null>(null);
+  const [depreciation, setDepreciation] = React.useState<DepreciationData | null>(null);  // ✅ NEW
   const [lastId, setLastId] = React.useState<string | null>(null);
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
-  React.useEffect(() => {
-    if (vin && vin.length === 17 && !decoding) {
-      console.log('📍 Auto-decoding VIN:', vin);
-      (async () => {
-        setDecoding(true);
-        try {
-          const decoded = await decodeVinWithNhtsa(vin);
-          if (decoded) {
-            if (decoded.year) setValue('year', decoded.year);
-            if (decoded.make) {
-              setValue('make', decoded.make);
-              setPendingData(decoded);
-            }
-          }
-        } finally {
-          setDecoding(false);
-        }
-      })();
+  const handleDecodeVin = async () => {
+    setDecoding(true);
+    const decoded = await decodeVinWithNhtsa(vin);
+    if (decoded) {
+      if (decoded.year) setValue('year', decoded.year);
+      if (decoded.make) setValue('make', decoded.make);
+      if (decoded.model) setValue('model', decoded.model);
+      if (decoded.trim) setValue('trim', decoded.trim);
+    } else {
+      alert("VIN decode failed. Please enter vehicle details manually.");
     }
-  }, [vin, decoding, setValue]);
-
-  React.useEffect(() => {
-    if (pendingData && make === pendingData.make) {
-      console.log('✅ Applying pending model/trim:', pendingData);
-      if (pendingData.model) setValue('model', pendingData.model);
-      if (pendingData.trim) setValue('trim', pendingData.trim);
-      setPendingData(null);
-    }
-  }, [make, pendingData, setValue]);
-
-  const onSubmit = async (data: FormData) => {
-    if (!API_BASE) {
-      alert('API endpoint not configured.');
-      return;
-    }
-    const res = await fetch(`${API_BASE}/api/appraise`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) {
-      alert('Appraisal failed. Check logs.');
-      return;
-    }
-    const payload: AppraiseResponse = await res.json();
-    setQuotes(payload.quotes);
-    setSummary(payload.summary);
-    setLastId(payload.id);
+    setDecoding(false);
   };
 
-  const onDecodeVin = async () => {
-    if (!vin || vin.length < 11) {
-      alert('Enter at least 11 characters of a VIN.');
-      return;
-    }
-    setDecoding(true);
+  const onSubmit = async (data: FormData) => {
     try {
-      const decoded = await decodeVinWithNhtsa(vin);
-      if (!decoded) {
-        alert('VIN decode failed. Try again.');
-        return;
+      const payload = {
+        storeId: data.storeId,
+        year: parseInt(data.year.toString()),
+        make: data.make,
+        model: data.model,
+        trim: data.trim || undefined,
+        mileage: parseInt(data.mileage.toString()),
+        condition: parseInt(data.condition.toString()),
+        vin: data.vin || undefined,
+        options: data.options,
+        zip: data.zip || undefined,
+      };
+
+      const response = await fetch(`${API_BASE}/api/valuations/calculate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Valuation failed');
       }
-      if (decoded.year) setValue('year', decoded.year);
-      if (decoded.make) {
-        setValue('make', decoded.make);
-        setPendingData(decoded);
-      }
-    } finally {
-      setDecoding(false);
+
+      const result = await response.json();
+      
+      setQuotes(result.quotes);
+      setSummary({
+        low: Math.min(...result.quotes.map((q: SourceQuote) => q.value)),
+        high: Math.max(...result.quotes.map((q: SourceQuote) => q.value)),
+        avg: Math.round(result.quotes.reduce((sum: number, q: SourceQuote) => sum + q.value, 0) / result.quotes.length),
+        confidence: result.summary.confidence || 'High',
+        base: result.baseWholesaleValue,  // ✅ NEW
+        depreciation: result.depreciation,  // ✅ NEW
+      });
+      setDepreciation(result.depreciation);  // ✅ NEW
+      setLastId(result.id);
+      
+      // Scroll to results
+      setTimeout(() => {
+        document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } catch (error) {
+      console.error('Valuation error:', error);
+      alert(error instanceof Error ? error.message : 'Error calculating valuation. Please try again.');
     }
   };
 
   return (
-    <div className="w-full overflow-hidden bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
       {/* HERO SECTION */}
-      <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white pt-20 pb-32 relative">
-        {/* Admin Link */}
-        <div className="absolute top-6 right-6">
-          <Link
-            href="/login"
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/30 rounded-lg transition text-white font-medium text-sm backdrop-blur-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span>Admin Login</span>
-          </Link>
+      <div className="relative bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#00d9a3] rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#00d9a3] rounded-full blur-3xl"></div>
         </div>
-        
-        <div className="max-w-6xl mx-auto px-6 text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
-            Get Accurate Trade Values<br />
-            <span className="text-[#00d9a3]">Instantly</span>
-          </h1>
-          <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto">
-            Real-time integration with Black Book, Quincy Auto Auction, Auction Edge, Manheim, KBB, and NADA for accurate appraisal values powered by Quirk AI.
-          </p>
-        </div>
-      </div>
 
-      {/* WAVE DIVIDER */}
-      <div className="relative -mt-12 bg-white">
-        <div className="absolute inset-0 bg-white" style={{ clipPath: 'polygon(0 20%, 100% 0, 100% 100%, 0 100%)' }}></div>
-        <div className="h-20"></div>
+        <div className="relative max-w-6xl mx-auto px-6 py-20">
+          <div className="flex items-center gap-3 mb-6">
+            <ScanLine className="w-10 h-10 text-[#00d9a3]" />
+            <span className="text-[#00d9a3] font-semibold text-sm tracking-widest uppercase">Trade Valuation Tool</span>
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            Get Instant Wholesale Valuations
+          </h1>
+          <p className="text-xl text-gray-200 max-w-2xl mb-8">
+            Real-time vehicle appraisals powered by Black Book, KBB, NADA, Manheim, and more. Accurate, transparent pricing with condition-based adjustments.
+          </p>
+          <div className="flex flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-[#00d9a3]" />
+              <span>Multi-source accuracy</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-[#00d9a3]" />
+              <span>Real-time data</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-5 h-5 text-[#00d9a3]" />
+              <span>VIN decoding</span>
+            </div>
+          </div>
+        </div>
+
+        <WaveDivider />
       </div>
 
       {/* FORM SECTION */}
-      <div className="relative bg-white py-16 px-6">
-        <div className="max-w-5xl mx-auto">
-          <form onSubmit={handleSubmit(onSubmit)} className="bg-white rounded-2xl shadow-xl p-10">
-            {/* DEALERSHIP */}
-            <div className="mb-8">
-              <label className="block text-sm font-semibold text-gray-800 mb-3">Select Your Dealership *</label>
+      <div className="relative -mt-1 bg-white">
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {/* Dealership Selection */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-3">Dealership Location *</label>
               <select {...register('storeId')} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800">
-                <option value="">Choose a dealership...</option>
-                {DEALERSHIPS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                {DEALERSHIPS.map(d => <option key={d.id} value={d.id}>{d.name} ({d.city}, {d.state})</option>)}
               </select>
               {errors.storeId && <p className="text-red-600 text-sm mt-2">{errors.storeId.message as string}</p>}
             </div>
 
-            {/* VIN INPUT */}
-            <div className="mb-8">
-              <label className="block text-sm font-semibold text-gray-800 mb-3">Vehicle VIN (optional)</label>
-              <div className="flex gap-3">
+            {/* VIN Decode Section */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-800 mb-3">VIN (optional) - Auto-fill vehicle details</label>
+              <div className="flex gap-2">
                 <input 
+                  type="text" 
                   {...register('vin')} 
-                  placeholder="Enter VIN (e.g., 1G1ZT62812F113456)" 
-                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] uppercase bg-white text-gray-800"
+                  placeholder="e.g., 1G1ZT62812F113456" 
+                  className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] uppercase"
+                  maxLength={17}
                 />
                 <button 
-                  type="button" 
-                  onClick={onDecodeVin} 
-                  disabled={decoding || !vin}
-                  className="px-6 py-3 bg-[#00d9a3] hover:bg-[#00b87d] text-white font-semibold rounded-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
+                  type="button"
+                  onClick={handleDecodeVin}
+                  disabled={!vin || vin.length < 17 || decoding}
+                  className="px-6 py-3 bg-[#00d9a3] hover:bg-[#00b87d] text-gray-900 font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 >
-                  <ScanLine className="w-4 h-4" />
                   {decoding ? 'Decoding...' : 'Decode'}
                 </button>
               </div>
-              <p className="text-gray-500 text-xs mt-2">Auto-decodes when 17 characters are entered</p>
+              {vin && vin.length === 17 && (
+                <p className="text-sm text-green-600 mt-2 font-medium">✓ Valid VIN format</p>
+              )}
             </div>
 
-            {/* VEHICLE DETAILS GRID */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Vehicle Details Grid */}
+            <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-800 mb-3">Year *</label>
                 <select {...register('year')} className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] bg-white text-gray-800">
                   <option value="">Select Year</option>
-                  {Array.from({ length: 30 }, (_, i) => currentYear - i).map(y => <option key={y} value={y}>{y}</option>)}
+                  {Array.from({length: currentYear - 1989}, (_, i) => currentYear - i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
                 </select>
                 {errors.year && <p className="text-red-600 text-sm mt-2">{errors.year.message as string}</p>}
               </div>
@@ -328,126 +371,7 @@ export default function Page() {
               </div>
             </div>
 
-            {/* CONDITION SLIDER */}
-            <div className="mb-8">
-              <label className="block text-sm font-semibold text-gray-800 mb-3">Vehicle Condition: <span className="text-[#00d9a3]">{condition}</span></label>
-              <input type="range" min={1} max={5} {...register('condition')} className="w-full h-2 bg-gray-300 rounded-lg accent-[#00d9a3]" />
-              <div className="flex justify-between text-xs text-gray-600 mt-2">
-                <span>Poor</span><span>Fair</span><span>Good</span><span>Very Good</span><span>Excellent</span>
-              </div>
-              <p className="text-sm text-gray-600 mt-3 italic">{conditionDescriptions[Number(condition) || 3]}</p>
-            </div>
-
-            {/* OPTIONS */}
-            <div className="mb-10">
-              <label className="block text-sm font-semibold text-gray-800 mb-4">Additional Options</label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {optionsList.map(o => (
-                  <label key={o} className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" value={o} {...register('options')} className="w-5 h-5 accent-[#00d9a3] rounded" />
-                    <span className="text-sm text-gray-700">{o}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* SUBMIT BUTTON */}
-            <button 
-              disabled={isSubmitting}
-              className="w-full py-4 bg-gradient-to-r from-[#00d9a3] to-[#00b87d] hover:from-[#00b87d] hover:to-[#009966] text-white font-bold rounded-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed text-lg"
-            >
-              {isSubmitting ? 'Calculating Appraisal...' : 'Get Wholesale Value'}
-            </button>
-          </form>
-        </div>
-      </div>
-
-      {/* RESULTS SECTION */}
-      {summary && quotes && (
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-6">
-          <div className="max-w-5xl mx-auto space-y-8">
-            {/* APPRAISAL CARD */}
-            <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] rounded-2xl shadow-2xl p-10 text-white">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="bg-[#00d9a3] bg-opacity-20 p-3 rounded-lg">
-                  <DollarSign className="w-8 h-8 text-[#00d9a3]" />
-                </div>
-                <h2 className="text-3xl font-bold">Estimated Wholesale Value</h2>
-              </div>
-              <div className="text-center">
-                <p className="text-5xl font-bold mb-3">${summary.low.toLocaleString()} - ${summary.high.toLocaleString()}</p>
-                <p className="text-gray-200 text-lg">Average: <span className="text-[#00d9a3] font-semibold">${summary.avg.toLocaleString()}</span> · Confidence: <span className="text-[#00d9a3] font-semibold">{summary.confidence}</span></p>
-              </div>
-            </div>
-
-            {/* SOURCES BREAKDOWN */}
-            <div className="bg-white rounded-2xl shadow-lg p-10">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-3">
-                  <div className="bg-[#00d9a3] bg-opacity-10 p-3 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-[#00d9a3]" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-gray-800">Valuation Sources</h3>
-                </div>
-                {!!lastId && API_BASE && (
-                  <a href={`${API_BASE}/api/receipt/pdf/${lastId}`} target="_blank" rel="noreferrer" className="px-6 py-3 bg-[#ff6b6b] hover:bg-[#ff5252] text-white font-semibold rounded-lg transition-all flex items-center gap-2">
-                    Download PDF <ArrowRight className="w-4 h-4" />
-                  </a>
-                )}
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {quotes.map((q, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-5 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border-l-4 border-[#00d9a3]">
-                    <div className="flex items-center gap-3">
-                      <CheckCircle2 className="w-5 h-5 text-[#00d9a3]" />
-                      <span className="font-semibold text-gray-700">{q.source}</span>
-                    </div>
-                    <span className="text-xl font-bold text-[#00d9a3]">${q.value.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* DISCLAIMER */}
-            <div className="bg-[#fff8e6] border-l-4 border-[#ff9800] rounded-lg p-6">
-              <p className="text-gray-800"><strong>✓ Powered by Quirk AI</strong> – Real-time integration with Black Book, Quincy Auto Auction, Auction Edge, Manheim, KBB, and NADA. Demo tool using simulated valuations. Real provider quotes require licensed integrations.</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* FEATURES SECTION */}
-      <div className="relative bg-white py-20 px-6">
-        <div className="max-w-6xl mx-auto text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-800 mb-4">Why Choose Quirk Trade Tool</h2>
-          <div className="w-20 h-1 bg-[#00d9a3] mx-auto"></div>
-        </div>
-
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
-          {[
-            { icon: '⚡', title: 'Instant Results', desc: 'Get valuations in seconds with auto-decode on VIN entry' },
-            { icon: '🎯', title: 'Accurate Data', desc: 'Powered by real-time feeds from industry-leading providers' },
-            { icon: '🔒', title: 'Trusted Platform', desc: 'Seamless integration across all Quirk dealership locations' }
-          ].map((feat, i) => (
-            <div key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-8 text-center hover:shadow-lg transition-all">
-              <div className="text-5xl mb-4">{feat.icon}</div>
-              <h3 className="text-xl font-bold text-gray-800 mb-3">{feat.title}</h3>
-              <p className="text-gray-600">{feat.desc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* FOOTER CTA */}
-      <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white py-16 px-6 relative">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Streamline Your Appraisals?</h2>
-          <p className="text-gray-200 mb-8 text-lg">Join Quirk dealerships in getting accurate, real-time trade valuations</p>
-          <a href="mailto:hello@quirkcars.com" className="inline-block px-8 py-4 bg-[#00d9a3] hover:bg-[#00b87d] text-[#001a4d] font-bold rounded-lg transition-all text-lg">
-            Contact Us Today
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-}
+            {/* ✅ NEW: CONDITION SLIDER - UPDATED */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Info className=
