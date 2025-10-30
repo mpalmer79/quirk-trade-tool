@@ -38,7 +38,7 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // VALIDATION & STARTUP CHECKS
 // ============================================================================
 
-// ✅ NEW: Validate depreciation calculator on startup
+// ✅ Validate depreciation calculator on startup
 try {
   validateOnStartup();
 } catch (error) {
@@ -90,7 +90,7 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
-// ✅ NEW: Valuation routes
+// ✅ Valuation routes
 app.use('/api/valuations', valuationRoutes);
 
 // Add other existing routes here
