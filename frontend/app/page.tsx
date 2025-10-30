@@ -282,13 +282,7 @@ export default function Page() {
             {/* Right side: logo */}
             <div className="flex-shrink-0">
               {/* ✅ FIX: Next/Image static import so it respects basePath/assetPrefix */}
-              <Image
-                src={logo}
-                alt="Quirk Logo"
-                height={64}
-                className="h-16 w-auto"
-                priority
-              />
+              
             </div>
           </div>
 
