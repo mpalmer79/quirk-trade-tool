@@ -185,7 +185,8 @@ export default function Page() {
   const [depreciation, setDepreciation] = React.useState<DepreciationData | null>(null);  // ✅ NEW
   const [lastId, setLastId] = React.useState<string | null>(null);
 
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
+  // ✅ CORRECTED: Added fallback default to prevent undefined API calls
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:4000';
 
   // ✅ FIXED: Added null check for vin
   const handleDecodeVin = async () => {
