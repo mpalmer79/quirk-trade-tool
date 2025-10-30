@@ -2,14 +2,21 @@
  * Valuation API Routes
  * 
  * POST /api/valuations/calculate - Calculate vehicle valuation with depreciation
- * GET /api/valuations/health - Health check
- * POST /api/valuations/validate-depreciation - Validate depreciation configuration
+ * GET /api/valuations/health - Health check (PUBLIC)
+ * POST /api/valuations/validate-depreciation - Validate depreciation (ADMIN ONLY)
+ * GET /api/valuations/history/:vin - Get valuation history
+ * GET /api/valuations/statistics/:year/:make/:model - Get model statistics
  */
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { valuationService, type ValuationRequest } from '../services/valuation-service';
-import { depreciationCalculator } from '../services/depreciation-calculator';
+import { authenticate } from '../middleware/auth.js';
+import { authorizationService } from '../services/authorization-service.js';
+import { asyncHandler } from '../middleware/error-handler.js';
+import { auditLog } from '../middleware/logging.js';
+import { valuationService, type ValuationRequest } from '../services/valuation-service.js';
+import { depreciationCalculator } from '../services/depreciation-calculator.js';
+import { Permission, UserRole } from '../types/user.js';
 
 const router = Router();
 
@@ -34,6 +41,9 @@ type ValuationRequestBody = z.infer<typeof ValuationRequestSchema>;
  * 
  * Calculate vehicle valuation with multi-source aggregation and depreciation applied
  * 
+ * Required auth: Authenticated user with CREATE_APPRAISAL permission
+ * Dealership access: User must have access to the specified storeId
+ * 
  * Request body:
  * {
  *   storeId: string (required)
@@ -52,16 +62,7 @@ type ValuationRequestBody = z.infer<typeof ValuationRequestSchema>;
  * {
  *   id: string
  *   baseWholesaleValue: number
- *   depreciation: {
- *     baseWholesaleValue: number
- *     conditionRating: 1-5
- *     conditionLabel: string
- *     depreciationFactor: number (0.6-1.0)
- *     depreciationPercentage: number
- *     depreciationAmount: number
- *     finalWholesaleValue: number
- *     breakdown: { excellent, veryGood, good, fair, poor }
- *   }
+ *   depreciation: {...}
  *   finalWholesaleValue: number
  *   quotes: Array<{source, value, confidence}>
  *   vehicle: {vin, year, make, model, trim, mileage}
@@ -69,10 +70,22 @@ type ValuationRequestBody = z.infer<typeof ValuationRequestSchema>;
  *   timestamp: string
  * }
  */
-router.post('/calculate', async (req: Request, res: Response) => {
-  try {
+router.post(
+  '/calculate',
+  authenticate,                                    // ← Verify JWT token
+  asyncHandler(async (req: Request, res: Response) => {
     // ============================================================================
-    // STEP 1: VALIDATE REQUEST
+    // STEP 1: VALIDATE PERMISSION
+    // ============================================================================
+    if (!authorizationService.hasPermission(req.user!, Permission.CREATE_APPRAISAL)) {
+      return res.status(403).json({
+        error: 'insufficient_permissions',
+        message: 'You do not have permission to calculate valuations'
+      });
+    }
+
+    // ============================================================================
+    // STEP 2: VALIDATE REQUEST
     // ============================================================================
     let payload: ValuationRequestBody;
     
@@ -81,7 +94,8 @@ router.post('/calculate', async (req: Request, res: Response) => {
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({
-          error: 'Validation failed',
+          error: 'validation_error',
+          message: 'Validation failed',
           details: error.errors.map(e => ({
             field: e.path.join('.'),
             message: e.message,
@@ -91,10 +105,21 @@ router.post('/calculate', async (req: Request, res: Response) => {
       throw error;
     }
 
-    console.log(`📥 Valuation request received from ${payload.storeId}`);
+    // ============================================================================
+    // STEP 3: VALIDATE DEALERSHIP ACCESS
+    // ============================================================================
+    if (!authorizationService.canAccessDealership(req.user!, payload.storeId)) {
+      return res.status(403).json({
+        error: 'dealership_access_denied',
+        message: `You do not have access to dealership ${payload.storeId}`
+      });
+    }
+
+    const userId = req.user!.userId;
+    console.log(`📥 Valuation request received from ${payload.storeId} by user ${userId}`);
 
     // ============================================================================
-    // STEP 2: CREATE SERVICE REQUEST
+    // STEP 4: CREATE SERVICE REQUEST
     // ============================================================================
     const valuationRequest: ValuationRequest = {
       vin: payload.vin,
@@ -109,17 +134,40 @@ router.post('/calculate', async (req: Request, res: Response) => {
     };
 
     // ============================================================================
-    // STEP 3: CALL VALUATION SERVICE
+    // STEP 5: CALL VALUATION SERVICE
     // ============================================================================
     const valuation = await valuationService.performValuation(valuationRequest);
 
     // ============================================================================
-    // STEP 4: RETURN RESPONSE
+    // STEP 6: AUDIT LOG
+    // ============================================================================
+    await auditLog({
+      userId,
+      action: 'CALCULATE_VALUATION',
+      resourceType: 'valuation',
+      resourceId: valuation.id,
+      dealershipId: payload.storeId,
+      metadata: {
+        vin: payload.vin || 'unknown',
+        year: payload.year,
+        make: payload.make,
+        model: payload.model,
+        mileage: payload.mileage,
+        finalValue: valuation.finalWholesaleValue
+      },
+      ipAddress: req.ip,
+      timestamp: new Date()
+    });
+
+    // ============================================================================
+    // STEP 7: RETURN RESPONSE
     // ============================================================================
     console.log(`✅ Returning valuation to ${payload.storeId}: $${valuation.finalWholesaleValue.toLocaleString()}`);
 
     return res.json({
       id: valuation.id,
+      userId,
+      dealershipId: payload.storeId,
       baseWholesaleValue: valuation.baseWholesaleValue,
       depreciation: valuation.depreciation,
       finalWholesaleValue: valuation.finalWholesaleValue,
@@ -130,86 +178,73 @@ router.post('/calculate', async (req: Request, res: Response) => {
       _cached: valuation._cached,
     });
 
-  } catch (error) {
-    console.error('❌ Valuation calculation error:', error);
-
-    // Handle specific error types
-    if (error instanceof Error) {
-      if (error.message.includes('unavailable')) {
-        return res.status(503).json({
-          error: 'Service unavailable',
-          message: 'All valuation sources are temporarily unavailable',
-          suggestion: 'Try again in a few moments or contact support',
-        });
-      }
-
-      if (error.message.includes('Validation')) {
-        return res.status(400).json({
-          error: 'Validation error',
-          message: error.message,
-        });
-      }
-    }
-
-    // Generic error response
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to calculate valuation',
-      requestId: (req as any).id || 'unknown',
-    });
-  }
-});
+  })
+);
 
 /**
  * GET /api/valuations/health
  * 
- * Health check endpoint
+ * Health check endpoint (PUBLIC - No auth required)
  * Verifies that the valuation service is operational
  */
-router.get('/health', (req: Request, res: Response) => {
-  try {
-    const config = depreciationCalculator.exportConfiguration();
-    
-    return res.json({
-      status: 'ok',
-      service: 'valuation-api',
-      timestamp: new Date().toISOString(),
-      depreciation: {
-        factors: config.factors,
-        version: config.version,
-      },
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    return res.status(500).json({
-      status: 'error',
-      service: 'valuation-api',
-      message: 'Health check failed',
-    });
+router.get(
+  '/health',
+  (req: Request, res: Response) => {
+    try {
+      const config = depreciationCalculator.exportConfiguration();
+      
+      return res.json({
+        status: 'ok',
+        service: 'valuation-api',
+        timestamp: new Date().toISOString(),
+        depreciation: {
+          factors: config.factors,
+          version: config.version,
+        },
+      });
+    } catch (error) {
+      console.error('Health check failed:', error);
+      return res.status(500).json({
+        status: 'error',
+        service: 'valuation-api',
+        message: 'Health check failed',
+      });
+    }
   }
-});
+);
 
 /**
  * POST /api/valuations/validate-depreciation
  * 
  * Validate depreciation calculator configuration
- * Useful for startup checks and debugging
+ * ADMIN ONLY - Used for system configuration checks
+ * 
+ * Required auth: Authenticated user with ADMIN role
  * 
  * Response:
  * {
  *   valid: boolean
- *   configuration: {
- *     factors: { excellent, veryGood, good, fair, poor }
- *     conditionLabels: {...}
- *     conditionDescriptions: {...}
- *     lastUpdated: string
- *     version: string
- *   }
+ *   configuration: {...}
  *   status: string
  * }
  */
-router.post('/validate-depreciation', (req: Request, res: Response) => {
-  try {
+router.post(
+  '/validate-depreciation',
+  authenticate,                                    // ← Verify JWT token
+  asyncHandler(async (req: Request, res: Response) => {
+    // ============================================================================
+    // STEP 1: VALIDATE ADMIN ROLE
+    // ============================================================================
+    if (req.user!.role !== UserRole.ADMIN) {
+      return res.status(403).json({
+        error: 'admin_only',
+        message: 'This endpoint is for administrators only'
+      });
+    }
+
+    // ============================================================================
+    // STEP 2: VALIDATE CONFIGURATION
+    // ============================================================================
     console.log('🔍 Validating depreciation configuration...');
 
     const isValid = depreciationCalculator.validateConfiguration();
@@ -217,6 +252,22 @@ router.post('/validate-depreciation', (req: Request, res: Response) => {
 
     console.log(`${isValid ? '✅' : '❌'} Depreciation validation: ${isValid ? 'VALID' : 'INVALID'}`);
 
+    // ============================================================================
+    // STEP 3: AUDIT LOG
+    // ============================================================================
+    await auditLog({
+      userId: req.user!.userId,
+      action: 'VALIDATE_DEPRECIATION',
+      resourceType: 'system_config',
+      resourceId: 'depreciation_calculator',
+      metadata: { valid: isValid },
+      ipAddress: req.ip,
+      timestamp: new Date()
+    });
+
+    // ============================================================================
+    // STEP 4: RETURN RESPONSE
+    // ============================================================================
     return res.json({
       valid: isValid,
       configuration: config,
@@ -224,24 +275,20 @@ router.post('/validate-depreciation', (req: Request, res: Response) => {
         ? 'Depreciation calculator is properly configured' 
         : 'Configuration error detected - see factors',
     });
-  } catch (error) {
-    console.error('Depreciation validation error:', error);
-
-    return res.status(500).json({
-      error: 'Validation error',
-      message: 'Failed to validate depreciation configuration',
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
+  })
+);
 
 /**
  * GET /api/valuations/history/:vin
  * 
  * Get historical valuations for a specific VIN
  * 
+ * Required auth: Authenticated user with VIEW_APPRAISAL_HISTORY permission
+ * Dealership access: User must have access to the dealership filter (query param)
+ * 
  * Query parameters:
  * - days: number (default: 30) - How many days back to look
+ * - dealershipId: string (required) - Filter by dealership
  * 
  * Response:
  * {
@@ -251,57 +298,112 @@ router.post('/validate-depreciation', (req: Request, res: Response) => {
  *   averageValue: number | null
  * }
  */
-router.get('/history/:vin', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/history/:vin',
+  authenticate,                                    // ← Verify JWT token
+  asyncHandler(async (req: Request, res: Response) => {
+    // ============================================================================
+    // STEP 1: VALIDATE PERMISSION
+    // ============================================================================
+    if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
+      return res.status(403).json({
+        error: 'insufficient_permissions',
+        message: 'You do not have permission to view appraisal history'
+      });
+    }
+
+    // ============================================================================
+    // STEP 2: VALIDATE PARAMETERS
+    // ============================================================================
     const { vin } = req.params;
     const days = parseInt(req.query.days as string) || 30;
+    const dealershipId = req.query.dealershipId as string;
 
     if (!vin || vin.length < 11) {
       return res.status(400).json({
-        error: 'Invalid VIN',
+        error: 'invalid_vin',
         message: 'VIN must be at least 11 characters',
       });
     }
 
     if (days < 1 || days > 365) {
       return res.status(400).json({
-        error: 'Invalid days parameter',
+        error: 'invalid_days',
         message: 'Days must be between 1 and 365',
       });
     }
 
-    console.log(`📋 Retrieving valuation history for ${vin} (last ${days} days)`);
+    if (!dealershipId) {
+      return res.status(400).json({
+        error: 'missing_dealership',
+        message: 'dealershipId query parameter is required',
+      });
+    }
 
-    const valuations = await valuationService.getValuationHistory(vin, days);
+    // ============================================================================
+    // STEP 3: VALIDATE DEALERSHIP ACCESS
+    // ============================================================================
+    if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
+      return res.status(403).json({
+        error: 'dealership_access_denied',
+        message: `You do not have access to dealership ${dealershipId}`
+      });
+    }
 
+    const userId = req.user!.userId;
+    console.log(`📋 Retrieving valuation history for ${vin} (last ${days} days) by user ${userId}`);
+
+    // ============================================================================
+    // STEP 4: RETRIEVE HISTORY
+    // ============================================================================
+    const valuations = await valuationService.getValuationHistory(vin, days, dealershipId);
+
+    // ============================================================================
+    // STEP 5: AUDIT LOG
+    // ============================================================================
+    await auditLog({
+      userId,
+      action: 'VIEW_VALUATION_HISTORY',
+      resourceType: 'valuation_history',
+      resourceId: vin,
+      dealershipId,
+      metadata: { days, count: valuations.length },
+      ipAddress: req.ip,
+      timestamp: new Date()
+    });
+
+    // ============================================================================
+    // STEP 6: CALCULATE AVERAGE
+    // ============================================================================
     const averageValue = valuations.length > 0
       ? Math.round(valuations.reduce((sum, v) => sum + v.finalWholesaleValue, 0) / valuations.length)
       : null;
 
+    // ============================================================================
+    // STEP 7: RETURN RESPONSE
+    // ============================================================================
     return res.json({
       vin,
+      dealershipId,
       valuationCount: valuations.length,
       valuations,
       averageValue,
       periodDays: days,
     });
-  } catch (error) {
-    console.error('Failed to retrieve valuation history:', error);
-
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to retrieve valuation history',
-    });
-  }
-});
+  })
+);
 
 /**
  * GET /api/valuations/statistics/:year/:make/:model
  * 
  * Get valuation statistics for a specific vehicle model
  * 
+ * Required auth: Authenticated user with VIEW_DEALERSHIP_REPORTS permission
+ * Dealership access: User must have access to the dealership filter (query param)
+ * 
  * Query parameters:
  * - days: number (default: 30) - How many days back to analyze
+ * - dealershipId: string (required) - Filter by dealership
  * 
  * Response:
  * {
@@ -318,49 +420,98 @@ router.get('/history/:vin', async (req: Request, res: Response) => {
  *   }
  * }
  */
-router.get('/statistics/:year/:make/:model', async (req: Request, res: Response) => {
-  try {
+router.get(
+  '/statistics/:year/:make/:model',
+  authenticate,                                    // ← Verify JWT token
+  asyncHandler(async (req: Request, res: Response) => {
+    // ============================================================================
+    // STEP 1: VALIDATE PERMISSION
+    // ============================================================================
+    if (!authorizationService.hasPermission(req.user!, Permission.VIEW_DEALERSHIP_REPORTS)) {
+      return res.status(403).json({
+        error: 'insufficient_permissions',
+        message: 'You do not have permission to view reports'
+      });
+    }
+
+    // ============================================================================
+    // STEP 2: VALIDATE PARAMETERS
+    // ============================================================================
     const { year, make, model } = req.params;
     const days = parseInt(req.query.days as string) || 30;
+    const dealershipId = req.query.dealershipId as string;
 
     if (!year || !make || !model) {
       return res.status(400).json({
-        error: 'Invalid parameters',
+        error: 'invalid_parameters',
         message: 'year, make, and model are required',
       });
     }
 
     if (days < 1 || days > 365) {
       return res.status(400).json({
-        error: 'Invalid days parameter',
+        error: 'invalid_days',
         message: 'Days must be between 1 and 365',
       });
     }
 
-    console.log(`📊 Retrieving statistics for ${year} ${make} ${model} (last ${days} days)`);
+    if (!dealershipId) {
+      return res.status(400).json({
+        error: 'missing_dealership',
+        message: 'dealershipId query parameter is required',
+      });
+    }
 
+    // ============================================================================
+    // STEP 3: VALIDATE DEALERSHIP ACCESS
+    // ============================================================================
+    if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
+      return res.status(403).json({
+        error: 'dealership_access_denied',
+        message: `You do not have access to dealership ${dealershipId}`
+      });
+    }
+
+    const userId = req.user!.userId;
+    console.log(`📊 Retrieving statistics for ${year} ${make} ${model} (last ${days} days) by user ${userId}`);
+
+    // ============================================================================
+    // STEP 4: RETRIEVE STATISTICS
+    // ============================================================================
     const statistics = await valuationService.getModelStatistics(
       parseInt(year),
       make,
       model,
-      days
+      days,
+      dealershipId
     );
 
+    // ============================================================================
+    // STEP 5: AUDIT LOG
+    // ============================================================================
+    await auditLog({
+      userId,
+      action: 'VIEW_STATISTICS',
+      resourceType: 'model_statistics',
+      resourceId: `${year}/${make}/${model}`,
+      dealershipId,
+      metadata: { days },
+      ipAddress: req.ip,
+      timestamp: new Date()
+    });
+
+    // ============================================================================
+    // STEP 6: RETURN RESPONSE
+    // ============================================================================
     return res.json({
       year: parseInt(year),
       make,
       model,
+      dealershipId,
       periodDays: days,
       statistics,
     });
-  } catch (error) {
-    console.error('Failed to retrieve model statistics:', error);
-
-    return res.status(500).json({
-      error: 'Internal server error',
-      message: 'Failed to retrieve model statistics',
-    });
-  }
-});
+  })
+);
 
 export default router;
