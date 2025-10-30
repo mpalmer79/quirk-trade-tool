@@ -51,6 +51,12 @@ pnpm install
 # run both apps (frontend :3000, API :4000)
 pnpm dev
 
+## 📚 API Documentation
+
+- [Full API Reference](./docs/API.md) - Complete endpoint documentation
+- [Postman Collection](./postman/Quirk-Trade-Tool-API.postman_collection.json) - Import and test
+- [Mock Server](https://f554d68c-70e5-4bb3-a9a3-0344f9638408.mock.pstmn.io) - Test without backend
+
 ## Multi-store support
 - Frontend shows a Dealership dropdown sourced from `frontend/app/lib/dealerships.ts`.
 - Orchestrator validates `storeId` against `src/config/dealerships.json` and stamps it on the receipt (JSON + PDF).
