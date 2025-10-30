@@ -1,0 +1,793 @@
+# Quirk Trade Tool API Documentation
+
+**Base URL:** `http://localhost:4000` (Development)  
+**Mock Server:** `https://f554d68c-70e5-4bb3-a9a3-0344f9638408.mock.pstmn.io` (Testing without backend)
+
+---
+
+## 📋 Table of Contents
+
+1. [Authentication](#authentication)
+2. [Permission Matrix](#permission-matrix)
+3. [API Endpoints](#api-endpoints)
+4. [Error Codes](#error-codes)
+5. [Setup Instructions](#setup-instructions)
+6. [Testing with Postman](#testing-with-postman)
+
+---
+
+## Authentication
+
+### How It Works
+
+1. User logs in with email/password
+2. API returns `accessToken` (24 hours) and `refreshToken` (7 days)
+3. Include `Authorization: Bearer {accessToken}` in all requests
+4. When token expires, use refresh token to get new access token
+
+### JWT Token Structure
+
+```
+Header.Payload.Signature
+
+Payload contains:
+{
+  "userId": "usr_123456",
+  "email": "user@quirk.com",
+  "role": "sales_manager",
+  "dealershipIds": ["quirk-chevy-manchester"],
+  "iat": 1692903600,
+  "exp": 1693000000
+}
+```
+
+### Token Storage (Frontend Best Practices)
+
+```javascript
+// ✅ DO: Store in memory or sessionStorage
+localStorage.setItem('accessToken', token); // Only if HTTPS
+
+// ❌ DON'T: Don't store in cookies without HttpOnly flag
+```
+
+---
+
+## Permission Matrix
+
+| Permission | Admin | GM | GSM | Sales Mgr | Sales Rep |
+|------------|-------|----|----|-----------|-----------|
+| `CREATE_APPRAISAL` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `VIEW_APPRAISAL_HISTORY` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `VIEW_DEALERSHIP_REPORTS` | ✅ | ✅ | ✅ | ✅ | ❌ |
+| `VIEW_SYSTEM_SETTINGS` | ✅ | ❌ | ❌ | ❌ | ❌ |
+| `MANAGE_USERS` | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+**Legend:** Admin = Administrator, GM = General Manager, GSM = General Sales Manager
+
+---
+
+## API Endpoints
+
+### 1. Authentication
+
+#### **POST** `/api/auth/login`
+
+Login and get JWT tokens.
+
+**Request:**
+```json
+{
+  "email": "test@quirk.com",
+  "password": "password123"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "usr_1234567890",
+    "email": "test@quirk.com",
+    "name": "Test User",
+    "role": "sales_manager",
+    "dealershipIds": ["quirk-chevy-manchester"],
+    "createdAt": "2025-01-15T10:30:00Z"
+  }
+}
+```
+
+**Authentication:** None (public endpoint)
+
+---
+
+#### **POST** `/api/auth/refresh`
+
+Get a new access token using refresh token.
+
+**Request:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Authentication:** None (public endpoint)
+
+---
+
+#### **GET** `/api/auth/me`
+
+Get current authenticated user information.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": "usr_1234567890",
+  "email": "test@quirk.com",
+  "name": "Test User",
+  "role": "sales_manager",
+  "dealershipIds": ["quirk-chevy-manchester"],
+  "permissions": ["CREATE_APPRAISAL", "VIEW_APPRAISAL_HISTORY"],
+  "createdAt": "2025-01-15T10:30:00Z",
+  "lastLogin": "2025-10-30T15:22:00Z"
+}
+```
+
+**Authentication:** Required ✅
+
+---
+
+#### **POST** `/api/auth/logout`
+
+Logout current user.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200 OK):**
+```json
+{
+  "message": "Logged out successfully",
+  "timestamp": "2025-10-30T15:25:00Z"
+}
+```
+
+**Authentication:** Required ✅
+
+---
+
+### 2. VIN Decoding
+
+#### **POST** `/api/vin/decode`
+
+Decode a VIN and extract vehicle information.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "vin": "1HGBH41JXMN109186"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "vin": "1HGBH41JXMN109186",
+  "year": 2020,
+  "make": "Honda",
+  "model": "Civic",
+  "trim": "LX",
+  "bodyType": "Sedan",
+  "engine": {
+    "displacement": "1.5L",
+    "type": "4-Cylinder",
+    "horsepower": 158,
+    "torque": 138
+  },
+  "transmission": "CVT",
+  "drivetrain": "FWD",
+  "fuelType": "Gasoline",
+  "mpg": {
+    "city": 30,
+    "highway": 38,
+    "combined": 33
+  }
+}
+```
+
+**Authentication:** Required ✅  
+**Permission:** Any authenticated user
+
+---
+
+### 3. Appraisals
+
+#### **POST** `/api/appraise`
+
+Create a new appraisal with multi-source quotes.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "dealershipId": "quirk-chevy-manchester",
+  "vin": "1HGBH41JXMN109186",
+  "year": 2020,
+  "make": "Honda",
+  "model": "Civic",
+  "trim": "LX",
+  "mileage": 45000,
+  "condition": 3,
+  "options": ["sunroof", "leather_seats"],
+  "zip": "03104"
+}
+```
+
+**Field Descriptions:**
+- `dealershipId` (required): Your assigned dealership
+- `year` (required): Vehicle year (1990-current)
+- `make` (required): Vehicle manufacturer
+- `model` (required): Vehicle model
+- `trim` (optional): Trim level
+- `mileage` (required): Current mileage (0-1,000,000)
+- `condition` (required): Condition rating 1-5 (1=Poor, 5=Excellent)
+- `options` (optional): Array of add-ons/features
+- `vin` (optional): Vehicle VIN
+- `zip` (optional): Zip code for regional data
+
+**Response (201 Created):**
+```json
+{
+  "id": "apr_x9k7m2q1z5w8",
+  "userId": "usr_1234567890",
+  "dealershipId": "quirk-chevy-manchester",
+  "quotes": [
+    {
+      "source": "BlackBook",
+      "value": 18500
+    },
+    {
+      "source": "KBB",
+      "value": 19200
+    },
+    {
+      "source": "NADA",
+      "value": 18800
+    }
+  ],
+  "summary": {
+    "low": 18500,
+    "high": 19200,
+    "avg": 18840,
+    "confidence": "high"
+  },
+  "createdAt": "2025-10-30T15:30:00Z"
+}
+```
+
+**Authentication:** Required ✅  
+**Permission:** `CREATE_APPRAISAL`
+
+---
+
+### 4. Receipts
+
+#### **GET** `/api/receipt/json/:id`
+
+Retrieve an appraisal receipt as JSON.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**URL Parameters:**
+- `id` (required): Receipt ID (e.g., `apr_x9k7m2q1z5w8`)
+
+**Response (200 OK):**
+```json
+{
+  "id": "apr_x9k7m2q1z5w8",
+  "userId": "usr_1234567890",
+  "dealershipId": "quirk-chevy-manchester",
+  "createdAt": "2025-10-30T15:30:00Z",
+  "input": {
+    "year": 2020,
+    "make": "Honda",
+    "model": "Civic",
+    "mileage": 45000,
+    "condition": 3
+  },
+  "quotes": [
+    {
+      "source": "BlackBook",
+      "value": 18500
+    }
+  ],
+  "summary": {
+    "low": 18500,
+    "high": 19200,
+    "avg": 18840,
+    "confidence": "high"
+  }
+}
+```
+
+**Authentication:** Required ✅  
+**Permission:** `VIEW_APPRAISAL_HISTORY`  
+**Dealership Access:** User must have access to the receipt's dealership
+
+---
+
+#### **GET** `/api/receipt/pdf/:id`
+
+Download an appraisal receipt as PDF.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**URL Parameters:**
+- `id` (required): Receipt ID
+
+**Response (200 OK):**
+- Returns PDF file for download/printing
+- Filename: `quirk-appraisal-{id}.pdf`
+
+**Authentication:** Required ✅  
+**Permission:** `VIEW_APPRAISAL_HISTORY`  
+**Dealership Access:** User must have access to the receipt's dealership
+
+---
+
+### 5. Valuations
+
+#### **POST** `/api/valuations/calculate`
+
+Calculate vehicle valuation with depreciation analysis.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "storeId": "quirk-chevy-manchester",
+  "year": 2020,
+  "make": "Honda",
+  "model": "Civic",
+  "mileage": 45000,
+  "condition": 3,
+  "vin": "1HGBH41JXMN109186"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "id": "val_p8k9m3l2q1w5",
+  "userId": "usr_1234567890",
+  "dealershipId": "quirk-chevy-manchester",
+  "baseWholesaleValue": 18840,
+  "depreciation": {
+    "baseWholesaleValue": 18840,
+    "conditionRating": 3,
+    "conditionLabel": "Good",
+    "depreciationFactor": 0.92,
+    "depreciationPercentage": 8,
+    "depreciationAmount": 1507.20,
+    "finalWholesaleValue": 17332.80,
+    "breakdown": {
+      "excellent": 20526,
+      "veryGood": 19533,
+      "good": 17332.80,
+      "fair": 15132.80,
+      "poor": 11304
+    }
+  },
+  "finalWholesaleValue": 17332.80,
+  "quotes": [
+    {
+      "source": "BlackBook",
+      "value": 18500,
+      "confidence": "high"
+    }
+  ],
+  "timestamp": "2025-10-30T15:35:00Z"
+}
+```
+
+**Authentication:** Required ✅  
+**Permission:** `CREATE_APPRAISAL`
+
+---
+
+#### **GET** `/api/valuations/history/:vin`
+
+Get historical valuations for a specific VIN.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**URL Parameters:**
+- `vin` (required): Vehicle VIN (11+ characters)
+
+**Query Parameters:**
+- `days` (optional): How many days back to search (default: 30, max: 365)
+- `dealershipId` (required): Filter by dealership
+
+**Example:**
+```
+GET /api/valuations/history/1HGBH41JXMN109186?days=30&dealershipId=quirk-chevy-manchester
+```
+
+**Response (200 OK):**
+```json
+{
+  "vin": "1HGBH41JXMN109186",
+  "dealershipId": "quirk-chevy-manchester",
+  "valuationCount": 3,
+  "valuations": [
+    {
+      "id": "val_p8k9m3l2q1w5",
+      "finalWholesaleValue": 17332.80,
+      "timestamp": "2025-10-30T15:35:00Z"
+    },
+    {
+      "id": "val_n7k9m3l2q1w5",
+      "finalWholesaleValue": 17450,
+      "timestamp": "2025-10-25T14:20:00Z"
+    }
+  ],
+  "averageValue": 17391.40,
+  "periodDays": 30
+}
+```
+
+**Authentication:** Required ✅  
+**Permission:** `VIEW_APPRAISAL_HISTORY`  
+**Dealership Access:** Required
+
+---
+
+#### **GET** `/api/valuations/statistics/:year/:make/:model`
+
+Get valuation statistics for a vehicle model.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**URL Parameters:**
+- `year` (required): Vehicle year
+- `make` (required): Vehicle manufacturer
+- `model` (required): Vehicle model
+
+**Query Parameters:**
+- `days` (optional): Analysis period in days (default: 30, max: 365)
+- `dealershipId` (required): Filter by dealership
+
+**Example:**
+```
+GET /api/valuations/statistics/2020/Honda/Civic?days=30&dealershipId=quirk-chevy-manchester
+```
+
+**Response (200 OK):**
+```json
+{
+  "year": 2020,
+  "make": "Honda",
+  "model": "Civic",
+  "dealershipId": "quirk-chevy-manchester",
+  "periodDays": 30,
+  "statistics": {
+    "totalAppraisals": 12,
+    "averageValue": 17685.42,
+    "minValue": 16800,
+    "maxValue": 18900,
+    "avgCondition": 3.25,
+    "trend": "stable",
+    "lastUpdated": "2025-10-30T15:35:00Z"
+  }
+}
+```
+
+**Authentication:** Required ✅  
+**Permission:** `VIEW_DEALERSHIP_REPORTS`  
+**Dealership Access:** Required
+
+---
+
+#### **GET** `/api/valuations/health`
+
+Health check for the valuation service (PUBLIC - no auth required).
+
+**Response (200 OK):**
+```json
+{
+  "status": "ok",
+  "service": "valuation-api",
+  "timestamp": "2025-10-30T15:40:00Z",
+  "depreciation": {
+    "factors": {
+      "excellent": 1.0,
+      "veryGood": 0.95,
+      "good": 0.92,
+      "fair": 0.8,
+      "poor": 0.6
+    },
+    "version": "1.0.0"
+  }
+}
+```
+
+**Use Cases:** Load balancer health checks, monitoring, status pages
+
+**Authentication:** None (public endpoint)
+
+---
+
+#### **POST** `/api/valuations/validate-depreciation`
+
+Validate depreciation calculator configuration (ADMIN ONLY).
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200 OK):**
+```json
+{
+  "valid": true,
+  "configuration": {
+    "factors": {
+      "excellent": 1.0,
+      "veryGood": 0.95,
+      "good": 0.92,
+      "fair": 0.8,
+      "poor": 0.6
+    },
+    "version": "1.0.0"
+  },
+  "status": "Depreciation calculator is properly configured"
+}
+```
+
+**Authentication:** Required ✅  
+**Role:** ADMIN only
+
+---
+
+## Error Codes
+
+### 400 Bad Request
+
+**Validation Error:**
+```json
+{
+  "error": "validation_error",
+  "message": "Validation failed",
+  "details": [
+    {
+      "field": "year",
+      "message": "year is required"
+    }
+  ]
+}
+```
+
+### 401 Unauthorized
+
+**Missing Token:**
+```json
+{
+  "error": "unauthorized",
+  "message": "No JWT token provided"
+}
+```
+
+**Invalid Token:**
+```json
+{
+  "error": "unauthorized",
+  "message": "Invalid or expired token"
+}
+```
+
+### 403 Forbidden
+
+**Insufficient Permissions:**
+```json
+{
+  "error": "insufficient_permissions",
+  "message": "You do not have permission to create appraisals"
+}
+```
+
+**Dealership Access Denied:**
+```json
+{
+  "error": "dealership_access_denied",
+  "message": "You do not have access to dealership quirk-chevy-manchester"
+}
+```
+
+### 404 Not Found
+
+**Resource Not Found:**
+```json
+{
+  "error": "not_found",
+  "message": "Receipt not found",
+  "id": "apr_nonexistent"
+}
+```
+
+### 500 Internal Server Error
+
+**Server Error:**
+```json
+{
+  "error": "internal_server_error",
+  "message": "Failed to calculate valuation",
+  "requestId": "req_abc123"
+}
+```
+
+---
+
+## Setup Instructions
+
+### Development Environment
+
+#### Prerequisites
+- Node.js 18+
+- npm or pnpm
+- PostgreSQL (when IT approves)
+
+#### Installation
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/quirk-trade-tool.git
+cd quirk-trade-tool
+
+# Install dependencies
+npm install
+
+# Create .env file
+cp .env.example .env
+
+# Update .env with your values
+# DB_HOST=localhost
+# DB_PORT=5432
+# JWT_SECRET=your-secret-key
+
+# Start development server
+npm run dev
+
+# Server runs at http://localhost:4000
+```
+
+#### Test Users
+
+| Email | Password | Role |
+|-------|----------|------|
+| admin@quirk.com | password123 | admin |
+| gm@quirk.com | password123 | general_manager |
+| gsm@quirk.com | password123 | general_sales_manager |
+| sm@quirk.com | password123 | sales_manager |
+| sr@quirk.com | password123 | sales_rep |
+
+---
+
+## Testing with Postman
+
+### Import Collection
+
+1. Download the Postman collection file
+2. Open Postman
+3. Click **Import**
+4. Select the collection file
+5. Click **Import**
+
+### Using the Mock Server
+
+The mock server allows testing without a running backend:
+
+```
+Mock Server URL: https://f554d68c-70e5-4bb3-a9a3-0344f9638408.mock.pstmn.io
+```
+
+**Benefits:**
+- Test API flows without database
+- Frontend development
+- Team demos
+- Integration testing
+
+### Setting Up Environment Variables
+
+In Postman:
+
+1. Click the environment dropdown (top right)
+2. Create new environment: `Quirk Trade Tool - Dev`
+3. Add variables:
+
+| Variable | Value |
+|----------|-------|
+| `baseUrl` | `http://localhost:4000` |
+| `accessToken` | (auto-populated after login) |
+| `refreshToken` | (auto-populated after login) |
+| `userId` | (auto-populated after login) |
+
+### Testing Workflow
+
+1. **Run Login** → Get tokens (auto-saved to environment)
+2. **Run any other endpoint** → Uses saved token automatically
+3. **Tokens expire** → Run Refresh Token
+4. **New token** → Continue testing
+
+---
+
+## Rate Limiting
+
+Not currently implemented. Coming in future release.
+
+---
+
+## Deprecation Policy
+
+APIs will be deprecated with 3 months notice.
+
+Old versions will continue working for 6 months after deprecation announcement.
+
+---
+
+## Support
+
+For issues or questions:
+- Slack: #engineering
+- Email: mpalmer@quirk.com
+- GitHub: Create an issue
+
+---
+
+**Last Updated:** October 30, 2025  
+**API Version:** 1.0.0  
+**Status:** Beta
