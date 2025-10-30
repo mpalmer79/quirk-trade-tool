@@ -1,30 +1,25 @@
-import { Router } from 'express';
-import { readFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { generateReceiptPdf } from '../util/pdf.js';
-import type { AppraisalReceipt } from '../util/receipts.js';
+import { nanoid } from 'nanoid';
+import { env } from '../config/env.js';  // ← ADD THIS LINE
 
-const router = Router();
+export type AppraisalReceipt = {
+  id: string;
+  createdAt: string;
+  input: Record<string, unknown>;
+  quotes: { source: string; value: number }[];
+  summary: { low: number; high: number; avg: number; confidence: string };
+  provenance: { sources: string[]; simulated: boolean; region?: string };
+};
 
-// GET /api/receipt/pdf/:id  -> returns a generated PDF from saved receipt JSON
-router.get('/pdf/:id', async (req, res) => {
-  const id = req.params.id;
-  if (!id || !/^apr_[A-Za-z0-9_-]+$/.test(id)) {
-    return res.status(400).json({ error: 'invalid_id' });
-    }
+export async function saveReceipt(receipt: AppraisalReceipt) {
+  const dir = join(process.cwd(), env.RECEIPTS_DIR);  // ← CHANGE THIS LINE
+  await mkdir(dir, { recursive: true });
+  const file = join(dir, `${receipt.id}.json`);
+  await writeFile(file, JSON.stringify(receipt, null, 2), 'utf8');
+  return file;
+}
 
-  try {
-    const file = join(process.cwd(), '..', 'data', 'receipts', `${id}.json`);
-    const raw = await readFile(file, 'utf8');
-    const receipt = JSON.parse(raw) as AppraisalReceipt;
-
-    const pdfBytes = await generateReceiptPdf(receipt);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${id}.pdf"`);
-    return res.send(Buffer.from(pdfBytes));
-  } catch (e) {
-    return res.status(404).json({ error: 'receipt_not_found' });
-  }
-});
-
-export default router;
+export function newReceiptId() {
+  return `apr_${nanoid(12)}`;
+}
