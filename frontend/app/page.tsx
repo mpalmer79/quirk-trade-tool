@@ -662,7 +662,7 @@ export default function Page() {
       <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white py-16 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Transform Your Trade-In Process?</h2>
-          <p className="text-gray-200 mb-8 text-lg">Join Quirk dealership locations in getting accurate, transparent, condition-adjusted valuations in seconds.</p>
+          <p className="text-gray-200 mb-8 text-lg">Join Quirk Auto Dealers in getting accurate, transparent, condition-adjusted valuations in seconds.</p>
           <a href="mailto:mpalmer@quirkcars.com" className="inline-block px-8 py-4 bg-[#00d9a3] hover:bg-[#00b87d] text-[#001a4d] font-bold rounded-lg transition-all text-lg">
             Contact Us Today
           </a>
