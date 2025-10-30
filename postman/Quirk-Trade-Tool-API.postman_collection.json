@@ -1,0 +1,613 @@
+{
+  "info": {
+    "name": "Quirk Trade Tool API",
+    "description": "Complete API collection for Quirk Trade Tool - Trade appraisal and vehicle valuation system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "quirk-trade-tool"
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "User authentication and token management",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "    pm.environment.set('userId', jsonData.user.id);",
+                  "    pm.environment.set('userRole', jsonData.user.role);",
+                  "    console.log('✅ Logged in as: ' + jsonData.user.name + ' (' + jsonData.user.role + ')');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@quirk.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Authenticate user and get JWT tokens\n\nDefault test user:\n- Email: test@quirk.com\n- Password: password123\n- Role: sales_manager\n\nResponse includes:\n- accessToken: Use for API requests\n- refreshToken: Use to get new access token when expired"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Get current authenticated user information"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    pm.environment.set('refreshToken', jsonData.refreshToken);",
+                  "    console.log('✅ Token refreshed');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Get a new access token using refresh token\n\nUse this when your access token expires (24h by default)"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Logout current user (clears tokens on client)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "VIN Decoding",
+      "description": "VIN decode and vehicle information extraction",
+      "item": [
+        {
+          "name": "Decode VIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"vin\": \"1HGBH41JXMN109186\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/vin/decode",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "vin",
+                "decode"
+              ]
+            },
+            "description": "Decode a VIN and extract vehicle information\n\nReturns:\n- Year\n- Make\n- Model\n- Body type\n- Engine info\n- Transmission\n- And more..."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Appraisals",
+      "description": "Create and manage vehicle appraisals",
+      "item": [
+        {
+          "name": "Create Appraisal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dealershipId\": \"quirk-chevy-manchester\",\n  \"vin\": \"1HGBH41JXMN109186\",\n  \"year\": 2020,\n  \"make\": \"Honda\",\n  \"model\": \"Civic\",\n  \"trim\": \"LX\",\n  \"mileage\": 45000,\n  \"condition\": 3,\n  \"options\": [\"sunroof\", \"leather_seats\"],\n  \"zip\": \"03104\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appraise",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "appraise"
+              ]
+            },
+            "description": "Create a new appraisal with multi-source quotes\n\nRequired:\n- dealershipId: Your assigned dealership\n- year, make, model\n- mileage: Vehicle mileage\n- condition: 1-5 (1=Poor, 5=Excellent)\n\nOptional:\n- vin: Vehicle VIN\n- trim: Vehicle trim level\n- options: Additional features\n- zip: Zip code for regional data\n\nReturns:\n- Appraisal ID\n- Quotes from multiple sources\n- Summary with low/high/average values"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Receipts",
+      "description": "View and download appraisal receipts",
+      "item": [
+        {
+          "name": "Get Receipt (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/receipt/json/apr_example123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "receipt",
+                "json",
+                "apr_example123"
+              ]
+            },
+            "description": "Retrieve an appraisal receipt as JSON\n\nReplace 'apr_example123' with actual receipt ID from appraisal response\n\nReturns:\n- Full appraisal data\n- All quotes from sources\n- Summary information"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Receipt (PDF)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/receipt/pdf/apr_example123",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "receipt",
+                "pdf",
+                "apr_example123"
+              ]
+            },
+            "description": "Download an appraisal receipt as PDF\n\nReplace 'apr_example123' with actual receipt ID from appraisal response\n\nReturns:\n- PDF file for download/printing\n- Professional formatted appraisal document"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Valuations",
+      "description": "Calculate vehicle valuations with depreciation",
+      "item": [
+        {
+          "name": "Calculate Valuation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"storeId\": \"quirk-chevy-manchester\",\n  \"vin\": \"1HGBH41JXMN109186\",\n  \"year\": 2020,\n  \"make\": \"Honda\",\n  \"model\": \"Civic\",\n  \"trim\": \"LX\",\n  \"mileage\": 45000,\n  \"condition\": 3,\n  \"options\": [\"sunroof\"],\n  \"zip\": \"03104\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/valuations/calculate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "valuations",
+                "calculate"
+              ]
+            },
+            "description": "Calculate vehicle valuation with depreciation analysis\n\nParameters same as appraisal but also returns:\n- Base wholesale value\n- Depreciation analysis\n- Condition-based adjustment\n- Final wholesale value\n\nThis is used for trade-in evaluations"
+          },
+          "response": []
+        },
+        {
+          "name": "Valuation History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/valuations/history/1HGBH41JXMN109186?days=30&dealershipId=quirk-chevy-manchester",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "valuations",
+                "history",
+                "1HGBH41JXMN109186"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                },
+                {
+                  "key": "dealershipId",
+                  "value": "quirk-chevy-manchester"
+                }
+              ]
+            },
+            "description": "Get valuation history for a specific VIN\n\nParameters:\n- :vin - VIN number (path parameter)\n- days - How many days back (default: 30, max: 365)\n- dealershipId - Filter by dealership (required)\n\nReturns:\n- List of all valuations for this VIN\n- Average value\n- Count of valuations"
+          },
+          "response": []
+        },
+        {
+          "name": "Model Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/valuations/statistics/2020/Honda/Civic?days=30&dealershipId=quirk-chevy-manchester",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "valuations",
+                "statistics",
+                "2020",
+                "Honda",
+                "Civic"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                },
+                {
+                  "key": "dealershipId",
+                  "value": "quirk-chevy-manchester"
+                }
+              ]
+            },
+            "description": "Get valuation statistics for a specific vehicle model\n\nParameters:\n- :year/:make/:model - Vehicle model (path parameters)\n- days - How many days back (default: 30, max: 365)\n- dealershipId - Filter by dealership (required)\n\nReturns:\n- Total appraisals for this model\n- Average value\n- Min/max values\n- Average condition rating\n- Trend analysis"
+          },
+          "response": []
+        },
+        {
+          "name": "Valuation Health Check (PUBLIC)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/valuations/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "valuations",
+                "health"
+              ]
+            },
+            "description": "Check valuation service health (no auth required)\n\nUse for:\n- Load balancer health checks\n- Monitoring\n- Status page\n\nReturns:\n- Service status\n- Depreciation calculator version\n- Configuration checksum"
+          },
+          "response": []
+        },
+        {
+          "name": "Validate Depreciation (ADMIN ONLY)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/valuations/validate-depreciation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "valuations",
+                "validate-depreciation"
+              ]
+            },
+            "description": "Validate depreciation calculator configuration\n\n⚠️ ADMIN ONLY - Requires admin role\n\nUse for:\n- System startup checks\n- Configuration validation\n- Debugging\n\nReturns:\n- Configuration validity\n- Current depreciation factors\n- Version information"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Test Scenarios",
+      "description": "Common workflows and test cases",
+      "item": [
+        {
+          "name": "Workflow: Complete Appraisal",
+          "description": "Complete workflow: Login → Decode VIN → Create Appraisal → Get Receipt",
+          "item": [
+            {
+              "name": "1. Login",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"test@quirk.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "login"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "2. Decode VIN",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"vin\": \"1HGBH41JXMN109186\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/vin/decode",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "vin",
+                    "decode"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "3. Create Appraisal",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dealershipId\": \"quirk-chevy-manchester\",\n  \"vin\": \"1HGBH41JXMN109186\",\n  \"year\": 2020,\n  \"make\": \"Honda\",\n  \"model\": \"Civic\",\n  \"mileage\": 45000,\n  \"condition\": 3\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/appraise",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "appraise"
+                  ]
+                }
+              }
+            },
+            {
+              "name": "4. Get Receipt (JSON)",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{accessToken}}",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/receipt/json/apr_example",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "receipt",
+                    "json",
+                    "apr_example"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userRole",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
