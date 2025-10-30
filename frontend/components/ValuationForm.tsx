@@ -21,15 +21,34 @@ export default function ValuationForm({ onSubmit, isLoading, error }: ValuationF
 
   const { makes, models, years, loadingMakes, loadingModels, fetchModels, decodeVin } = useVehicleData();
 
+  // Auto-fetch models when make and year change
   useEffect(() => {
     fetchModels(make, year);
   }, [make, year]);
+
+  // Auto-decode VIN when input changes (11+ characters)
+  useEffect(() => {
+    if (vin.length >= 11) {
+      const autoDecodeVin = async () => {
+        setDecoding(true);
+        const decoded = await decodeVin(vin);
+        if (decoded) {
+          if (decoded.year) setYear(decoded.year.toString());
+          if (decoded.make) setMake(decoded.make);
+          if (decoded.model) setModel(decoded.model);
+          if (decoded.trim) setTrim(decoded.trim);
+        }
+        setDecoding(false);
+      };
+      autoDecodeVin();
+    }
+  }, [vin, decodeVin]);
 
   const handleDecodeVin = async () => {
     setDecoding(true);
     const decoded = await decodeVin(vin);
     if (decoded) {
-      if (decoded.year) setYear(decoded.year);
+      if (decoded.year) setYear(decoded.year.toString());
       if (decoded.make) setMake(decoded.make);
       if (decoded.model) setModel(decoded.model);
       if (decoded.trim) setTrim(decoded.trim);
