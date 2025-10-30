@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -268,10 +269,30 @@ export default function Page() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-6 py-20">
-          <div className="flex items-center gap-3 mb-6">
-            <ScanLine className="w-10 h-10 text-[#00d9a3]" />
-            <span className="text-[#00d9a3] font-semibold text-sm tracking-widest uppercase">Trade Valuation Tool</span>
+          {/* ✅ NEW: HEADER WITH LOGO */}
+          <div className="flex items-start justify-between mb-12">
+            {/* Left side: branding */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <ScanLine className="w-10 h-10 text-[#00d9a3]" />
+                <span className="text-[#00d9a3] font-semibold text-sm tracking-widest uppercase">Trade Valuation Tool</span>
+              </div>
+            </div>
+
+            {/* Right side: logo */}
+            <div className="flex-shrink-0">
+              <Image
+                src="/assets/Quirk logo.png"
+                alt="Quirk Logo"
+                width={150}
+                height={60}
+                className="h-16 w-auto object-contain"
+                priority
+              />
+            </div>
           </div>
+
+          {/* Main headline and description */}
           <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
             Get Instant Wholesale Valuations
           </h1>
