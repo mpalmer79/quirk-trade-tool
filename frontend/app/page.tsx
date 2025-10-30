@@ -187,7 +187,13 @@ export default function Page() {
 
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE;
 
+  // ✅ FIXED: Added null check for vin
   const handleDecodeVin = async () => {
+    if (!vin) {
+      alert('Please enter a VIN first');
+      return;
+    }
+
     setDecoding(true);
     const decoded = await decodeVinWithNhtsa(vin);
     if (decoded) {
