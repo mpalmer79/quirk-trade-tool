@@ -13,7 +13,7 @@ const TEST_USERS = [
   {
     id: "admin-1",
     name: "Admin User",
-    email: "admin@quirk.com",
+    email: "admin@quirkcars.com",
     password: "admin123",
     role: UserRole.ADMIN,
     dealershipIds: [
@@ -42,7 +42,7 @@ const TEST_USERS = [
   {
     id: "gm-1",
     name: "General Manager",
-    email: "gm@quirk.com",
+    email: "gm@quirkcars.com",
     password: "gm123",
     role: UserRole.GENERAL_MANAGER,
     dealershipIds: [
@@ -57,7 +57,7 @@ const TEST_USERS = [
   {
     id: "gsm-1",
     name: "Sales Manager",
-    email: "sales@quirk.com",
+    email: "sales@quirkcars.com",
     password: "sales123",
     role: UserRole.GENERAL_SALES_MANAGER,
     dealershipIds: ["quirk-chevy-braintree"],
@@ -163,7 +163,7 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="admin@quirk.com"
+                  placeholder="admin@quirkcars.com"
                   required
                 />
               </div>
