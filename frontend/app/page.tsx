@@ -2,6 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import logo from '@/public/assets/quirk.png'; // ✅ Static import so basePath/subpath deploys work
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -280,10 +282,13 @@ export default function Page() {
 
             {/* Right side: logo */}
             <div className="flex-shrink-0">
-              <img
-                src="/assets/quirk.png"
+              {/* ✅ FIX: Next/Image static import so it respects basePath/assetPrefix */}
+              <Image
+                src={logo}
                 alt="Quirk Logo"
+                height={64}
                 className="h-16 w-auto"
+                priority
               />
             </div>
           </div>
