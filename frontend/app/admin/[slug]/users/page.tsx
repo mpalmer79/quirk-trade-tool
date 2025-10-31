@@ -156,6 +156,11 @@ export default function DealershipUsersPage() {
     return roleMap[role] || role;
   };
 
+  const handleDeleteUser = (userId: string) => {
+    // TODO: Implement delete API call
+    setUsers(users.filter((u) => u.id !== userId));
+  };
+
   const handleCloseModal = () => {
     setShowAddModal(false);
     setFormData({ name: "", email: "", role: "sales_manager", password: "" });
