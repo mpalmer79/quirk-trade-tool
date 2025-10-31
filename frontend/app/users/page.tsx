@@ -44,47 +44,53 @@ export default function GlobalUsersPage() {
 
   const loadUsers = async () => {
     try {
-      // TODO: Replace with actual API call to fetch all users across all dealerships
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      
-      setUsers([
-        {
-          id: "1",
-          name: "John Admin",
-          email: "jadmin@quirkcars.com",
-          role: "admin",
-          dealership: "Quirk Buick GMC – Braintree, MA",
-          status: "active",
-          joinDate: "2024-01-15",
-        },
-        {
-          id: "2",
-          name: "Sarah Manager",
-          email: "smanager@quirkcars.com",
-          role: "general_manager",
-          dealership: "Quirk Chevrolet – Braintree, MA",
-          status: "active",
-          joinDate: "2024-02-20",
-        },
-        {
-          id: "3",
-          name: "Mike Sales",
-          email: "msales@quirkcars.com",
-          role: "general_sales_manager",
-          dealership: "Quirk Chevrolet – Braintree, MA",
-          status: "active",
-          joinDate: "2024-03-10",
-        },
-        {
-          id: "4",
-          name: "Lisa Anderson",
-          email: "landerson@quirkcars.com",
-          role: "sales_manager",
-          dealership: "Quirk Buick GMC – Manchester, NH",
-          status: "inactive",
-          joinDate: "2024-01-05",
-        },
-      ]);
+      // Check if users are saved in localStorage first
+      const savedUsers = localStorage.getItem("quirk_users");
+      if (savedUsers) {
+        setUsers(JSON.parse(savedUsers));
+      } else {
+        // Fallback to default demo data if no saved users
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        
+        setUsers([
+          {
+            id: "1",
+            name: "John Admin",
+            email: "jadmin@quirkcars.com",
+            role: "admin",
+            dealership: "Admin",
+            status: "active",
+            joinDate: "2024-01-15",
+          },
+          {
+            id: "2",
+            name: "Sarah Manager",
+            email: "smanager@quirkcars.com",
+            role: "general_manager",
+            dealership: "Quirk Chevrolet – Braintree, MA",
+            status: "active",
+            joinDate: "2024-02-20",
+          },
+          {
+            id: "3",
+            name: "Mike Sales",
+            email: "msales@quirkcars.com",
+            role: "general_sales_manager",
+            dealership: "Quirk Chevrolet – Braintree, MA",
+            status: "active",
+            joinDate: "2024-03-10",
+          },
+          {
+            id: "4",
+            name: "Lisa Anderson",
+            email: "landerson@quirkcars.com",
+            role: "sales_manager",
+            dealership: "Quirk Buick GMC – Manchester, NH",
+            status: "inactive",
+            joinDate: "2024-01-05",
+          },
+        ]);
+      }
     } catch (error) {
       console.error("Failed to load users:", error);
     } finally {
@@ -125,7 +131,10 @@ export default function GlobalUsersPage() {
 
   const handleDeleteUser = (userId: string) => {
     // TODO: Implement delete API call
-    setUsers(users.filter((u) => u.id !== userId));
+    const updatedUsers = users.filter((u) => u.id !== userId);
+    setUsers(updatedUsers);
+    // Auto-save to localStorage
+    localStorage.setItem("quirk_users", JSON.stringify(updatedUsers));
   };
 
   const handleCloseModal = () => {
@@ -136,16 +145,25 @@ export default function GlobalUsersPage() {
   const handleAddUser = async () => {
     // TODO: Implement add user API call
     if (formData.name && formData.email) {
+      // Admin users automatically get assigned to "Admin" dealership
+      const dealership = formData.role === "admin" ? "Admin" : "To be assigned";
+      
       const newUser: User = {
         id: String(users.length + 1),
         name: formData.name,
         email: formData.email,
         role: (formData.role as "admin" | "general_manager" | "general_sales_manager" | "sales_manager") || "sales_manager",
-        dealership: "To be assigned",
+        dealership,
         status: "active",
         joinDate: new Date().toISOString().split("T")[0],
       };
-      setUsers([...users, newUser]);
+      
+      const updatedUsers = [...users, newUser];
+      setUsers(updatedUsers);
+      
+      // Auto-save to localStorage
+      localStorage.setItem("quirk_users", JSON.stringify(updatedUsers));
+      
       handleCloseModal();
     }
   };
