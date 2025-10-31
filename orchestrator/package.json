@@ -5,15 +5,18 @@
   "type": "module",
   "main": "dist/src/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "node dist/src/server.js",
-    "start:prod": "NODE_ENV=production node dist/src/server.js",
-    "test": "vitest",
-    "test:coverage": "vitest --coverage",
-    "test:watch": "vitest --watch",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix"
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc -p tsconfig.json",
+  "start": "node dist/src/server.js",
+  "start:prod": "NODE_ENV=production node dist/src/server.js",
+  "test": "vitest",
+  "test:coverage": "vitest --coverage",
+  "test:watch": "vitest --watch",
+  "lint": "eslint src --ext .ts",
+  "lint:fix": "eslint src --ext .ts --fix",
+  "format": "prettier --write \"src/**/*.ts\"",
+  "format:check": "prettier --check \"src/**/*.ts\""
+}
   },
   "dependencies": {
     "dotenv": "^16.4.5",
