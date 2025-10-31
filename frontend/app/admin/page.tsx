@@ -42,7 +42,7 @@ export default function AdminDashboardPage() {
     try {
       // TODO: Replace with actual API calls
       await new Promise((resolve) => setTimeout(resolve, 500));
-      
+
       setStats({
         totalUsers: 12,
         activeUsers: 10,
@@ -78,9 +78,7 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Welcome back, {user?.name}
-                  </p>
+                  <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.name}</p>
                 </div>
               </div>
             </div>
@@ -135,7 +133,7 @@ export default function AdminDashboardPage() {
                 title="Manage Users"
                 description="Add, edit, or remove user accounts and permissions"
                 icon={Users}
-                href="/admin"
+                href="/users"            {/* <- changed from /admin to /users */}
                 color="blue"
               />
               <ActionCard
