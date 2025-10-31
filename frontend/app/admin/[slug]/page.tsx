@@ -21,17 +21,6 @@ import {
   Home,
 } from "lucide-react";
 
-// Generate static params for all dealerships at build time
-export async function generateStaticParams() {
-  return DEALERSHIPS.map((dealership) => {
-    const slug = dealership.name
-      .toLowerCase()
-      .replace(/\s+/g, "")
-      .replace(/[^\w]/g, "");
-    return { slug };
-  });
-}
-
 interface DealershipStats {
   totalUsers: number;
   activeUsers: number;
