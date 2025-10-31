@@ -11,6 +11,7 @@
 
 import { depreciationCalculator, type DepreciatedValuation } from './depreciation-calculator';
 import { cacheValuationResult, getValuationFromCache } from '../lib/cache';
+import { getRegionalAdjustment } from '../valuation/regional-adjustment.js';
 
 // Types
 export interface ValuationRequest {
@@ -23,6 +24,7 @@ export interface ValuationRequest {
   conditionRating: 1 | 2 | 3 | 4 | 5;
   options?: string[];
   dealershipId: string;
+  zip?: string;  // ZIP code for regional pricing adjustments
 }
 
 export interface SourceValuation {
@@ -86,7 +88,20 @@ async function getBlackBookValue(request: ValuationRequest): Promise<number | nu
     const basePrice = basePrices[request.make] || 18000;
     const yearAdjustment = (new Date().getFullYear() - request.year) * 0.08; // 8% per year
     const mileageAdjustment = (request.mileage / 100000) * 0.35; // 35% per 100k miles
-    const adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    
+    // Apply regional market adjustment based on ZIP code
+    const regionalMultiplier = getRegionalAdjustment({
+      year: request.year,
+      make: request.make,
+      model: request.model,
+      trim: request.trim,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+      options: request.options,
+      zip: request.zip
+    });
+    adjustedPrice *= regionalMultiplier;
     
     return Math.round(adjustedPrice + (Math.random() * 500 - 250)); // ±$250 variance
   } catch (error) {
@@ -126,7 +141,20 @@ async function getKBBValue(request: ValuationRequest): Promise<number | null> {
     const basePrice = basePrices[request.make] || 17500;
     const yearAdjustment = (new Date().getFullYear() - request.year) * 0.085; // 8.5% per year
     const mileageAdjustment = (request.mileage / 100000) * 0.32; // 32% per 100k miles
-    const adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    
+    // Apply regional market adjustment
+    const regionalMultiplier = getRegionalAdjustment({
+      year: request.year,
+      make: request.make,
+      model: request.model,
+      trim: request.trim,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+      options: request.options,
+      zip: request.zip
+    });
+    adjustedPrice *= regionalMultiplier;
     
     return Math.round(adjustedPrice + (Math.random() * 400 - 200)); // ±$200 variance
   } catch (error) {
@@ -166,7 +194,20 @@ async function getNADAValue(request: ValuationRequest): Promise<number | null> {
     const basePrice = basePrices[request.make] || 17800;
     const yearAdjustment = (new Date().getFullYear() - request.year) * 0.082; // 8.2% per year
     const mileageAdjustment = (request.mileage / 100000) * 0.33; // 33% per 100k miles
-    const adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    
+    // Apply regional market adjustment
+    const regionalMultiplier = getRegionalAdjustment({
+      year: request.year,
+      make: request.make,
+      model: request.model,
+      trim: request.trim,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+      options: request.options,
+      zip: request.zip
+    });
+    adjustedPrice *= regionalMultiplier;
     
     return Math.round(adjustedPrice + (Math.random() * 450 - 225)); // ±$225 variance
   } catch (error) {
@@ -206,7 +247,20 @@ async function getManheimValue(request: ValuationRequest): Promise<number | null
     const basePrice = basePrices[request.make] || 17300;
     const yearAdjustment = (new Date().getFullYear() - request.year) * 0.088; // 8.8% per year
     const mileageAdjustment = (request.mileage / 100000) * 0.34; // 34% per 100k miles
-    const adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    
+    // Apply regional market adjustment
+    const regionalMultiplier = getRegionalAdjustment({
+      year: request.year,
+      make: request.make,
+      model: request.model,
+      trim: request.trim,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+      options: request.options,
+      zip: request.zip
+    });
+    adjustedPrice *= regionalMultiplier;
     
     return Math.round(adjustedPrice + (Math.random() * 500 - 250)); // ±$250 variance
   } catch (error) {
@@ -246,7 +300,20 @@ async function getAuctionEdgeValue(request: ValuationRequest): Promise<number | 
     const basePrice = basePrices[request.make] || 17600;
     const yearAdjustment = (new Date().getFullYear() - request.year) * 0.085; // 8.5% per year
     const mileageAdjustment = (request.mileage / 100000) * 0.36; // 36% per 100k miles
-    const adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    
+    // Apply regional market adjustment
+    const regionalMultiplier = getRegionalAdjustment({
+      year: request.year,
+      make: request.make,
+      model: request.model,
+      trim: request.trim,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+      options: request.options,
+      zip: request.zip
+    });
+    adjustedPrice *= regionalMultiplier;
     
     return Math.round(adjustedPrice + (Math.random() * 350 - 175)); // ±$175 variance
   } catch (error) {
@@ -286,7 +353,20 @@ async function getQuincyAutoValue(request: ValuationRequest): Promise<number | n
     const basePrice = basePrices[request.make] || 17700;
     const yearAdjustment = (new Date().getFullYear() - request.year) * 0.083; // 8.3% per year
     const mileageAdjustment = (request.mileage / 100000) * 0.31; // 31% per 100k miles
-    const adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+    
+    // Apply regional market adjustment
+    const regionalMultiplier = getRegionalAdjustment({
+      year: request.year,
+      make: request.make,
+      model: request.model,
+      trim: request.trim,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+      options: request.options,
+      zip: request.zip
+    });
+    adjustedPrice *= regionalMultiplier;
     
     return Math.round(adjustedPrice + (Math.random() * 420 - 210)); // ±$210 variance
   } catch (error) {
