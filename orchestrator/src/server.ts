@@ -163,8 +163,8 @@ app.use('/api/auth', authRoute);
 // TODO: Add other routes here (appraise, vin, receipt)
 // For now, just auth is wired up
 import vinRoute from './routes/vin.js';
-
 app.use('/api/vin', vinRoute);
+
 // ============================================================================
 // 404 HANDLER
 // ============================================================================
