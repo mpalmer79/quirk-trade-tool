@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import { getVehicleListings } from '../autodev/listings.js';
 
@@ -36,7 +36,7 @@ const ListingsSchema = z.object({
  */
 router.get(
   '/',
-  authenticate,
+  optionalAuthenticate,
   asyncHandler(async (req, res) => {
     // Parse query parameters
     const { make, model, year, trim, condition, mileage } = req.query;
