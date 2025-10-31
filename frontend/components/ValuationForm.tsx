@@ -1,86 +1,181 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
-import { useVehicleData } from '@/hooks/useVehicleData';
+import React from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { AlertCircle, ScanLine } from "lucide-react";
+import { DEALERSHIPS } from "@lib/dealerships";
+import { FormSchema, type FormData, type AppraiseResponse } from "@lib/types";
 
-interface ValuationFormProps {
-  onSubmit: (data: any) => void;
-  isLoading: boolean;
-  error: string | null;
-}
+type Props = {
+  apiBase: string;
+  onAppraised: (resp: AppraiseResponse) => void;
+};
 
-export default function ValuationForm({ onSubmit, isLoading, error }: ValuationFormProps) {
-  const [vin, setVin] = useState('');
-  const [year, setYear] = useState('');
-  const [make, setMake] = useState('');
-  const [model, setModel] = useState('');
-  const [trim, setTrim] = useState('');
-  const [mileage, setMileage] = useState('');
-  const [isDecoding, setDecoding] = useState(false);
+const makes = ["Acura","Audi","BMW","Cadillac","Chevrolet","Chrysler","Dodge","Ford","GMC","Honda","Hyundai","Jeep","Kia","Lexus","Mazda","Mercedes-Benz","Nissan","Ram","Subaru","Tesla","Toyota","Volkswagen","Volvo"];
 
-  const { makes, models, years, loadingMakes, loadingModels, fetchModels, decodeVin } = useVehicleData();
+const modelsByMake: Record<string, string[]> = {
+  Acura: ["ILX","Integra","TLX","MDX","RDX","NSX"],
+  Audi: ["A3","A4","A5","A6","A7","A8","Q3","Q5","Q7","Q8","e-tron","R8","TT"],
+  BMW: ["2 Series","3 Series","4 Series","5 Series","7 Series","X1","X3","X5","X7","i4","iX"],
+  Cadillac: ["CT4","CT5","Escalade","XT4","XT5","XT6","Lyriq"],
+  Chevrolet: ["Blazer","Camaro","Colorado Crew Cab","Colorado Extended Cab","Corvette","Equinox","Malibu","Silverado 1500 Regular Cab","Silverado 1500 Extended Cab","Silverado 1500 Crew Cab","Silverado 2500 Regular Cab","Silverado 2500 Crew Cab","Silverado 3500 Regular Cab","Silverado 3500 Crew Cab","Suburban","Tahoe","Trailblazer","Traverse","Trax"],
+  Chrysler: ["300","Pacifica"],
+  Dodge: ["Challenger","Charger","Durango","Hornet"],
+  Ford: ["Bronco","Bronco Sport","Edge","Escape","Expedition","Explorer","F-150 Regular Cab","F-150 SuperCab","F-150 SuperCrew","F-250 Regular Cab","F-250 SuperCab","F-250 Crew Cab","F-350 Regular Cab","F-350 SuperCab","F-350 Crew Cab","Maverick","Mustang","Ranger SuperCab","Ranger SuperCrew"],
+  GMC: ["Acadia","Canyon Crew Cab","Canyon Extended Cab","Sierra 1500 Regular Cab","Sierra 1500 Double Cab","Sierra 1500 Crew Cab","Sierra 2500 Regular Cab","Sierra 2500 Crew Cab","Sierra 3500 Regular Cab","Sierra 3500 Crew Cab","Terrain","Yukon","Yukon XL"],
+  Honda: ["Accord","Civic","CR-V","HR-V","Odyssey","Passport","Pilot","Ridgeline"],
+  Hyundai: ["Elantra","Sonata","Tucson","Santa Fe","Palisade","Kona","Venue","Ioniq 5","Ioniq 6"],
+  Jeep: ["Cherokee","Compass","Gladiator","Grand Cherokee","Grand Wagoneer","Renegade","Wagoneer","Wrangler 2-Door","Wrangler 4-Door","Wrangler Unlimited"],
+  Kia: ["Forte","K5","Sportage","Sorento","Telluride","Seltos","Soul","EV6","Carnival"],
+  Lexus: ["ES","IS","LS","GX","LX","NX","RX","UX","TX"],
+  Mazda: ["Mazda3","Mazda6","CX-30","CX-5","CX-50","CX-9","CX-90","MX-5 Miata"],
+  "Mercedes-Benz": ["A-Class","C-Class","E-Class","S-Class","GLA","GLB","GLC","GLE","GLS","EQB","EQE","EQS"],
+  Nissan: ["Altima","Maxima","Sentra","Versa","Ariya","Kicks","Rogue","Murano","Pathfinder","Armada","Frontier Crew Cab","Frontier King Cab","Titan Crew Cab","Titan King Cab","Z"],
+  Ram: ["1500 Regular Cab","1500 Quad Cab","1500 Crew Cab","2500 Regular Cab","2500 Crew Cab","3500 Regular Cab","3500 Crew Cab","ProMaster"],
+  Subaru: ["Impreza","Legacy","Outback","Crosstrek","Forester","Ascent","WRX","BRZ","Solterra"],
+  Tesla: ["Model 3","Model S","Model X","Model Y"],
+  Toyota: ["Camry","Corolla","Avalon","Prius","RAV4","Highlander","4Runner","Sequoia","Tacoma Access Cab","Tacoma Double Cab","Tundra Regular Cab","Tundra Double Cab","Tundra CrewMax","Sienna","bZ4X","GR86","Supra"],
+  Volkswagen: ["Jetta","Passat","Arteon","Taos","Tiguan","Atlas","ID.4","Golf GTI"],
+  Volvo: ["S60","S90","V60","V90","XC40","XC60","XC90","C40"]
+};
 
-  // Auto-fetch models when make and year change
-  useEffect(() => {
-    fetchModels(make, year);
-  }, [make, year, fetchModels]);
+const optionsList = [
+  "Navigation System","Sunroof/Moonroof","Leather Seats","Premium Sound System",
+  "Third Row Seating","All-Wheel Drive","Adaptive Cruise Control","Heated Seats",
+  "Backup Camera","Towing Package"
+];
 
-  // Auto-decode VIN when input changes (11+ characters)
-  useEffect(() => {
-    if (vin.length >= 11) {
-      const autoDecodeVin = async () => {
-        setDecoding(true);
-        const decoded = await decodeVin(vin);
-        if (decoded) {
-          if (decoded.year) setYear(decoded.year.toString());
-          if (decoded.make) setMake(decoded.make);
-          if (decoded.model) setModel(decoded.model);
-          if (decoded.trim) setTrim(decoded.trim);
-        }
-        setDecoding(false);
-      };
-      autoDecodeVin();
+const conditionDescriptions: Record<number, string> = {
+  1: "Poor - Significant damage, needs major repairs",
+  2: "Fair - Visible wear, minor damage, functional",
+  3: "Good - Normal wear, clean, well-maintained",
+  4: "Very Good - Minimal wear, excellent condition",
+  5: "Excellent - Like new, pristine condition"
+};
+
+export default function ValuationForm({ apiBase, onAppraised }: Props) {
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 30 }, (_, i) => currentYear - i);
+
+  const { register, handleSubmit, setValue, watch, formState: { errors, isSubmitting } } =
+    useForm<FormData>({ resolver: zodResolver(FormSchema), defaultValues: { storeId: DEALERSHIPS[0]?.id ?? "", condition: 3, options: [] } });
+
+  const make = watch("make");
+  const condition = watch("condition");
+  const vin = watch("vin");
+  const availableModels = make ? modelsByMake[make] || [] : [];
+
+  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+
+  const onSubmit = async (data: FormData) => {
+    setErrorMsg(null);
+    // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
+    const submissionData = {
+      ...data,
+      zip: "02122"
+    };
+    try {
+      const res = await fetch(`${apiBase}/api/appraise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionData)
+      });
+      if (!res.ok) {
+        console.error("Appraise error", res.status, res.statusText);
+        setErrorMsg("Appraisal failed. Please try again or contact support.");
+        return;
+      }
+      const payload: AppraiseResponse = await res.json();
+      onAppraised(payload);
+    } catch (error) {
+      console.error("Appraisal error:", error);
+      setErrorMsg("An error occurred during appraisal. Please try again.");
     }
-  }, [vin, decodeVin]);
-
-  const handleDecodeVin = async () => {
-    setDecoding(true);
-    const decoded = await decodeVin(vin);
-    if (decoded) {
-      if (decoded.year) setYear(decoded.year.toString());
-      if (decoded.make) setMake(decoded.make);
-      if (decoded.model) setModel(decoded.model);
-      if (decoded.trim) setTrim(decoded.trim);
-    } else {
-      alert("VIN decode failed. Try again.");
-    }
-    setDecoding(false);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
-    onSubmit({ 
-      vin, 
-      year, 
-      make, 
-      model, 
-      trim, 
-      mileage: parseInt(mileage),
-      zip: "02122"
-    });
+  const [decoding, setDecoding] = React.useState(false);
+
+  const onDecodeVin = async () => {
+    setErrorMsg(null);
+    if (!vin || vin.length < 11) {
+      setErrorMsg("Enter at least 11 characters of a VIN.");
+      return;
+    }
+    setDecoding(true);
+    try {
+      // Primary: orchestrator
+      console.log("VIN decode: trying server", `${apiBase}/api/vin/decode`);
+      const res = await fetch(`${apiBase}/api/vin/decode`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vin })
+      });
+      if (!res.ok) throw new Error(`server_decode_failed:${res.status}`);
+      const decoded = await res.json();
+      if (decoded.year) setValue("year", decoded.year);
+      if (decoded.make) setValue("make", decoded.make);
+      if (decoded.model) setValue("model", decoded.model);
+      if (decoded.trim) setValue("trim", decoded.trim);
+      console.log("VIN decode via server OK", decoded);
+      return;
+    } catch (e) {
+      console.warn("VIN server decode failed, falling back to NHTSA", e);
+      // Fallback: NHTSA VPIC
+      try {
+        const v = vin.trim().toUpperCase();
+        const url = `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(v)}?format=json`;
+        console.log("VIN decode: calling NHTSA", url);
+        const vp = await fetch(url, { mode: "cors" });
+        if (!vp.ok) throw new Error(`nhtsa_http_${vp.status}`);
+        const data = await vp.json();
+        const row = data?.Results?.[0] || {};
+        const yr = Number(row.ModelYear) || undefined;
+        const mk = row.Make || undefined;
+        const mdl = row.Model || undefined;
+        const trm = row.Trim || row.Series || undefined;
+
+        if (yr) setValue("year", yr);
+        if (mk) setValue("make", mk);
+        if (mdl) setValue("model", mdl);
+        if (trm) setValue("trim", trm);
+
+        console.log("VIN decode via NHTSA OK", { yr, mk, mdl, trm });
+        return;
+      } catch (err) {
+        console.error("VIN decode fallback failed", err);
+        setErrorMsg("VIN decode failed. Try again.");
+      }
+    } finally {
+      setDecoding(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded">
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
         <div className="flex items-start gap-2">
           <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-blue-800">
-            This demo uses simulated valuations. Production version integrates with licensed providers (Black Book, KBB, NADA, Manheim).
+            Demo uses simulated valuations. Real integrations with licensed providers (Black Book, KBB, NADA, Manheim) are available.
           </p>
         </div>
+      </div>
+
+      {errorMsg && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {errorMsg}
+        </div>
+      )}
+
+      {/* Dealership */}
+      <div className="mb-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-2">Dealership *</label>
+        <select {...register("storeId")} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+          <option value="">Select a dealership</option>
+          {DEALERSHIPS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+        </select>
+        {errors.storeId && <p className="text-sm text-red-600 mt-1">{errors.storeId.message as string}</p>}
       </div>
 
       {/* VIN + Decode */}
@@ -88,124 +183,98 @@ export default function ValuationForm({ onSubmit, isLoading, error }: ValuationF
         <label className="block text-sm font-semibold text-gray-700 mb-2">VIN (optional)</label>
         <div className="flex gap-2">
           <input
-            type="text"
-            value={vin}
-            onChange={(e) => setVin(e.target.value.toUpperCase())}
+            {...register("vin")}
             placeholder="e.g., 1G1ZT62812F113456"
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase"
+            className="flex-1 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 uppercase"
           />
           <button
             type="button"
-            onClick={handleDecodeVin}
-            disabled={!vin || vin.length < 17 || isDecoding}
-            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+            onClick={onDecodeVin}
+            disabled={decoding || !vin}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}
           >
-            {isDecoding ? 'Decoding...' : 'Decode'}
+            {decoding ? "Decoding..." : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
           </button>
         </div>
-        {year && make && (
-          <p className="text-sm text-green-600 mt-2 font-medium">
-            ✓ Decoded: {year} {make} {model} {trim}
-          </p>
-        )}
+        <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC if server is unavailable.</p>
       </div>
 
+      {/* Vehicle fields */}
       <div className="grid md:grid-cols-2 gap-6 mb-6">
-        {/* Year */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Year *</label>
-          <select
-            value={year}
-            onChange={(e) => setYear(e.target.value)}
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
-          >
+          <select {...register("year")} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
             <option value="">Select Year</option>
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
+            {years.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
+          {errors.year && <p className="text-sm text-red-600 mt-1">{errors.year.message as string}</p>}
         </div>
 
-        {/* Make */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Make *</label>
-          <select
-            value={make}
-            onChange={(e) => {
-              setMake(e.target.value);
-              setModel('');
-            }}
-            required
-            disabled={loadingMakes}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:opacity-50"
-          >
-            <option value="">{loadingMakes ? 'Loading...' : 'Select Make'}</option>
-            {makes.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
+          <select {...register("make")} className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            <option value="">Select Make</option>
+            {makes.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
+          {errors.make && <p className="text-sm text-red-600 mt-1">{errors.make.message as string}</p>}
         </div>
-      </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-6">
-        {/* Model */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-          <select
-            value={model}
-            onChange={(e) => setModel(e.target.value)}
-            required
-            disabled={!make || !year || loadingModels}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white disabled:opacity-50"
-          >
-            <option value="">
-              {!make || !year ? 'Select year & make first' : loadingModels ? 'Loading...' : 'Select Model'}
-            </option>
-            {models.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
+          <select {...register("model")} disabled={!watch("make")}
+            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
+            <option value="">{watch("make") ? "Select Model" : "Select Make First"}</option>
+            {(watch("make") ? (modelsByMake[watch("make")!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
+          {errors.model && <p className="text-sm text-red-600 mt-1">{errors.model.message as string}</p>}
         </div>
 
-        {/* Mileage */}
         <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Trim</label>
+          <input {...register("trim")} placeholder="e.g., LE, Sport, Limited"
+            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+        </div>
+
+        <div className="md:col-span-2">
           <label className="block text-sm font-semibold text-gray-700 mb-2">Mileage *</label>
-          <input
-            type="number"
-            value={mileage}
-            onChange={(e) => setMileage(e.target.value)}
-            placeholder="e.g., 45000"
-            required
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          <input type="number" {...register("mileage")} placeholder="Enter mileage"
+            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
+          {errors.mileage && <p className="text-sm text-red-600 mt-1">{errors.mileage.message as string}</p>}
         </div>
       </div>
 
-      {/* Trim */}
+      {/* Condition */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">Trim (optional)</label>
-        <input
-          type="text"
-          value={trim}
-          onChange={(e) => setTrim(e.target.value)}
-          placeholder="e.g., XLE, Sport, Limited"
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Vehicle Condition: {condition}
+        </label>
+        <input type="range" min={1} max={5} {...register("condition")}
+          className="w-full h-2 bg-gray-200 rounded-lg accent-indigo-600" />
+        <div className="flex justify-between text-xs text-gray-600 mt-2">
+          <span>Poor</span><span>Fair</span><span>Good</span><span>Very Good</span><span>Excellent</span>
+        </div>
+        <p className="text-sm text-gray-600 mt-2 italic">
+          {conditionDescriptions[Number(condition) || 3]}
+        </p>
       </div>
 
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded">
-          <p className="text-sm text-red-700 font-medium">{error}</p>
+      {/* Options */}
+      <div className="mb-8">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">Additional Options</label>
+        <div className="grid grid-cols-2 gap-3">
+          {optionsList.map(o => (
+            <label key={o} className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" value={o} {...register("options")}
+                     className="w-4 h-4 text-indigo-600 rounded focus:ring-2 focus:ring-indigo-500" />
+              <span className="text-sm text-gray-700">{o}</span>
+            </label>
+          ))}
         </div>
-      )}
+      </div>
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-lg rounded-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
-      >
-        {isLoading ? 'Getting Valuation...' : 'Get Multi-Source Valuation'}
+      <button type="submit" disabled={isSubmitting}
+        className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}>
+        {isSubmitting ? "Calculating..." : "Get Wholesale Value"}
       </button>
     </form>
   );
