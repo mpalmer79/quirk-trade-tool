@@ -5,7 +5,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { AdminNav } from "@/components/AdminNav";
 import { Permission } from "@/app/lib/auth-types";
-import { DEALERSHIPS } from "@/lib/dealerships";
+import { DEALERSHIPS } from "@lib/dealerships";
 import {
   Users,
   Plus,
@@ -179,7 +179,7 @@ export default function GlobalUsersPage() {
       sales_manager: "Sales Manager",
     };
     return roleMap[role] || role;
-    }
+  };
 
   const roleIsGM = formData.role === "general_manager";
   const canSubmit = Boolean(formData.name && formData.email && formData.dealershipIds.length > 0);
@@ -455,22 +455,22 @@ export default function GlobalUsersPage() {
                     )}
                   </div>
 
-                  {/* Password (optional) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, password: e.target.value }))
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      placeholder="User will be prompted to create"
-                    />
+                    {/* Password (optional) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                      </label>
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData((prev) => ({ ...prev, password: e.target.value }))
+                        }
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                        placeholder="User will be prompted to create"
+                      />
+                    </div>
                   </div>
-                </div>
 
                 {/* Note */}
                 <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
