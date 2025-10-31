@@ -70,27 +70,28 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
 
   const onSubmit = async (data: FormData) => {
     setErrorMsg(null);
-    const onSubmit = async (data: FormData) => {
-  setErrorMsg(null);
-  // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
-  const submissionData = {
-    ...data,
-    zip: "02122"
-  };
-  const res = await fetch(`${apiBase}/api/appraise`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(submissionData)
-  });
-  // ... rest of code
-}
-    if (!res.ok) {
-      console.error("Appraise error", res.status, res.statusText);
-      setErrorMsg("Appraisal failed. Please try again or contact support.");
-      return;
+    // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
+    const submissionData = {
+      ...data,
+      zip: "02122"
+    };
+    try {
+      const res = await fetch(`${apiBase}/api/appraise`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(submissionData)
+      });
+      if (!res.ok) {
+        console.error("Appraise error", res.status, res.statusText);
+        setErrorMsg("Appraisal failed. Please try again or contact support.");
+        return;
+      }
+      const payload: AppraiseResponse = await res.json();
+      onAppraised(payload);
+    } catch (error) {
+      console.error("Appraisal error:", error);
+      setErrorMsg("An error occurred during appraisal. Please try again.");
     }
-    const payload: AppraiseResponse = await res.json();
-    onAppraised(payload);
   };
 
   const [decoding, setDecoding] = React.useState(false);
@@ -151,7 +152,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   };
 
   return (
-    <>
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 rounded">
         <div className="flex items-start gap-2">
           <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
@@ -271,10 +272,10 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         </div>
       </div>
 
-      <button disabled={isSubmitting}
+      <button type="submit" disabled={isSubmitting}
         className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}>
         {isSubmitting ? "Calculating..." : "Get Wholesale Value"}
       </button>
-    </>
+    </form>
   );
 }
