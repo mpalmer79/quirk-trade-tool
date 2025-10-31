@@ -42,7 +42,6 @@ export default function AdminDashboardPage() {
     try {
       // TODO: Replace with actual API calls
       await new Promise((resolve) => setTimeout(resolve, 500));
-
       setStats({
         totalUsers: 12,
         activeUsers: 10,
@@ -64,7 +63,9 @@ export default function AdminDashboardPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+            <p className="text-gray-600">
+              You don't have permission to access the admin panel.
+            </p>
           </div>
         </div>
       }
@@ -78,7 +79,9 @@ export default function AdminDashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-                  <p className="mt-1 text-sm text-gray-500">Welcome back, {user?.name}</p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Welcome back, {user?.name}
+                  </p>
                 </div>
               </div>
             </div>
@@ -89,7 +92,8 @@ export default function AdminDashboardPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <Link href="/users" target="_blank">
+            {/* Total Users -> /users (same tab) */}
+            <Link href="/users">
               <StatCard
                 title="Total Users"
                 value={stats.totalUsers}
@@ -98,15 +102,15 @@ export default function AdminDashboardPage() {
                 isLoading={isLoading}
               />
             </Link>
-            <Link href="/active-users" target="_blank">
-              <StatCard
-                title="Active Users"
-                value={stats.activeUsers}
-                icon={Activity}
-                color="green"
-                isLoading={isLoading}
-              />
-            </Link>
+
+            <StatCard
+              title="Active Users"
+              value={stats.activeUsers}
+              icon={Activity}
+              color="green"
+              isLoading={isLoading}
+            />
+
             <StatCard
               title="Dealerships"
               value={stats.dealerships}
@@ -114,7 +118,8 @@ export default function AdminDashboardPage() {
               color="purple"
               isLoading={isLoading}
             />
-            <Link href="/reports" target="_blank">
+
+            <Link href="/reports">
               <StatCard
                 title="Recent Activity"
                 value={stats.recentActivity}
@@ -129,11 +134,12 @@ export default function AdminDashboardPage() {
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* Manage Users -> /users (same tab) */}
               <ActionCard
                 title="Manage Users"
                 description="Add, edit, or remove user accounts and permissions"
                 icon={Users}
-                href="/users"            {/* <- changed from /admin to /users */}
+                href="/users"
                 color="blue"
               />
               <ActionCard
@@ -141,7 +147,6 @@ export default function AdminDashboardPage() {
                 description="Access trade valuation reports and analytics"
                 icon={BarChart3}
                 href="/reports"
-                target="_blank"
                 color="green"
               />
               <ActionCard
@@ -174,7 +179,8 @@ export default function AdminDashboardPage() {
   );
 }
 
-// Stat Card Component
+/* ======= Stat Card ======= */
+
 interface StatCardProps {
   title: string;
   value: number;
@@ -210,14 +216,14 @@ function StatCard({ title, value, icon: Icon, color, isLoading }: StatCardProps)
   );
 }
 
-// Action Card Component
+/* ======= Action Card ======= */
+
 interface ActionCardProps {
   title: string;
   description: string;
   icon: React.ElementType;
   href: string;
   color: "blue" | "green" | "purple";
-  target?: string;
   disabled?: boolean;
 }
 
@@ -227,7 +233,6 @@ function ActionCard({
   icon: Icon,
   href,
   color,
-  target,
   disabled = false,
 }: ActionCardProps) {
   const colorClasses = {
@@ -262,13 +267,6 @@ function ActionCard({
     </div>
   );
 
-  if (disabled) {
-    return content;
-  }
-
-  return (
-    <Link href={href} target={target}>
-      {content}
-    </Link>
-  );
+  if (disabled) return content;
+  return <Link href={href}>{content}</Link>;
 }
