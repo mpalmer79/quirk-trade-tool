@@ -5,7 +5,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { AdminNav } from "@/components/AdminNav";
 import { Permission } from "@/app/lib/auth-types";
-import { DEALERSHIPS } from "@lib/dealerships";
+import { DEALERSHIPS } from "@/lib/dealerships";
 import {
   Users,
   Plus,
@@ -27,10 +27,13 @@ interface User {
   name: string;
   email: string;
   role: Role;
-  dealershipIds: string[]; // store IDs; render names in table
+  dealershipIds: string[];      // store dealership IDs for non-global users
+  isGlobalAdmin?: boolean;      // true only if Admin with global access
   status: "active" | "inactive";
   joinDate: string;
 }
+
+const GLOBAL_ADMIN_ID = "GLOBAL_ADMIN";
 
 export default function GlobalUsersPage() {
   const { user } = useAuth();
@@ -45,20 +48,23 @@ export default function GlobalUsersPage() {
     email: string;
     role: Role;
     password: string;
-    dealershipIds: string[]; // required
+    dealershipIds: string[];
+    isGlobalAdmin: boolean;     // tracks “Global Admin (All Dealerships)”
   }>({
     name: "",
     email: "",
     role: "sales_manager",
     password: "",
     dealershipIds: [],
+    isGlobalAdmin: false,
   });
 
   useEffect(() => {
     loadUsers();
   }, []);
 
-  const byName = (name: string) => DEALERSHIPS.find((d) => d.name === name)?.id ?? "";
+  const byName = (name: string) =>
+    DEALERSHIPS.find((d) => d.name === name)?.id ?? "";
 
   const loadUsers = async () => {
     try {
@@ -73,7 +79,8 @@ export default function GlobalUsersPage() {
             name: "John Admin",
             email: "jadmin@quirkcars.com",
             role: "admin",
-            dealershipIds: [byName("Quirk Chevrolet – Braintree, MA")].filter(Boolean), // pick any default
+            dealershipIds: [],
+            isGlobalAdmin: true, // demo global admin
             status: "active",
             joinDate: "2024-01-15",
           },
@@ -94,7 +101,9 @@ export default function GlobalUsersPage() {
             name: "Mike Sales",
             email: "msales@quirkcars.com",
             role: "general_sales_manager",
-            dealershipIds: [byName("Quirk Chevrolet – Braintree, MA")].filter(Boolean),
+            dealershipIds: [byName("Quirk Chevrolet – Braintree, MA")].filter(
+              Boolean
+            ),
             status: "active",
             joinDate: "2024-03-10",
           },
@@ -103,7 +112,9 @@ export default function GlobalUsersPage() {
             name: "Lisa Anderson",
             email: "landerson@quirkcars.com",
             role: "sales_manager",
-            dealershipIds: [byName("Quirk Buick GMC – Manchester, NH")].filter(Boolean),
+            dealershipIds: [byName("Quirk Buick GMC – Manchester, NH")].filter(
+              Boolean
+            ),
             status: "inactive",
             joinDate: "2024-01-05",
           },
@@ -126,9 +137,15 @@ export default function GlobalUsersPage() {
       if (parts.length >= 2) {
         const firstInitial = parts[0][0].toLowerCase();
         const lastName = parts.slice(1).join("").toLowerCase();
-        setFormData((prev) => ({ ...prev, email: `${firstInitial}${lastName}@quirkcars.com` }));
+        setFormData((prev) => ({
+          ...prev,
+          email: `${firstInitial}${lastName}@quirkcars.com`,
+        }));
       } else {
-        setFormData((prev) => ({ ...prev, email: `${parts[0].toLowerCase()}@quirkcars.com` }));
+        setFormData((prev) => ({
+          ...prev,
+          email: `${parts[0].toLowerCase()}@quirkcars.com`,
+        }));
       }
     } else {
       setFormData((prev) => ({ ...prev, email: "" }));
@@ -149,18 +166,34 @@ export default function GlobalUsersPage() {
       role: "sales_manager",
       password: "",
       dealershipIds: [],
+      isGlobalAdmin: false,
     });
   };
 
   const handleAddUser = async () => {
-    if (!formData.name || !formData.email || formData.dealershipIds.length === 0) return;
+    // Validation:
+    // GM: >=1 dealership
+    // Admin: global OR exactly one dealership
+    // Others: exactly one dealership
+    const roleIsGM = formData.role === "general_manager";
+    const roleIsAdmin = formData.role === "admin";
+
+    const hasDealershipRequirement =
+      roleIsGM
+        ? formData.dealershipIds.length > 0
+        : roleIsAdmin
+        ? formData.isGlobalAdmin || formData.dealershipIds.length === 1
+        : formData.dealershipIds.length === 1;
+
+    if (!formData.name || !formData.email || !hasDealershipRequirement) return;
 
     const newUser: User = {
       id: String(users.length + 1),
       name: formData.name,
       email: formData.email,
       role: formData.role,
-      dealershipIds: formData.dealershipIds,
+      dealershipIds: formData.isGlobalAdmin ? [] : formData.dealershipIds,
+      isGlobalAdmin: roleIsAdmin ? formData.isGlobalAdmin : false,
       status: "active",
       joinDate: new Date().toISOString().split("T")[0],
     };
@@ -182,16 +215,31 @@ export default function GlobalUsersPage() {
   };
 
   const roleIsGM = formData.role === "general_manager";
-  const canSubmit = Boolean(formData.name && formData.email && formData.dealershipIds.length > 0);
+  const roleIsAdmin = formData.role === "admin";
+
+  const canSubmit = Boolean(
+    formData.name &&
+      formData.email &&
+      (roleIsGM
+        ? formData.dealershipIds.length > 0
+        : roleIsAdmin
+        ? formData.isGlobalAdmin || formData.dealershipIds.length === 1
+        : formData.dealershipIds.length === 1)
+  );
 
   const filteredUsers =
-    filterRole === "all" ? users : users.filter((u) => u.role === (filterRole as Role));
+    filterRole === "all"
+      ? users
+      : users.filter((u) => u.role === (filterRole as Role));
 
   const namesFromIds = (ids: string[]) =>
     ids
       .map((id) => DEALERSHIPS.find((d) => d.id === id)?.name)
       .filter(Boolean)
       .join(", ");
+
+  const displayDealerships = (u: User) =>
+    u.isGlobalAdmin ? "All Dealerships (Global Admin)" : namesFromIds(u.dealershipIds);
 
   return (
     <PermissionGuard
@@ -201,7 +249,9 @@ export default function GlobalUsersPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+            <p className="text-gray-600">
+              You don't have permission to access the admin panel.
+            </p>
           </div>
         </div>
       }
@@ -214,7 +264,9 @@ export default function GlobalUsersPage() {
             <div className="py-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    User Management
+                  </h1>
                   <p className="mt-1 text-sm text-gray-500">
                     Add, edit, and remove user accounts and permissions
                   </p>
@@ -229,7 +281,9 @@ export default function GlobalUsersPage() {
           {/* Filter + Add */}
           <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
-              <label className="text-sm font-medium text-gray-700">Filter by Role:</label>
+              <label className="text-sm font-medium text-gray-700">
+                Filter by Role:
+              </label>
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
@@ -238,7 +292,9 @@ export default function GlobalUsersPage() {
                 <option value="all">All Roles</option>
                 <option value="admin">Admin</option>
                 <option value="general_manager">General Manager</option>
-                <option value="general_sales_manager">General Sales Manager</option>
+                <option value="general_sales_manager">
+                  General Sales Manager
+                </option>
                 <option value="sales_manager">Sales Manager</option>
               </select>
             </div>
@@ -257,12 +313,24 @@ export default function GlobalUsersPage() {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Dealerships</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Dealerships
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -271,13 +339,18 @@ export default function GlobalUsersPage() {
                       <td colSpan={6} className="px-6 py-12 text-center">
                         <div className="inline-flex items-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                          <span className="ml-2 text-gray-600">Loading users...</span>
+                          <span className="ml-2 text-gray-600">
+                            Loading users...
+                          </span>
                         </div>
                       </td>
                     </tr>
                   ) : filteredUsers.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                      <td
+                        colSpan={6}
+                        className="px-6 py-12 text-center text-gray-500"
+                      >
                         <Users className="mx-auto h-12 w-12 text-gray-300 mb-2" />
                         <p>No users found</p>
                       </td>
@@ -285,7 +358,9 @@ export default function GlobalUsersPage() {
                   ) : (
                     filteredUsers.map((u) => (
                       <tr key={u.id} className="hover:bg-gray-50 transition">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{u.name}</td>
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                          {u.name}
+                        </td>
                         <td className="px-6 py-4 text-sm text-gray-600 flex items-center">
                           <Mail className="h-4 w-4 mr-2 text-gray-400" />
                           {u.email}
@@ -297,7 +372,7 @@ export default function GlobalUsersPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
-                          {namesFromIds(u.dealershipIds)}
+                          {displayDealerships(u)}
                         </td>
                         <td className="px-6 py-4 text-sm">
                           <span
@@ -309,10 +384,13 @@ export default function GlobalUsersPage() {
                           >
                             <span
                               className={`h-2 w-2 rounded-full mr-1.5 ${
-                                u.status === "active" ? "bg-green-600" : "bg-gray-400"
+                                u.status === "active"
+                                  ? "bg-green-600"
+                                  : "bg-gray-400"
                               }`}
                             />
-                            {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
+                            {u.status.charAt(0).toUpperCase() +
+                              u.status.slice(1)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm">
@@ -344,7 +422,9 @@ export default function GlobalUsersPage() {
           {showAddModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-lg">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Add New User</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Add New User
+                </h2>
 
                 <div className="space-y-4 mb-6">
                   {/* Full Name */}
@@ -386,35 +466,47 @@ export default function GlobalUsersPage() {
                     <select
                       value={formData.role}
                       onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, role: e.target.value as Role, dealershipIds: [] }))
+                        setFormData((prev) => ({
+                          ...prev,
+                          role: e.target.value as Role,
+                          dealershipIds: [],
+                          isGlobalAdmin: false,
+                        }))
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                     >
                       <option value="admin">Admin</option>
                       <option value="general_manager">General Manager</option>
-                      <option value="general_sales_manager">General Sales Manager</option>
+                      <option value="general_sales_manager">
+                        General Sales Manager
+                      </option>
                       <option value="sales_manager">Sales Manager</option>
                     </select>
                     <p className="text-xs text-gray-500 mt-1">
                       {roleIsGM
                         ? "General Managers can be assigned to multiple dealerships."
+                        : roleIsAdmin
+                        ? "Admins can be Global Admin or tied to a single dealership."
                         : "Select the user’s primary dealership."}
                     </p>
                   </div>
 
-                  {/* Dealership(s) - REQUIRED */}
+                  {/* Dealership(s) - Required */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Dealership{roleIsGM ? "s" : ""} *
                     </label>
 
                     {roleIsGM ? (
-                      // Multi-select by checkboxes for GM
+                      // GM: multi-select (checkboxes)
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-56 overflow-auto rounded border p-3">
                         {DEALERSHIPS.map((d) => {
                           const checked = formData.dealershipIds.includes(d.id);
                           return (
-                            <label key={d.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                            <label
+                              key={d.id}
+                              className="flex items-center gap-2 text-sm cursor-pointer"
+                            >
                               <input
                                 type="checkbox"
                                 checked={checked}
@@ -423,7 +515,10 @@ export default function GlobalUsersPage() {
                                     const set = new Set(prev.dealershipIds);
                                     if (checked) set.delete(d.id);
                                     else set.add(d.id);
-                                    return { ...prev, dealershipIds: Array.from(set) };
+                                    return {
+                                      ...prev,
+                                      dealershipIds: Array.from(set),
+                                    };
                                   })
                                 }
                                 className="h-4 w-4"
@@ -434,18 +529,38 @@ export default function GlobalUsersPage() {
                         })}
                       </div>
                     ) : (
-                      // Single select dropdown for all other roles
+                      // Others (Admin & non-GM roles): single-select
                       <select
-                        value={formData.dealershipIds[0] ?? ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            dealershipIds: e.target.value ? [e.target.value] : [],
-                          }))
+                        value={
+                          formData.isGlobalAdmin
+                            ? GLOBAL_ADMIN_ID
+                            : formData.dealershipIds[0] ?? ""
                         }
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === GLOBAL_ADMIN_ID) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              isGlobalAdmin: true,
+                              dealershipIds: [],
+                            }));
+                          } else {
+                            setFormData((prev) => ({
+                              ...prev,
+                              isGlobalAdmin: false,
+                              dealershipIds: val ? [val] : [],
+                            }));
+                          }
+                        }}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                       >
                         <option value="">Select a dealership</option>
+                        {/* Only show Global Admin option when Role = Admin */}
+                        {roleIsAdmin && (
+                          <option value={GLOBAL_ADMIN_ID}>
+                            Global Admin (All Dealerships)
+                          </option>
+                        )}
                         {DEALERSHIPS.map((d) => (
                           <option key={d.id} value={d.id}>
                             {d.name}
@@ -455,29 +570,33 @@ export default function GlobalUsersPage() {
                     )}
                   </div>
 
-                    {/* Password (optional) */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Password
-                      </label>
-                      <input
-                        type="password"
-                        value={formData.password}
-                        onChange={(e) =>
-                          setFormData((prev) => ({ ...prev, password: e.target.value }))
-                        }
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                        placeholder="User will be prompted to create"
-                      />
-                    </div>
+                  {/* Password (optional) */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      placeholder="User will be prompted to create"
+                    />
                   </div>
+                </div>
 
                 {/* Note */}
                 <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                   <p className="text-xs text-blue-800">
-                    <strong>Note:</strong> Leave the password field blank. Users will create their
-                    own password upon first login with the following requirements: lowercase,
-                    uppercase, at least 1 number, and 1 special character.
+                    <strong>Note:</strong> Leave the password field blank. Users
+                    will create their own password upon first login with the
+                    following requirements: lowercase, uppercase, at least 1
+                    number, and 1 special character.
                   </p>
                 </div>
 
