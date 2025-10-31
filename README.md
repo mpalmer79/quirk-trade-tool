@@ -205,9 +205,9 @@ pnpm dev
 
 | Email | Password | Role | Access |
 |-------|----------|------|--------|
-| `admin@quirk.com` | `admin123` | Admin | All dealerships, full access |
-| `gm@quirk.com` | `gm123` | General Manager | Multiple dealerships |
-| `sales@quirk.com` | `sales123` | General Sales Manager | Single dealership, user management |
+| `admin@quirkcars.com` | `admin123` | Admin | All dealerships, full access |
+| `gm@quirkcars.com` | `gm123` | General Manager | Multiple dealerships |
+| `sales@quirkcars.com` | `sales123` | General Sales Manager | Single dealership, user management |
 
 ### Quick Login
 
