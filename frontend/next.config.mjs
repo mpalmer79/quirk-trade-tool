@@ -1,15 +1,8 @@
-const isPages = process.env.GITHUB_PAGES === 'true';
-const repo = 'quirk-trade-tool';
-
+/** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  trailingSlash: true,
-  images: { unoptimized: true },
-  basePath: isPages ? `/${repo}` : undefined,
-  assetPrefix: isPages ? `/${repo}/` : undefined,
-  env: {
-    NEXT_PUBLIC_BASE_PATH: isPages ? `/${repo}` : ''
-  }
+  reactStrictMode: true,
+  swcMinify: true,
+  pageExtensions: ['page.tsx', 'page.ts', 'page.jsx', 'page.js']
 };
 
 export default nextConfig;
