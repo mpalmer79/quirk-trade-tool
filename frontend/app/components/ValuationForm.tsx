@@ -67,6 +67,30 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   const availableModels = make ? modelsByMake[make] || [] : [];
 
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [decoding, setDecoding] = React.useState(false);
+  const decodeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Auto-decode VIN as user types (with debounce)
+  React.useEffect(() => {
+    if (decodeTimeoutRef.current) {
+      clearTimeout(decodeTimeoutRef.current);
+    }
+
+    if (!vin || vin.length < 11) {
+      return;
+    }
+
+    // Debounce: wait 800ms after user stops typing before decoding
+    decodeTimeoutRef.current = setTimeout(() => {
+      onDecodeVin();
+    }, 800);
+
+    return () => {
+      if (decodeTimeoutRef.current) {
+        clearTimeout(decodeTimeoutRef.current);
+      }
+    };
+  }, [vin]);
 
   const onSubmit = async (data: FormData) => {
     setErrorMsg(null);
@@ -94,12 +118,9 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
     }
   };
 
-  const [decoding, setDecoding] = React.useState(false);
-
   const onDecodeVin = async () => {
     setErrorMsg(null);
     if (!vin || vin.length < 11) {
-      setErrorMsg("Enter at least 11 characters of a VIN.");
       return;
     }
     setDecoding(true);
@@ -133,7 +154,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         const yr = Number(row.ModelYear) || undefined;
         const mk = row.Make || undefined;
         const mdl = row.Model || undefined;
-        const trm = row.Trim || row.Series || undefined;
+        const trm = row.Trim || row.Series || row.ModelVariantDescription || undefined;
 
         if (yr) setValue("year", yr);
         if (mk) setValue("make", mk);
@@ -144,7 +165,6 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         return;
       } catch (err) {
         console.error("VIN decode fallback failed", err);
-        setErrorMsg("VIN decode failed. Try again.");
       }
     } finally {
       setDecoding(false);
@@ -180,7 +200,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
 
       {/* VIN + Decode */}
       <div className="mb-6">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">VIN (optional)</label>
+        <label className="block text-sm font-semibold text-gray-700 mb-2">VIN (optional) - Auto-fill vehicle details</label>
         <div className="flex gap-2">
           <input
             {...register("vin")}
@@ -190,13 +210,29 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
           <button
             type="button"
             onClick={onDecodeVin}
-            disabled={decoding || !vin}
-            className={`px-4 py-2.5 rounded-lg font-semibold text-white ${decoding ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}
+            disabled={decoding || !vin || vin.length < 11}
+            className={`px-4 py-2.5 rounded-lg font-semibold text-white transition ${
+              decoding || !vin || vin.length < 11
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-teal-500 hover:bg-teal-600"
+            }`}
           >
-            {decoding ? "Decoding..." : (<span className="inline-flex items-center gap-2"><ScanLine className="w-4 h-4" /> Decode</span>)}
+            {decoding ? (
+              <span className="inline-flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                Decode
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-2">
+                <ScanLine className="w-4 h-4" />
+                Decode
+              </span>
+            )}
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-1">Decodes via NHTSA VPIC if server is unavailable.</p>
+        <p className="text-xs text-gray-500 mt-1">
+          {vin && vin.length >= 11 ? "Auto-decoding in progress..." : "Enter 11+ characters to auto-decode. Decodes via NHTSA VPIC if server unavailable."}
+        </p>
       </div>
 
       {/* Vehicle fields */}
