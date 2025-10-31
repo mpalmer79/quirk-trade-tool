@@ -23,7 +23,7 @@ interface User {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "manager" | "user";
+  role: "admin" | "general_manager" | "general_sales_manager" | "sales_manager";
   status: "active" | "inactive";
   joinDate: string;
 }
@@ -91,7 +91,7 @@ export default function DealershipUsersPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "user",
+    role: "sales_manager",
     password: "",
   });
 
@@ -117,7 +117,7 @@ export default function DealershipUsersPage() {
           id: "2",
           name: "Sarah Johnson",
           email: "sarah.johnson@dealership.com",
-          role: "manager",
+          role: "general_manager",
           status: "active",
           joinDate: "2024-02-20",
         },
@@ -125,7 +125,7 @@ export default function DealershipUsersPage() {
           id: "3",
           name: "Mike Davis",
           email: "mike.davis@dealership.com",
-          role: "user",
+          role: "general_sales_manager",
           status: "active",
           joinDate: "2024-03-10",
         },
@@ -133,7 +133,7 @@ export default function DealershipUsersPage() {
           id: "4",
           name: "Lisa Anderson",
           email: "lisa.anderson@dealership.com",
-          role: "user",
+          role: "sales_manager",
           status: "inactive",
           joinDate: "2024-01-05",
         },
@@ -145,14 +145,20 @@ export default function DealershipUsersPage() {
     }
   };
 
-  const handleDeleteUser = (userId: string) => {
-    // TODO: Implement delete API call
-    setUsers(users.filter((u) => u.id !== userId));
+  // Format role name for display
+  const formatRoleName = (role: string) => {
+    const roleMap: Record<string, string> = {
+      admin: "Admin",
+      general_manager: "General Manager",
+      general_sales_manager: "General Sales Manager",
+      sales_manager: "Sales Manager",
+    };
+    return roleMap[role] || role;
   };
 
   const handleCloseModal = () => {
     setShowAddModal(false);
-    setFormData({ name: "", email: "", role: "user", password: "" });
+    setFormData({ name: "", email: "", role: "sales_manager", password: "" });
   };
 
   const handleAddUser = async () => {
@@ -162,7 +168,7 @@ export default function DealershipUsersPage() {
         id: String(users.length + 1),
         name: formData.name,
         email: formData.email,
-        role: (formData.role as "admin" | "manager" | "user") || "user",
+        role: (formData.role as "admin" | "general_manager" | "general_sales_manager" | "sales_manager") || "sales_manager",
         status: "active",
         joinDate: new Date().toISOString().split("T")[0],
       };
@@ -308,7 +314,7 @@ export default function DealershipUsersPage() {
                         <td className="px-6 py-4 text-sm">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             <Shield className="h-3 w-3 mr-1" />
-                            {u.role.charAt(0).toUpperCase() + u.role.slice(1)}
+                            {formatRoleName(u.role)}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm">
@@ -399,9 +405,10 @@ export default function DealershipUsersPage() {
                       }
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                     >
-                      <option value="user">User</option>
-                      <option value="manager">Manager</option>
                       <option value="admin">Admin</option>
+                      <option value="general_manager">General Manager</option>
+                      <option value="general_sales_manager">General Sales Manager</option>
+                      <option value="sales_manager">Sales Manager</option>
                     </select>
                   </div>
                   <div>
