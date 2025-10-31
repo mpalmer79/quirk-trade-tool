@@ -1,1 +1,66 @@
+{
+  "semi": true,
+  "trailingComma": "es5",
+  "singleQuote": true,
+  "printWidth": 100,
+  "tabWidth": 2,
+  "useTabs": false,
+  "bracketSpacing": true,
+  "arrowParens": "always",
+  "endOfLine": "lf",
+  "jsxBracketSameLine": false,
+  "jsxSingleQuote": false,
+  "proseWrap": "preserve",
+  "htmlWhitespaceSensitivity": "css",
+  "embeddedLanguageFormatting": "auto"
+}
+```
 
+---
+
+## **File 2: `.prettierignore`**
+
+Create in project root:
+```
+# Dependencies
+node_modules
+dist
+build
+.next
+out
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+.DS_Store
+
+# Logs
+logs
+*.log
+npm-debug.log
+
+# Coverage
+coverage
+.nyc_output
+
+# Misc
+.git
+.gitignore
+.cache
+
+# Package management
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Database
+*.sql
+migrations/
+
+# Static files
+public/
