@@ -1,4 +1,5 @@
 import type { AppraiseInput } from '../schemas/appraise.js';
+import { getRegionalAdjustment } from './regional-adjustment.js';
 
 export function demoHeuristic(f: AppraiseInput): number {
   const now = new Date().getFullYear();
@@ -11,5 +12,9 @@ export function demoHeuristic(f: AppraiseInput): number {
   base = Math.max(base, 2000);
   base *= conditionMultipliers[f.condition] ?? 1;
   base += (f.options?.length ?? 0) * 500;
+  
+  // Apply regional market adjustment
+  base *= getRegionalAdjustment(f);
+  
   return Math.round(base);
 }
