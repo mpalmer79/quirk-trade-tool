@@ -8,7 +8,7 @@
  * GET /api/valuations/statistics/:year/:make/:model - Get model statistics
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { authorizationService } from '../services/authorization-service.js';
@@ -41,54 +41,26 @@ type ValuationRequestBody = z.infer<typeof ValuationRequestSchema>;
  * 
  * Calculate vehicle valuation with multi-source aggregation and depreciation applied
  * 
- * Required auth: Authenticated user with CREATE_APPRAISAL permission
- * Dealership access: User must have access to the specified storeId
- * 
- * Request body:
- * {
- *   storeId: string (required)
- *   year: number (required)
- *   make: string (required)
- *   model: string (required)
- *   trim?: string
- *   mileage: number (required)
- *   condition: 1-5 (required)
- *   options?: string[]
- *   vin?: string
- *   zip?: string
- * }
- * 
- * Response:
- * {
- *   id: string
- *   baseWholesaleValue: number
- *   depreciation: {...}
- *   finalWholesaleValue: number
- *   quotes: Array<{source, value, confidence}>
- *   vehicle: {vin, year, make, model, trim, mileage}
- *   dealership: {id}
- *   timestamp: string
- * }
+ * If an Authorization header is present, we authenticate and enforce permissions
+ * + dealership access. If no token is present, we allow the request to run in a
+ * public/demo mode as userId "anonymous" (no permission/dealership checks).
  */
 router.post(
   '/calculate',
-  authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
-    // ============================================================================
-    // STEP 1: VALIDATE PERMISSION
-    // ============================================================================
-    if (!authorizationService.hasPermission(req.user!, Permission.CREATE_APPRAISAL)) {
-      return res.status(403).json({
-        error: 'insufficient_permissions',
-        message: 'You do not have permission to calculate valuations'
-      });
+  // Optional auth: only authenticate if a Bearer token is present.
+  (req: Request, res: Response, next: NextFunction) => {
+    const auth = req.headers.authorization;
+    if (auth && auth.startsWith('Bearer ')) {
+      return authenticate(req, res, next);
     }
-
-    // ============================================================================
-    // STEP 2: VALIDATE REQUEST
+    return next();
+  },
+  asyncHandler(async (req: Request, res: Response) => {
+    // ============================================================================ 
+    // STEP 1: VALIDATE REQUEST
     // ============================================================================
     let payload: ValuationRequestBody;
-    
+
     try {
       payload = ValuationRequestSchema.parse(req.body);
     } catch (error) {
@@ -105,21 +77,32 @@ router.post(
       throw error;
     }
 
+    const isAuthenticated = !!req.user;
+
+    // ============================================================================ 
+    // STEP 2: PERMISSION & DEALERSHIP ACCESS (only when authenticated)
     // ============================================================================
-    // STEP 3: VALIDATE DEALERSHIP ACCESS
-    // ============================================================================
-    if (!authorizationService.canAccessDealership(req.user!, payload.storeId)) {
-      return res.status(403).json({
-        error: 'dealership_access_denied',
-        message: `You do not have access to dealership ${payload.storeId}`
-      });
+    if (isAuthenticated) {
+      if (!authorizationService.hasPermission(req.user!, Permission.CREATE_APPRAISAL)) {
+        return res.status(403).json({
+          error: 'insufficient_permissions',
+          message: 'You do not have permission to calculate valuations'
+        });
+      }
+
+      if (!authorizationService.canAccessDealership(req.user!, payload.storeId)) {
+        return res.status(403).json({
+          error: 'dealership_access_denied',
+          message: `You do not have access to dealership ${payload.storeId}`
+        });
+      }
     }
 
-    const userId = req.user!.userId;
+    const userId = req.user?.userId ?? 'anonymous';
     console.log(`📥 Valuation request received from ${payload.storeId} by user ${userId}`);
 
-    // ============================================================================
-    // STEP 4: CREATE SERVICE REQUEST
+    // ============================================================================ 
+    // STEP 3: CREATE SERVICE REQUEST
     // ============================================================================
     const valuationRequest: ValuationRequest = {
       vin: payload.vin,
@@ -133,13 +116,13 @@ router.post(
       dealershipId: payload.storeId,
     };
 
-    // ============================================================================
-    // STEP 5: CALL VALUATION SERVICE
+    // ============================================================================ 
+    // STEP 4: CALL VALUATION SERVICE
     // ============================================================================
     const valuation = await valuationService.performValuation(valuationRequest);
 
-    // ============================================================================
-    // STEP 6: AUDIT LOG
+    // ============================================================================ 
+    // STEP 5: AUDIT LOG
     // ============================================================================
     await auditLog({
       userId,
@@ -159,8 +142,8 @@ router.post(
       timestamp: new Date()
     });
 
-    // ============================================================================
-    // STEP 7: RETURN RESPONSE
+    // ============================================================================ 
+    // STEP 6: RETURN RESPONSE
     // ============================================================================
     console.log(`✅ Returning valuation to ${payload.storeId}: $${valuation.finalWholesaleValue.toLocaleString()}`);
 
@@ -232,7 +215,7 @@ router.post(
   '/validate-depreciation',
   authenticate,                                    // ← Verify JWT token
   asyncHandler(async (req: Request, res: Response) => {
-    // ============================================================================
+    // ============================================================================ 
     // STEP 1: VALIDATE ADMIN ROLE
     // ============================================================================
     if (req.user!.role !== UserRole.ADMIN) {
@@ -242,7 +225,7 @@ router.post(
       });
     }
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 2: VALIDATE CONFIGURATION
     // ============================================================================
     console.log('🔍 Validating depreciation configuration...');
@@ -252,7 +235,7 @@ router.post(
 
     console.log(`${isValid ? '✅' : '❌'} Depreciation validation: ${isValid ? 'VALID' : 'INVALID'}`);
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 3: AUDIT LOG
     // ============================================================================
     await auditLog({
@@ -265,7 +248,7 @@ router.post(
       timestamp: new Date()
     });
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 4: RETURN RESPONSE
     // ============================================================================
     return res.json({
@@ -302,7 +285,7 @@ router.get(
   '/history/:vin',
   authenticate,                                    // ← Verify JWT token
   asyncHandler(async (req: Request, res: Response) => {
-    // ============================================================================
+    // ============================================================================ 
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
@@ -312,7 +295,7 @@ router.get(
       });
     }
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 2: VALIDATE PARAMETERS
     // ============================================================================
     const { vin } = req.params;
@@ -340,7 +323,7 @@ router.get(
       });
     }
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
@@ -353,12 +336,12 @@ router.get(
     const userId = req.user!.userId;
     console.log(`📋 Retrieving valuation history for ${vin} (last ${days} days) by user ${userId}`);
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 4: RETRIEVE HISTORY
     // ============================================================================
     const valuations = await valuationService.getValuationHistory(vin, days, dealershipId);
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 5: AUDIT LOG
     // ============================================================================
     await auditLog({
@@ -372,14 +355,14 @@ router.get(
       timestamp: new Date()
     });
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 6: CALCULATE AVERAGE
     // ============================================================================
     const averageValue = valuations.length > 0
       ? Math.round(valuations.reduce((sum, v) => sum + v.finalWholesaleValue, 0) / valuations.length)
       : null;
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 7: RETURN RESPONSE
     // ============================================================================
     return res.json({
@@ -424,7 +407,7 @@ router.get(
   '/statistics/:year/:make/:model',
   authenticate,                                    // ← Verify JWT token
   asyncHandler(async (req: Request, res: Response) => {
-    // ============================================================================
+    // ============================================================================ 
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_DEALERSHIP_REPORTS)) {
@@ -434,7 +417,7 @@ router.get(
       });
     }
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 2: VALIDATE PARAMETERS
     // ============================================================================
     const { year, make, model } = req.params;
@@ -462,7 +445,7 @@ router.get(
       });
     }
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
@@ -475,7 +458,7 @@ router.get(
     const userId = req.user!.userId;
     console.log(`📊 Retrieving statistics for ${year} ${make} ${model} (last ${days} days) by user ${userId}`);
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 4: RETRIEVE STATISTICS
     // ============================================================================
     const statistics = await valuationService.getModelStatistics(
@@ -486,7 +469,7 @@ router.get(
       dealershipId
     );
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 5: AUDIT LOG
     // ============================================================================
     await auditLog({
@@ -500,7 +483,7 @@ router.get(
       timestamp: new Date()
     });
 
-    // ============================================================================
+    // ============================================================================ 
     // STEP 6: RETURN RESPONSE
     // ============================================================================
     return res.json({
