@@ -1,5 +1,6 @@
 import type { VinDecodeResult } from './types.js';
 import { decodeVinWithNhtsa } from './nhtsa.js';
+import { decodeVinWithAutoDev } from './autodev.js';
 
 // Pluggable VIN decode pipeline: add commercial decoders here (e.g., Black Book VIN-specific, DataOne, ChromeData).
 export async function decodeVin(vin: string): Promise<VinDecodeResult> {
@@ -10,9 +11,15 @@ export async function decodeVin(vin: string): Promise<VinDecodeResult> {
   }
 
   // Priority order (when you license: commercial → fallback)
-  // const commercial = await decodeWithCommercial(cleaned).catch(() => null);
-  // if (commercial && !commercial.errors?.length) return commercial;
+  // 1. Try Auto.dev (primary commercial)
+  if (process.env.AUTODEV_API_KEY) {
+    const autoDev = await decodeVinWithAutoDev(cleaned).catch(() => null);
+    if (autoDev && !autoDev.errors?.length) {
+      console.log('VIN decode via Auto.dev successful');
+      return autoDev;
+    }
+  }
 
-  // Fallback to NHTSA
+  // 2. Fallback to NHTSA
   return await decodeVinWithNhtsa(cleaned);
 }
