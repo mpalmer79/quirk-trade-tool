@@ -2,7 +2,7 @@
 
 import React from "react";
 import { TrendingUp, DollarSign, BarChart3, AlertCircle } from "lucide-react";
-import type { PricingAnalysis, VehicleListing } from "@/hooks/useVehicleListings";
+import type { PricingAnalysis, VehicleListing } from "@/hooks/usedVehicleListings";
 
 interface WholesalePricingProps {
   pricing?: PricingAnalysis;
