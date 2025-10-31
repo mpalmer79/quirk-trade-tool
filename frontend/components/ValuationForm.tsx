@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { DollarSign, AlertCircle } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { useVehicleData } from '@/hooks/useVehicleData';
 
 interface ValuationFormProps {
@@ -24,7 +24,7 @@ export default function ValuationForm({ onSubmit, isLoading, error }: ValuationF
   // Auto-fetch models when make and year change
   useEffect(() => {
     fetchModels(make, year);
-  }, [make, year]);
+  }, [make, year, fetchModels]);
 
   // Auto-decode VIN when input changes (11+ characters)
   useEffect(() => {
