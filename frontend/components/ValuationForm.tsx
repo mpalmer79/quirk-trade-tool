@@ -60,20 +60,20 @@ export default function ValuationForm({ onSubmit, isLoading, error }: ValuationF
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const handleSubmit = (e: React.FormEvent) => {
-  e.preventDefault();
-  // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
-  onSubmit({ 
-    vin, 
-    year, 
-    make, 
-    model, 
-    trim, 
-    mileage: parseInt(mileage),
-    zip: "02122"
-  });
-};
+    // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
+    onSubmit({ 
+      vin, 
+      year, 
+      make, 
+      model, 
+      trim, 
+      mileage: parseInt(mileage),
+      zip: "02122"
+    });
+  };
 
+  return (
+    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded">
         <div className="flex items-start gap-2">
           <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
