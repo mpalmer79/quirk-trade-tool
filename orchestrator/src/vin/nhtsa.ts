@@ -16,12 +16,22 @@ export async function decodeVinWithNhtsa(vin: string): Promise<VinDecodeResult> 
   const yearStr = (row.ModelYear ?? '').toString().trim();
   const year = /^\d{4}$/.test(yearStr) ? Number(yearStr) : undefined;
 
+  // Extract model - NHTSA provides this in the Model field
+  const model = (row.Model ?? '').toString().trim() || undefined;
+
+  // Extract trim with fallbacks: Trim → Series → ModelVariantDescription
+  const trim =
+    (row.Trim ?? '').toString().trim() ||
+    (row.Series ?? '').toString().trim() ||
+    (row.ModelVariantDescription ?? '').toString().trim() ||
+    undefined;
+
   const result: VinDecodeResult = {
     vin,
     year,
     make: (row.Make ?? '').toString().trim() || undefined,
-    model: (row.Model ?? '').toString().trim() || undefined,
-    trim: (row.Trim ?? '').toString().trim() || (row.Series ?? '').toString().trim() || undefined,
+    model,
+    trim,
     bodyClass: (row.BodyClass ?? '').toString().trim() || undefined,
     fuelTypePrimary: (row.FuelTypePrimary ?? '').toString().trim() || undefined,
     driveType: (row.DriveType ?? '').toString().trim() || undefined,
