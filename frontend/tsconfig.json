@@ -18,5 +18,5 @@
       "@lib/*": ["app/lib/*"]
     }
   },
-  "include": ["app/**/*", "hooks/**/*", "components/**/*", "next-env.d.ts"]
+  "include": ["app/**/*", "components/**/*", "hooks/**/*", "next-env.d.ts"]
 }
