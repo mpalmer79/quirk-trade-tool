@@ -70,28 +70,6 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   const [decoding, setDecoding] = React.useState(false);
   const decodeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-decode VIN as user types (with debounce)
-  React.useEffect(() => {
-    if (decodeTimeoutRef.current) {
-      clearTimeout(decodeTimeoutRef.current);
-    }
-
-    if (!vin || vin.length < 11) {
-      return;
-    }
-
-    // Debounce: wait 800ms after user stops typing before decoding
-    decodeTimeoutRef.current = setTimeout(() => {
-      onDecodeVin();
-    }, 800);
-
-    return () => {
-      if (decodeTimeoutRef.current) {
-        clearTimeout(decodeTimeoutRef.current);
-      }
-    };
-  }, [vin]);
-
   const onSubmit = async (data: FormData) => {
     setErrorMsg(null);
     // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
@@ -118,7 +96,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
     }
   };
 
-  const onDecodeVin = async () => {
+  const onDecodeVin = React.useCallback(async () => {
     setErrorMsg(null);
     if (!vin || vin.length < 11) {
       return;
@@ -169,7 +147,29 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
     } finally {
       setDecoding(false);
     }
-  };
+  }, [vin, apiBase, setValue]);
+
+  // Auto-decode VIN as user types (with debounce)
+  React.useEffect(() => {
+    if (decodeTimeoutRef.current) {
+      clearTimeout(decodeTimeoutRef.current);
+    }
+
+    if (!vin || vin.length < 11) {
+      return;
+    }
+
+    // Debounce: wait 800ms after user stops typing before decoding
+    decodeTimeoutRef.current = setTimeout(() => {
+      onDecodeVin();
+    }, 800);
+
+    return () => {
+      if (decodeTimeoutRef.current) {
+        clearTimeout(decodeTimeoutRef.current);
+      }
+    };
+  }, [vin, onDecodeVin]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>
