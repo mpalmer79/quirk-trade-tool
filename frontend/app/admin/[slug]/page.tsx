@@ -12,8 +12,6 @@ import {
   Users,
   Activity,
   TrendingUp,
-  Settings,
-  ShieldCheck,
   BarChart3,
   FileText,
   ArrowRight,
@@ -39,6 +37,20 @@ export default function DealershipAdminPage() {
       .replace(/[^\w]/g, "");
     return dealershipSlug === slug;
   });
+
+  // Extract dealership display name (Brand + State, without city)
+  const getDealershipDisplayName = (name: string) => {
+    // Format: "Brand Name – City, State" -> "Brand Name State"
+    const parts = name.split("–");
+    if (parts.length > 1) {
+      const brand = parts[0].trim();
+      const location = parts[1].trim();
+      const stateMatch = location.match(/([A-Z]{2})$/);
+      const state = stateMatch ? stateMatch[1] : "";
+      return `${brand} ${state}`.trim();
+    }
+    return name;
+  };
 
   const [stats, setStats] = useState<DealershipStats>({
     totalUsers: 0,
@@ -123,18 +135,17 @@ export default function DealershipAdminPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900">
-                    {dealership.name} Admin Dashboard
+                    {getDealershipDisplayName(dealership.name)} Admin Dashboard
                   </h1>
                   <p className="mt-1 text-sm text-gray-500">
                     Welcome back, {user?.name}
                   </p>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                    <ShieldCheck className="mr-1.5 h-4 w-4" />
-                    {user?.role}
-                  </span>
-                </div>
+                <Link href="/admin">
+                  <button className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition">
+                    Admin HOME
+                  </button>
+                </Link>
               </div>
             </div>
           </div>
@@ -187,15 +198,6 @@ export default function DealershipAdminPage() {
                 disabled
               />
             </div>
-          </div>
-
-          {/* Admin HOME Button */}
-          <div className="mb-8">
-            <Link href="/admin">
-              <button className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition">
-                Admin HOME
-              </button>
-            </Link>
           </div>
 
           {/* Recent Activity (Placeholder) */}
