@@ -54,9 +54,46 @@ export default function DealershipUsersPage() {
     return name;
   };
 
+  // Auto-generate email from first initial + full last name
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fullName = e.target.value;
+    setFormData({ ...formData, name: fullName });
+
+    // Extract first initial and full last name, then auto-populate email
+    if (fullName.trim()) {
+      const nameParts = fullName.trim().split(" ");
+      if (nameParts.length >= 2) {
+        const firstInitial = nameParts[0][0].toLowerCase();
+        const lastName = nameParts.slice(1).join("").toLowerCase();
+        setFormData((prev) => ({
+          ...prev,
+          email: `${firstInitial}${lastName}@quirkcars.com`,
+        }));
+      } else {
+        // If only one name, use the full name
+        const firstName = nameParts[0].toLowerCase();
+        setFormData((prev) => ({
+          ...prev,
+          email: `${firstName}@quirkcars.com`,
+        }));
+      }
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        email: "",
+      }));
+    }
+  };
+
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    role: "user",
+    password: "",
+  });
 
   useEffect(() => {
     loadUsers();
@@ -111,6 +148,27 @@ export default function DealershipUsersPage() {
   const handleDeleteUser = (userId: string) => {
     // TODO: Implement delete API call
     setUsers(users.filter((u) => u.id !== userId));
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setFormData({ name: "", email: "", role: "user", password: "" });
+  };
+
+  const handleAddUser = async () => {
+    // TODO: Implement add user API call
+    if (formData.name && formData.email) {
+      const newUser: User = {
+        id: String(users.length + 1),
+        name: formData.name,
+        email: formData.email,
+        role: (formData.role as "admin" | "manager" | "user") || "user",
+        status: "active",
+        joinDate: new Date().toISOString().split("T")[0],
+      };
+      setUsers([...users, newUser]);
+      handleCloseModal();
+    }
   };
 
   if (!dealership) {
@@ -305,45 +363,78 @@ export default function DealershipUsersPage() {
                 <div className="space-y-4 mb-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Full Name
+                      Full Name *
                     </label>
                     <input
                       type="text"
+                      value={formData.name}
+                      onChange={handleNameChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                       placeholder="John Doe"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email
+                      Email *
                     </label>
                     <input
                       type="email"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                      placeholder="john@example.com"
+                      value={formData.email}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                      placeholder="john@quirkcars.com"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Auto-populated from first initial + last name
+                    </p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Role
+                      Role *
                     </label>
-                    <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600">
-                      <option>User</option>
-                      <option>Manager</option>
-                      <option>Admin</option>
+                    <select
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({ ...formData, role: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    >
+                      <option value="user">User</option>
+                      <option value="manager">Manager</option>
+                      <option value="admin">Admin</option>
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      placeholder="User will be prompted to create"
+                    />
+                  </div>
+                </div>
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-800">
+                    <strong>Note:</strong> Leave the password field blank. Users will create their own password upon first login with the following requirements: lowercase, uppercase, at least 1 number, and 1 special character.
+                  </p>
                 </div>
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={() => setShowAddModal(false)}
+                    onClick={handleCloseModal}
                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={() => setShowAddModal(false)}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                    onClick={handleAddUser}
+                    disabled={!formData.name || !formData.email}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Add User
                   </button>
