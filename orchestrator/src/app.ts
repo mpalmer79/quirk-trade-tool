@@ -9,6 +9,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { validateOnStartup } from './lib/startup-validation';
 import valuationRoutes from './routes/valuations';
+import listingsRoutes from './routes/listings';
 
 // ============================================================================
 // INITIALIZE EXPRESS APP
@@ -92,6 +93,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // ✅ Valuation routes
 app.use('/api/valuations', valuationRoutes);
+
+// ✅ Listings routes (vehicle market pricing & wholesale values)
+app.use('/api/listings', listingsRoutes);
 
 // Add other existing routes here
 // app.use('/api/vehicles', vehicleRoutes);
