@@ -70,11 +70,20 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
 
   const onSubmit = async (data: FormData) => {
     setErrorMsg(null);
-    const res = await fetch(`${apiBase}/api/appraise`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+    const onSubmit = async (data: FormData) => {
+  setErrorMsg(null);
+  // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
+  const submissionData = {
+    ...data,
+    zip: "02122"
+  };
+  const res = await fetch(`${apiBase}/api/appraise`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(submissionData)
+  });
+  // ... rest of code
+}
     if (!res.ok) {
       console.error("Appraise error", res.status, res.statusText);
       setErrorMsg("Appraisal failed. Please try again or contact support.");
