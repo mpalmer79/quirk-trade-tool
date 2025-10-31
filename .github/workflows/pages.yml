@@ -19,19 +19,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
       - name: Enable pnpm
         run: corepack enable && corepack prepare pnpm@9.15.0 --activate
-      - name: Clear all caches
+      - name: Clear Next.js build cache
         working-directory: frontend
-        run: |
-          rm -rf .next
-          rm -rf node_modules
-          rm -rf pnpm-lock.yaml
-      - name: Install workspace deps
-        run: pnpm install
-      - name: Install frontend deps explicitly
-        working-directory: frontend
-        run: pnpm install
+        run: rm -rf .next
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
       - name: Build static export for Pages
         working-directory: frontend
         env:
