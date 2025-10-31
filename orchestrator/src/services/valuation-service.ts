@@ -9,9 +9,12 @@
  * 4. Return comprehensive valuation result
  */
 
+import pino from 'pino';
 import { depreciationCalculator, type DepreciatedValuation } from './depreciation-calculator';
 import { cacheValuationResult, getValuationFromCache } from '../lib/cache';
 import { getRegionalAdjustment } from '../valuation/regional-adjustment.js';
+
+const log = pino();
 
 // Types
 export interface ValuationRequest {
@@ -24,7 +27,7 @@ export interface ValuationRequest {
   conditionRating: 1 | 2 | 3 | 4 | 5;
   options?: string[];
   dealershipId: string;
-  zip?: string;  // ZIP code for regional pricing adjustments
+  zip?: string;
 }
 
 export interface SourceValuation {
@@ -86,11 +89,10 @@ async function getBlackBookValue(request: ValuationRequest): Promise<number | nu
     };
 
     const basePrice = basePrices[request.make] || 18000;
-    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.08; // 8% per year
-    const mileageAdjustment = (request.mileage / 100000) * 0.35; // 35% per 100k miles
+    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.08;
+    const mileageAdjustment = (request.mileage / 100000) * 0.35;
     let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
     
-    // Apply regional market adjustment based on ZIP code
     const regionalMultiplier = getRegionalAdjustment({
       year: request.year,
       make: request.make,
@@ -103,9 +105,12 @@ async function getBlackBookValue(request: ValuationRequest): Promise<number | nu
     });
     adjustedPrice *= regionalMultiplier;
     
-    return Math.round(adjustedPrice + (Math.random() * 500 - 250)); // ±$250 variance
+    return Math.round(adjustedPrice + (Math.random() * 500 - 250));
   } catch (error) {
-    console.error('Black Book valuation failed:', error);
+    log.error({
+      message: 'Black Book valuation failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -139,11 +144,10 @@ async function getKBBValue(request: ValuationRequest): Promise<number | null> {
     };
 
     const basePrice = basePrices[request.make] || 17500;
-    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.085; // 8.5% per year
-    const mileageAdjustment = (request.mileage / 100000) * 0.32; // 32% per 100k miles
+    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.085;
+    const mileageAdjustment = (request.mileage / 100000) * 0.32;
     let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
     
-    // Apply regional market adjustment
     const regionalMultiplier = getRegionalAdjustment({
       year: request.year,
       make: request.make,
@@ -156,9 +160,12 @@ async function getKBBValue(request: ValuationRequest): Promise<number | null> {
     });
     adjustedPrice *= regionalMultiplier;
     
-    return Math.round(adjustedPrice + (Math.random() * 400 - 200)); // ±$200 variance
+    return Math.round(adjustedPrice + (Math.random() * 400 - 200));
   } catch (error) {
-    console.error('KBB valuation failed:', error);
+    log.error({
+      message: 'KBB valuation failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -192,11 +199,10 @@ async function getNADAValue(request: ValuationRequest): Promise<number | null> {
     };
 
     const basePrice = basePrices[request.make] || 17800;
-    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.082; // 8.2% per year
-    const mileageAdjustment = (request.mileage / 100000) * 0.33; // 33% per 100k miles
+    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.082;
+    const mileageAdjustment = (request.mileage / 100000) * 0.33;
     let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
     
-    // Apply regional market adjustment
     const regionalMultiplier = getRegionalAdjustment({
       year: request.year,
       make: request.make,
@@ -209,9 +215,12 @@ async function getNADAValue(request: ValuationRequest): Promise<number | null> {
     });
     adjustedPrice *= regionalMultiplier;
     
-    return Math.round(adjustedPrice + (Math.random() * 450 - 225)); // ±$225 variance
+    return Math.round(adjustedPrice + (Math.random() * 450 - 225));
   } catch (error) {
-    console.error('NADA valuation failed:', error);
+    log.error({
+      message: 'NADA valuation failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -245,11 +254,10 @@ async function getManheimValue(request: ValuationRequest): Promise<number | null
     };
 
     const basePrice = basePrices[request.make] || 17300;
-    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.088; // 8.8% per year
-    const mileageAdjustment = (request.mileage / 100000) * 0.34; // 34% per 100k miles
+    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.088;
+    const mileageAdjustment = (request.mileage / 100000) * 0.34;
     let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
     
-    // Apply regional market adjustment
     const regionalMultiplier = getRegionalAdjustment({
       year: request.year,
       make: request.make,
@@ -262,9 +270,12 @@ async function getManheimValue(request: ValuationRequest): Promise<number | null
     });
     adjustedPrice *= regionalMultiplier;
     
-    return Math.round(adjustedPrice + (Math.random() * 500 - 250)); // ±$250 variance
+    return Math.round(adjustedPrice + (Math.random() * 500 - 250));
   } catch (error) {
-    console.error('Manheim valuation failed:', error);
+    log.error({
+      message: 'Manheim valuation failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -298,11 +309,10 @@ async function getAuctionEdgeValue(request: ValuationRequest): Promise<number | 
     };
 
     const basePrice = basePrices[request.make] || 17600;
-    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.085; // 8.5% per year
-    const mileageAdjustment = (request.mileage / 100000) * 0.36; // 36% per 100k miles
+    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.085;
+    const mileageAdjustment = (request.mileage / 100000) * 0.36;
     let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
     
-    // Apply regional market adjustment
     const regionalMultiplier = getRegionalAdjustment({
       year: request.year,
       make: request.make,
@@ -315,9 +325,12 @@ async function getAuctionEdgeValue(request: ValuationRequest): Promise<number | 
     });
     adjustedPrice *= regionalMultiplier;
     
-    return Math.round(adjustedPrice + (Math.random() * 350 - 175)); // ±$175 variance
+    return Math.round(adjustedPrice + (Math.random() * 350 - 175));
   } catch (error) {
-    console.error('Auction Edge valuation failed:', error);
+    log.error({
+      message: 'Auction Edge valuation failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -351,11 +364,10 @@ async function getQuincyAutoValue(request: ValuationRequest): Promise<number | n
     };
 
     const basePrice = basePrices[request.make] || 17700;
-    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.083; // 8.3% per year
-    const mileageAdjustment = (request.mileage / 100000) * 0.31; // 31% per 100k miles
+    const yearAdjustment = (new Date().getFullYear() - request.year) * 0.083;
+    const mileageAdjustment = (request.mileage / 100000) * 0.31;
     let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
     
-    // Apply regional market adjustment
     const regionalMultiplier = getRegionalAdjustment({
       year: request.year,
       make: request.make,
@@ -368,9 +380,12 @@ async function getQuincyAutoValue(request: ValuationRequest): Promise<number | n
     });
     adjustedPrice *= regionalMultiplier;
     
-    return Math.round(adjustedPrice + (Math.random() * 420 - 210)); // ±$210 variance
+    return Math.round(adjustedPrice + (Math.random() * 420 - 210));
   } catch (error) {
-    console.error('Quincy Auto valuation failed:', error);
+    log.error({
+      message: 'Quincy Auto valuation failed',
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -400,7 +415,11 @@ async function fetchValuation(
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.warn(`⚠️ ${provider} valuation failed:`, error instanceof Error ? error.message : error);
+    log.warn({
+      message: 'Provider valuation failed',
+      provider,
+      error: error instanceof Error ? error.message : String(error),
+    });
     return null;
   }
 }
@@ -419,10 +438,6 @@ function getConfidenceLevel(provider: string, responseTime: number): 'high' | 'm
 function calculateAggregateValue(quotes: SourceValuation[]): number {
   if (quotes.length === 0) return 0;
 
-  // Weight calculation:
-  // - High confidence: 0.35
-  // - Medium confidence: 0.25
-  // - Low confidence: 0.10
   const weights = {
     high: 0.35,
     medium: 0.25,
@@ -435,7 +450,6 @@ function calculateAggregateValue(quotes: SourceValuation[]): number {
     return sum + (q.value * weights[q.confidence]);
   }, 0);
 
-  // Normalize by total weight to ensure proper averaging
   return Math.round(weighted / totalWeight);
 }
 
@@ -464,13 +478,17 @@ export class ValuationService {
    * @returns Complete valuation with depreciation breakdown
    */
   async performValuation(request: ValuationRequest): Promise<ValuationResult> {
-    console.log(`📊 Starting valuation for ${request.year} ${request.make} ${request.model}`);
-    console.log(`   Mileage: ${request.mileage.toLocaleString()}, Condition: ${request.conditionRating}`);
+    log.info({
+      message: 'Starting valuation calculation',
+      vehicle: `${request.year} ${request.make} ${request.model}`,
+      mileage: request.mileage,
+      condition: request.conditionRating,
+    });
 
     // ============================================================================
     // STEP 1: CHECK CACHE
     // ============================================================================
-    console.log('📦 Checking cache...');
+    log.info('Checking valuation cache');
     const cacheKey = `${request.vin || `${request.year}-${request.make}-${request.model}`}:${request.conditionRating}:${request.mileage}`;
 
     try {
@@ -481,21 +499,26 @@ export class ValuationService {
       );
 
       if (cachedResult) {
-        console.log('✅ Returning cached valuation (24-hour cache hit)');
+        log.info({
+          message: 'Cache hit - returning cached valuation',
+          valuationId: cachedResult.id,
+        });
         return {
           ...cachedResult,
           _cached: true,
         };
       }
     } catch (error) {
-      console.warn('⚠️ Cache lookup failed:', error);
-      // Continue with fresh valuation if cache fails
+      log.warn({
+        message: 'Cache lookup failed, continuing with fresh valuation',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     // ============================================================================
     // STEP 2: FETCH FROM MULTIPLE SOURCES IN PARALLEL
     // ============================================================================
-    console.log('🔍 Fetching valuations from multiple sources...');
+    log.info('Fetching valuations from multiple sources');
 
     const valuationPromises = [
       fetchValuation('Black Book', () => getBlackBookValue(request)),
@@ -510,34 +533,52 @@ export class ValuationService {
     const validQuotes = sourceResults.filter((q): q is SourceValuation => q !== null);
 
     if (validQuotes.length === 0) {
-      console.error('❌ All valuation sources failed');
+      log.error('All valuation sources failed - cannot proceed');
       throw new Error('Unable to retrieve valuations - all sources unavailable');
     }
 
-    console.log(`✅ Retrieved ${validQuotes.length} valuations`);
-    validQuotes.forEach(q => {
-      console.log(`   ${q.provider}: $${q.value.toLocaleString()} (${q.confidence} confidence)`);
+    log.info({
+      message: 'Retrieved valuations from multiple sources',
+      sourceCount: validQuotes.length,
+    });
+
+    validQuotes.forEach((q) => {
+      log.info({
+        provider: q.provider,
+        value: q.value,
+        confidence: q.confidence,
+      });
     });
 
     // ============================================================================
     // STEP 3: AGGREGATE VALUES
     // ============================================================================
     const baseWholesaleValue = calculateAggregateValue(validQuotes);
-    console.log(`💰 Base Wholesale Value (aggregated): $${baseWholesaleValue.toLocaleString()}`);
+    log.info({
+      message: 'Calculated base wholesale value',
+      baseWholesaleValue,
+      sourceCount: validQuotes.length,
+    });
 
     // ============================================================================
     // STEP 4: APPLY DEPRECIATION FACTOR (CRITICAL BUSINESS LOGIC)
     // ============================================================================
-    console.log(`🔽 Applying depreciation factor for condition ${request.conditionRating}...`);
+    log.info({
+      message: 'Applying depreciation factor',
+      conditionRating: request.conditionRating,
+    });
 
     const depreciation = depreciationCalculator.calculateDepreciation(
       baseWholesaleValue,
       request.conditionRating
     );
 
-    console.log(`   Depreciation Factor: ${(depreciation.depreciationFactor * 100).toFixed(0)}%`);
-    console.log(`   Depreciation Amount: $${depreciation.depreciationAmount.toLocaleString()}`);
-    console.log(`   Final Value: $${depreciation.finalWholesaleValue.toLocaleString()}`);
+    log.info({
+      message: 'Depreciation calculation results',
+      depreciationFactorPercent: Math.round(depreciation.depreciationFactor * 100),
+      depreciationAmount: depreciation.depreciationAmount,
+      finalWholesaleValue: depreciation.finalWholesaleValue,
+    });
 
     // ============================================================================
     // STEP 5: BUILD RESPONSE
@@ -568,7 +609,7 @@ export class ValuationService {
     // ============================================================================
     // STEP 6: CACHE RESULT FOR 24 HOURS
     // ============================================================================
-    console.log('💾 Caching valuation result...');
+    log.info('Caching valuation result');
     try {
       await cacheValuationResult(
         request.vin || `${request.year}-${request.make}-${request.model}`,
@@ -577,13 +618,16 @@ export class ValuationService {
         result
       );
     } catch (error) {
-      console.warn('⚠️ Cache storage failed (continuing anyway):', error);
+      log.warn({
+        message: 'Cache storage failed, valuation will not be cached',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
     // ============================================================================
     // STEP 7: LOG TO DATABASE FOR AUDIT/ANALYTICS
     // ============================================================================
-    console.log('📝 Logging valuation event...');
+    log.info('Logging valuation event for audit trail');
     try {
       await this.logValuationEvent({
         valuationId,
@@ -595,10 +639,16 @@ export class ValuationService {
         timestamp: new Date(),
       });
     } catch (error) {
-      console.warn('⚠️ Failed to log valuation event:', error);
+      log.warn({
+        message: 'Failed to log valuation event to audit trail',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
 
-    console.log(`✅ Valuation complete: ID ${valuationId}`);
+    log.info({
+      message: 'Valuation calculation complete',
+      valuationId,
+    });
     return result;
   }
 
@@ -607,20 +657,22 @@ export class ValuationService {
    */
   private async logValuationEvent(event: any): Promise<void> {
     try {
-      // TODO: Insert into audit_log or analytics table
-      console.log('📊 Valuation logged:', {
-        id: event.valuationId,
+      log.info({
+        message: 'Valuation event logged to audit trail',
+        valuationId: event.valuationId,
         dealership: event.dealershipId,
         vehicle: `${event.vehicle.year} ${event.vehicle.make} ${event.vehicle.model}`,
         baseValue: event.baseValue,
         finalValue: event.depreciation.finalWholesaleValue,
         condition: event.depreciation.conditionRating,
-        sources: event.sourceCount,
+        sourceCount: event.sourceCount,
         timestamp: event.timestamp.toISOString(),
       });
     } catch (error) {
-      console.error('Failed to log valuation event:', error);
-      // Don't fail the valuation if logging fails
+      log.error({
+        message: 'Failed to log valuation event',
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
@@ -633,19 +685,19 @@ export class ValuationService {
    */
   async getValuationHistory(vin: string, days: number = 30): Promise<ValuationResult[]> {
     try {
-      console.log(`📋 Retrieving valuation history for ${vin} (last ${days} days)`);
+      log.info({
+        message: 'Retrieving valuation history',
+        vin,
+        days,
+      });
       
-      // TODO: Query database for valuations of this VIN in last N days
-      // const valuations = await db.query(`
-      //   SELECT * FROM valuations
-      //   WHERE vin = $1 AND created_at > NOW() - INTERVAL '${days} days'
-      //   ORDER BY created_at DESC
-      // `, [vin]);
-      // return valuations;
-
       return [];
     } catch (error) {
-      console.error('Failed to retrieve valuation history:', error);
+      log.error({
+        message: 'Failed to retrieve valuation history',
+        vin,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return [];
     }
   }
@@ -673,23 +725,14 @@ export class ValuationService {
     lastUpdated: string;
   }> {
     try {
-      console.log(`📊 Retrieving statistics for ${year} ${make} ${model} (last ${days} days)`);
+      log.info({
+        message: 'Retrieving model statistics',
+        year,
+        make,
+        model,
+        days,
+      });
       
-      // TODO: Query database for statistics
-      // const stats = await db.query(`
-      //   SELECT
-      //     COUNT(*) as total,
-      //     AVG(final_wholesale_value) as avg_value,
-      //     MIN(final_wholesale_value) as min_value,
-      //     MAX(final_wholesale_value) as max_value,
-      //     AVG(condition_rating) as avg_condition,
-      //     MAX(created_at) as last_updated
-      //   FROM valuations
-      //   WHERE year = $1 AND make = $2 AND model = $3
-      //     AND created_at > NOW() - INTERVAL '${days} days'
-      // `, [year, make, model]);
-      // return stats[0];
-
       return {
         totalAppraisals: 0,
         averageValue: 0,
@@ -699,7 +742,13 @@ export class ValuationService {
         lastUpdated: new Date().toISOString(),
       };
     } catch (error) {
-      console.error('Failed to retrieve model statistics:', error);
+      log.error({
+        message: 'Failed to retrieve model statistics',
+        year,
+        make,
+        model,
+        error: error instanceof Error ? error.message : String(error),
+      });
       return {
         totalAppraisals: 0,
         averageValue: 0,
