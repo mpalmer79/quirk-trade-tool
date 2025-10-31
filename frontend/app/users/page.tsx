@@ -2,203 +2,416 @@
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/app/lib/auth-context";
-import { User, CreateUserInput, Permission } from "@/app/lib/auth-types";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { AdminNav } from "@/components/AdminNav";
-import { UserList } from "@/components/UserList";
-import { UserForm } from "@/components/UserForm";
-import { DEALERSHIPS } from "@/app/dealerships";
+import { Permission } from "@/app/lib/auth-types";
+import {
+  Users,
+  Plus,
+  Edit2,
+  Trash2,
+  AlertCircle,
+  Mail,
+  Shield,
+} from "lucide-react";
 
-export default function UsersPage() {
-  const { user: currentUser } = useAuth();
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: "admin" | "general_manager" | "general_sales_manager" | "sales_manager";
+  dealership: string;
+  status: "active" | "inactive";
+  joinDate: string;
+}
+
+export default function GlobalUsersPage() {
+  const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | undefined>();
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [filterRole, setFilterRole] = useState<string>("all");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    role: "sales_manager",
+    password: "",
+  });
 
-  // Load users on mount
   useEffect(() => {
     loadUsers();
   }, []);
 
   const loadUsers = async () => {
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch("/api/users");
-      const data = await response.json();
-      setUsers(data);
+      // TODO: Replace with actual API call to fetch all users across all dealerships
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
+      setUsers([
+        {
+          id: "1",
+          name: "John Admin",
+          email: "jadmin@quirkcars.com",
+          role: "admin",
+          dealership: "Quirk Buick GMC – Braintree, MA",
+          status: "active",
+          joinDate: "2024-01-15",
+        },
+        {
+          id: "2",
+          name: "Sarah Manager",
+          email: "smanager@quirkcars.com",
+          role: "general_manager",
+          dealership: "Quirk Chevrolet – Braintree, MA",
+          status: "active",
+          joinDate: "2024-02-20",
+        },
+        {
+          id: "3",
+          name: "Mike Sales",
+          email: "msales@quirkcars.com",
+          role: "general_sales_manager",
+          dealership: "Quirk Chevrolet – Braintree, MA",
+          status: "active",
+          joinDate: "2024-03-10",
+        },
+        {
+          id: "4",
+          name: "Lisa Anderson",
+          email: "landerson@quirkcars.com",
+          role: "sales_manager",
+          dealership: "Quirk Buick GMC – Manchester, NH",
+          status: "inactive",
+          joinDate: "2024-01-05",
+        },
+      ]);
     } catch (error) {
       console.error("Failed to load users:", error);
-      // For demo purposes, load mock data
-      setUsers(getMockUsers());
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCreateUser = async (data: CreateUserInput) => {
-    try {
-      // TODO: Replace with actual API call
-      const response = await fetch("/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
+  // Auto-generate email from first initial + full last name
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fullName = e.target.value;
+    setFormData({ ...formData, name: fullName });
 
-      if (!response.ok) throw new Error("Failed to create user");
-
-      const newUser = await response.json();
-      setUsers(prev => [...prev, newUser]);
-      setShowForm(false);
-    } catch (error) {
-      console.error("Failed to create user:", error);
-      throw error;
-    }
-  };
-
-  const handleUpdateUser = async (data: Partial<User>) => {
-    try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/users/${data.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      });
-
-      if (!response.ok) throw new Error("Failed to update user");
-
-      const updatedUser = await response.json();
-      setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-      setEditingUser(undefined);
-      setShowForm(false);
-    } catch (error) {
-      console.error("Failed to update user:", error);
-      throw error;
-    }
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/users/${userId}`, {
-        method: "DELETE"
-      });
-
-      if (!response.ok) throw new Error("Failed to delete user");
-
-      setUsers(prev => prev.filter(u => u.id !== userId));
-    } catch (error) {
-      console.error("Failed to delete user:", error);
-      alert("Failed to delete user");
-    }
-  };
-
-  const handleEditUser = (user: User) => {
-    setEditingUser(user);
-    setShowForm(true);
-  };
-
-  const handleFormSubmit = async (data: CreateUserInput | Partial<User>) => {
-    if (editingUser) {
-      await handleUpdateUser(data as Partial<User>);
+    // Extract first initial and full last name, then auto-populate email
+    if (fullName.trim()) {
+      const nameParts = fullName.trim().split(" ");
+      if (nameParts.length >= 2) {
+        const firstInitial = nameParts[0][0].toLowerCase();
+        const lastName = nameParts.slice(1).join("").toLowerCase();
+        setFormData((prev) => ({
+          ...prev,
+          email: `${firstInitial}${lastName}@quirkcars.com`,
+        }));
+      } else {
+        // If only one name, use the full name
+        const firstName = nameParts[0].toLowerCase();
+        setFormData((prev) => ({
+          ...prev,
+          email: `${firstName}@quirkcars.com`,
+        }));
+      }
     } else {
-      await handleCreateUser(data as CreateUserInput);
+      setFormData((prev) => ({
+        ...prev,
+        email: "",
+      }));
     }
   };
 
-  const handleCancelForm = () => {
-    setShowForm(false);
-    setEditingUser(undefined);
+  const handleDeleteUser = (userId: string) => {
+    // TODO: Implement delete API call
+    setUsers(users.filter((u) => u.id !== userId));
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl">Loading...</div>
-      </div>
-    );
-  }
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setFormData({ name: "", email: "", role: "sales_manager", password: "" });
+  };
+
+  const handleAddUser = async () => {
+    // TODO: Implement add user API call
+    if (formData.name && formData.email) {
+      const newUser: User = {
+        id: String(users.length + 1),
+        name: formData.name,
+        email: formData.email,
+        role: (formData.role as "admin" | "general_manager" | "general_sales_manager" | "sales_manager") || "sales_manager",
+        dealership: "To be assigned",
+        status: "active",
+        joinDate: new Date().toISOString().split("T")[0],
+      };
+      setUsers([...users, newUser]);
+      handleCloseModal();
+    }
+  };
+
+  // Format role name for display
+  const formatRoleName = (role: string) => {
+    const roleMap: Record<string, string> = {
+      admin: "Admin",
+      general_manager: "General Manager",
+      general_sales_manager: "General Sales Manager",
+      sales_manager: "Sales Manager",
+    };
+    return roleMap[role] || role;
+  };
+
+  const filteredUsers = filterRole === "all" ? users : users.filter((u) => u.role === filterRole);
 
   return (
     <PermissionGuard
       permission={Permission.MANAGE_USERS}
       fallback={
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-xl text-red-600">
-            You don't have permission to access this page.
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
+          <div className="text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
+            <p className="text-gray-600">You don't have permission to access the admin panel.</p>
           </div>
         </div>
       }
     >
       <AdminNav />
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">User Management</h1>
-          {!showForm && (
-            <button
-              onClick={() => {
-                setEditingUser(undefined);
-                setShowForm(true);
-              }}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              + Add New User
-            </button>
-          )}
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">
+                    User Management
+                  </h1>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Add, edit, and remove user accounts and permissions
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {showForm ? (
-          <UserForm
-            user={editingUser}
-            dealerships={DEALERSHIPS}
-            onSubmit={handleFormSubmit}
-            onCancel={handleCancelForm}
-          />
-        ) : (
-          <UserList
-            users={users}
-            dealerships={DEALERSHIPS}
-            onEditUser={handleEditUser}
-            onDeleteUser={handleDeleteUser}
-          />
-        )}
+        {/* Main Content */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Filter and Add User */}
+          <div className="mb-6 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">Filter by Role:</label>
+              <select
+                value={filterRole}
+                onChange={(e) => setFilterRole(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              >
+                <option value="all">All Roles</option>
+                <option value="admin">Admin</option>
+                <option value="general_manager">General Manager</option>
+                <option value="general_sales_manager">General Sales Manager</option>
+                <option value="sales_manager">Sales Manager</option>
+              </select>
+            </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Add New User
+            </button>
+          </div>
+
+          {/* Users Table */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Role
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Dealerships
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center">
+                        <div className="inline-flex items-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                          <span className="ml-2 text-gray-600">Loading users...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : filteredUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                        <Users className="mx-auto h-12 w-12 text-gray-300 mb-2" />
+                        <p>No users found</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredUsers.map((u) => (
+                      <tr key={u.id} className="hover:bg-gray-50 transition">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{u.name}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600 flex items-center">
+                          <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                          {u.email}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <Shield className="h-3 w-3 mr-1" />
+                            {formatRoleName(u.role)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{u.dealership}</td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              u.status === "active"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            <span
+                              className={`h-2 w-2 rounded-full mr-1.5 ${
+                                u.status === "active" ? "bg-green-600" : "bg-gray-400"
+                              }`}
+                            ></span>
+                            {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition text-xs font-medium"
+                              title="Edit user"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteUser(u.id)}
+                              className="inline-flex items-center px-2.5 py-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 transition text-xs font-medium"
+                              title="Delete user"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Add User Modal */}
+          {showAddModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Add New User</h2>
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.name}
+                      onChange={handleNameChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      placeholder="John Doe"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      value={formData.email}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                      placeholder="john@quirkcars.com"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Auto-populated from first initial + last name
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Role *
+                    </label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) =>
+                        setFormData({ ...formData, role: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="general_manager">General Manager</option>
+                      <option value="general_sales_manager">General Sales Manager</option>
+                      <option value="sales_manager">Sales Manager</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password
+                    </label>
+                    <input
+                      type="password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData({ ...formData, password: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      placeholder="User will be prompted to create"
+                    />
+                  </div>
+                </div>
+                <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-800">
+                    <strong>Note:</strong> Leave the password field blank. Users will create their own password upon first login with the following requirements: lowercase, uppercase, at least 1 number, and 1 special character.
+                  </p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={handleCloseModal}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddUser}
+                    disabled={!formData.name || !formData.email}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add User
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </PermissionGuard>
   );
-}
-
-// Mock data for demo purposes
-function getMockUsers(): User[] {
-  return [
-    {
-      id: "1",
-      email: "admin@quirkauto.com",
-      name: "John Admin",
-      role: "admin" as any,
-      dealershipIds: DEALERSHIPS.map(d => d.id),
-      createdAt: new Date("2024-01-01"),
-      updatedAt: new Date("2024-01-01"),
-      isActive: true
-    },
-    {
-      id: "2",
-      email: "gm@quirkauto.com",
-      name: "Sarah Manager",
-      role: "general_manager" as any,
-      dealershipIds: ["quirk-chevy-braintree", "quirk-chevy-manchester"],
-      createdAt: new Date("2024-02-01"),
-      updatedAt: new Date("2024-02-01"),
-      isActive: true
-    },
-    {
-      id: "3",
-      email: "gsm@quirkauto.com",
-      name: "Mike Sales",
-      role: "general_sales_manager" as any,
-      dealershipIds: ["quirk-chevy-braintree"],
-      createdAt: new Date("2024-03-01"),
-      updatedAt: new Date("2024-03-01"),
-      isActive: true
-    }
-  ];
 }
