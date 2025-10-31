@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ScanLine } from "lucide-react";
 import { DEALERSHIPS } from "@lib/dealerships";
 import { FormSchema, type FormData, type AppraiseResponse } from "@lib/types";
-import { useVehicleListings } from "@/hooks/useVehicleListings";
+import { useVehicleListings } from "@/hooks/usedVehicleListings";
 import { WholesalePricing } from "@/components/WholesalePricing";
 
 type Props = {
@@ -296,7 +296,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Trim</label>
+          <label className="block text.sm font-semibold text-gray-700 mb-2">Trim</label>
           <input {...register("trim")} placeholder="e.g., LE, Sport, Limited"
             className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
         </div>
