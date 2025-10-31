@@ -60,15 +60,19 @@ export default function ValuationForm({ onSubmit, isLoading, error }: ValuationF
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ vin, year, make, model, trim, mileage: parseInt(mileage) });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-2xl p-8 md:p-10">
-      <div className="flex items-center gap-3 mb-8">
-        <DollarSign className="w-10 h-10 text-blue-600" />
-        <h3 className="text-3xl font-bold text-gray-800">Get Vehicle Valuation</h3>
-      </div>
+    const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+  // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
+  onSubmit({ 
+    vin, 
+    year, 
+    make, 
+    model, 
+    trim, 
+    mileage: parseInt(mileage),
+    zip: "02122"
+  });
+};
 
       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded">
         <div className="flex items-start gap-2">
