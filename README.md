@@ -193,9 +193,9 @@ pnpm dev
 ```
 
 **Access the application:**
-- Frontend: http://localhost:3000
-- API: http://localhost:4000
-- Login page: http://localhost:3000/login
+- Frontend: https://mpalmer79.github.io/quirk-trade-tool/
+- API: https://mpalmer79.github.io/quirk-trade-tool/admin/
+- Login page: https://mpalmer79.github.io/quirk-trade-tool/login/
 
 ---
 
