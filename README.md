@@ -30,6 +30,226 @@ Quirk Trade Tool provides:
 - Provides confidence bands for valuations
 - Generates immutable receipt (JSON + PDF)
 
+## 🌐 External Services & API Providers
+
+This application integrates with multiple external services for vehicle data and valuations. Below is a comprehensive guide to each service.
+
+### 🚗 VIN Decoding Services
+
+#### **1. NHTSA VPIC (Vehicle Product Information Catalog)**
+- **Purpose:** Decode VIN to get year, make, model, body type, engine specs
+- **Type:** Free, government-run API (no key required)
+- **Endpoint:** `https://vpic.nhtsa.dot.gov/api/`
+- **Response:** JSON with complete vehicle details
+- **Reliability:** High (government service, 99.9% uptime)
+- **Rate Limits:** Generous (no official limits, but recommend <100 req/min)
+- **Implementation:** `orchestrator/src/vin/nhtsa.ts`
+
+**Setup:**
+```env
+# No API key needed - service is free
+NHTSA_API_URL=https://vpic.nhtsa.dot.gov/api
+```
+
+**Example Request:**
+```bash
+curl "https://vpic.nhtsa.dot.gov/api/vehicles/decodevin/1HGCV41JXMN109186"
+```
+
+---
+
+#### **2. AutoDev API**
+- **Purpose:** Alternative VIN decoding with enhanced vehicle data and market listings
+- **Type:** Premium service (requires API key)
+- **Endpoint:** `https://api.autodev.com/`
+- **Response:** Enhanced JSON with additional market data
+- **Features:** Listings, pricing history, market comparisons
+- **Rate Limits:** Varies by plan (typically 1000-10000 req/day)
+- **Implementation:** `orchestrator/src/vin/autodev.ts`
+
+**Setup:**
+```env
+# Get API key from https://www.autodev.com/
+AUTODEV_API_KEY=your_key_here
+AUTODEV_API_URL=https://api.autodev.com
+```
+
+**VIN Decode Request:**
+```javascript
+// Fetch VIN data with enhanced details
+POST https://api.autodev.com/vin/decode
+{
+  "vin": "1HGCV41JXMN109186",
+  "include": ["listings", "pricing", "market_data"]
+}
+```
+
+**Uses in App:**
+- Vehicle history and market data
+- Listing aggregation for used vehicle inventory
+- Pricing trends and comparisons
+- Market availability by region
+
+---
+
+### 💰 Vehicle Valuation Providers
+
+These providers estimate vehicle values based on condition, mileage, market data, and more.
+
+#### **1. BlackBook**
+- **Purpose:** Professional vehicle valuation guide
+- **Type:** Premium provider (requires subscription)
+- **Endpoint:** `https://api.blackbook.com/v2/`
+- **Update Frequency:** Daily
+- **Coverage:** US vehicles primarily
+- **Implementation:** `orchestrator/src/adapters/providers/blackbook.ts`
+
+**Setup:**
+```env
+BLACKBOOK_API_KEY=your_subscription_key
+BLACKBOOK_BASE_URL=https://api.blackbook.com/v2
+```
+
+**Example Request:**
+```bash
+POST /v2/valuations/instant
+{
+  "vin": "1HGCV41JXMN109186",
+  "mileage": 45000,
+  "condition": "average"
+}
+```
+
+**Demo Mode:** Uses realistic simulated data for testing
+
+---
+
+#### **2. KBB (Kelley Blue Book)**
+- **Purpose:** Consumer-facing vehicle valuation and market data
+- **Type:** Premium provider (requires API access)
+- **Endpoint:** `https://api.kbb.com/`
+- **Update Frequency:** Daily
+- **Coverage:** US and some international vehicles
+- **Specialties:** Retail and trade-in values, market trends
+- **Implementation:** `orchestrator/src/adapters/providers/kbb.ts`
+
+**Setup:**
+```env
+KBB_API_KEY=your_api_key
+KBB_API_SECRET=your_secret
+KBB_BASE_URL=https://api.kbb.com/v1
+```
+
+**Example Request:**
+```bash
+POST /v1/valuations
+{
+  "vin": "1HGCV41JXMN109186",
+  "mileage": 45000,
+  "condition": "good",
+  "location": "02116"  # ZIP code for local data
+}
+```
+
+**Unique Features:**
+- Consumer pricing
+- Retail, trade-in, private party values
+- Regional market variations
+- Certified pre-owned adjustments
+
+---
+
+#### **3. NADA Guides**
+- **Purpose:** Automotive valuation and market data
+- **Type:** Premium provider (subscription-based)
+- **Endpoint:** `https://api.nadaguides.com/`
+- **Update Frequency:** Multiple times daily
+- **Coverage:** Comprehensive US and international
+- **Implementation:** `orchestrator/src/adapters/providers/nada.ts`
+
+**Setup:**
+```env
+NADA_API_KEY=your_subscription_key
+NADA_BASE_URL=https://api.nadaguides.com
+```
+
+**Example Request:**
+```bash
+POST /valuations
+{
+  "vin": "1HGCV41JXMN109186",
+  "mileage": 45000,
+  "condition": "good",
+  "equipment": ["leather", "navigation"]
+}
+```
+
+**Specialties:**
+- Equipment-based adjustments
+- Loan and lease valuations
+- Certified pre-owned analysis
+
+---
+
+#### **4. Manheim Valuations**
+- **Purpose:** Wholesale and auction market valuations
+- **Type:** Premium provider (B2B)
+- **Endpoint:** `https://api.manheim.com/`
+- **Update Frequency:** Real-time auction data
+- **Coverage:** Auction market data, wholesale values
+- **Implementation:** `orchestrator/src/adapters/providers/manheim.ts`
+
+**Setup:**
+```env
+MANHEIM_CLIENT_ID=your_client_id
+MANHEIM_CLIENT_SECRET=your_secret
+MANHEIM_BASE_URL=https://api.manheim.com/v2
+```
+
+**Example Request:**
+```bash
+POST /v2/valuations/market
+{
+  "vin": "1HGCV41JXMN109186",
+  "market": "wholesale",
+  "include_auction_data": true
+}
+```
+
+**Specialties:**
+- Wholesale valuations
+- Auction results and trends
+- Market inventory levels
+- Days to sale data
+
+---
+
+#### **5. Auction Market Data**
+- **Purpose:** Real-time auction results and market data
+- **Type:** Aggregated provider (multiple auction sources)
+- **Endpoint:** Various auction APIs
+- **Update Frequency:** Real-time
+- **Coverage:** Major US and international auctions
+- **Implementation:** `orchestrator/src/adapters/demoAuction.ts`
+
+**Integrated Auction Sources:**
+- Copart
+- IAA (Insurance Auto Auctions)
+- Manheim auctions
+- Regional auction houses
+
+**Example Request:**
+```bash
+POST /api/auctions/search
+{
+  "vin": "1HGCV41JXMN109186",
+  "days_back": 30,
+  "location": "50mi"  # Within 50 miles
+}
+```
+
+---
+
 ### ✅ Authentication & Authorization
 - Mock authentication system (upgradeable to real OAuth/JWT)
 - 4 user roles with granular permission control
