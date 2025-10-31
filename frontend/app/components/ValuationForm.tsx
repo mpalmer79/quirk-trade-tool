@@ -66,7 +66,6 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   const make = watch("make");
   const condition = watch("condition");
   const vin = watch("vin");
-  const availableModels = make ? modelsByMake[make] || [] : [];
 
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [decoding, setDecoding] = React.useState(false);
@@ -75,6 +74,20 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   // Initialize listings hook for wholesale pricing
   const { data: listingsData, loading: listingsLoading, error: listingsError, fetchListings } = 
     useVehicleListings(apiBase);
+
+  // Helper: apply decoded fields, deferring "model" until after "make" is applied
+  const applyDecoded = React.useCallback((decoded: any) => {
+    if (decoded.year) setValue("year", decoded.year, { shouldDirty: true });
+    if (decoded.make) setValue("make", decoded.make, { shouldDirty: true });
+    if (decoded.trim) setValue("trim", decoded.trim, { shouldDirty: true });
+
+    if (decoded.model) {
+      // Defer to the next tick so the model <select> has options for the chosen make
+      setTimeout(() => {
+        setValue("model", decoded.model, { shouldDirty: true });
+      }, 0);
+    }
+  }, [setValue]);
 
   const onSubmit = async (data: FormData) => {
     setErrorMsg(null);
@@ -104,7 +117,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
 
   const onDecodeVin = React.useCallback(async () => {
     setErrorMsg(null);
-    if (!vin || vin.length < 11) {
+    if (!vin || vin.length < 17) {
       return;
     }
     setDecoding(true);
@@ -118,11 +131,8 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
       });
       if (!res.ok) throw new Error(`server_decode_failed:${res.status}`);
       const decoded = await res.json();
-      if (decoded.year) setValue("year", decoded.year);
-      if (decoded.make) setValue("make", decoded.make);
-      if (decoded.model) setValue("model", decoded.model);
-      if (decoded.trim) setValue("trim", decoded.trim);
-      console.log("VIN decode via server OK", decoded);
+
+      applyDecoded(decoded);
 
       // After successful decode, fetch market listings for wholesale pricing
       if (decoded.make && decoded.model && decoded.year) {
@@ -147,26 +157,23 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         if (!vp.ok) throw new Error(`nhtsa_http_${vp.status}`);
         const data = await vp.json();
         const row = data?.Results?.[0] || {};
-        const yr = Number(row.ModelYear) || undefined;
-        const mk = row.Make || undefined;
-        const mdl = row.Model || undefined;
-        const trm = row.Trim || row.Series || row.ModelVariantDescription || undefined;
+        const decoded = {
+          year: Number(row.ModelYear) || undefined,
+          make: row.Make || undefined,
+          model: row.Model || undefined,
+          trim: row.Trim || row.Series || row.ModelVariantDescription || undefined,
+        };
 
-        if (yr) setValue("year", yr);
-        if (mk) setValue("make", mk);
-        if (mdl) setValue("model", mdl);
-        if (trm) setValue("trim", trm);
-
-        console.log("VIN decode via NHTSA OK", { yr, mk, mdl, trm });
+        applyDecoded(decoded);
 
         // After successful decode, fetch market listings for wholesale pricing
-        if (mk && mdl && yr) {
+        if (decoded.make && decoded.model && decoded.year) {
           const mileageValue = watch("mileage");
           await fetchListings(
-            mk,
-            mdl,
-            yr,
-            trm,
+            decoded.make,
+            decoded.model,
+            decoded.year,
+            decoded.trim,
             mileageValue ? Number(mileageValue) : undefined
           );
         }
@@ -177,22 +184,22 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
     } finally {
       setDecoding(false);
     }
-  }, [vin, apiBase, setValue, watch, fetchListings]);
+  }, [vin, apiBase, watch, fetchListings, applyDecoded]);
 
-  // Auto-decode VIN as user types (with debounce)
+  // Auto-decode when a full VIN (17 chars) is entered (debounced)
   React.useEffect(() => {
     if (decodeTimeoutRef.current) {
       clearTimeout(decodeTimeoutRef.current);
     }
 
-    if (!vin || vin.length < 11) {
+    if (!vin || vin.length < 17) {
       return;
     }
 
-    // Debounce: wait 800ms after user stops typing before decoding
+    // Debounce: wait 600ms after user stops typing before decoding
     decodeTimeoutRef.current = setTimeout(() => {
       onDecodeVin();
-    }, 800);
+    }, 600);
 
     return () => {
       if (decodeTimeoutRef.current) {
@@ -240,9 +247,9 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
           <button
             type="button"
             onClick={onDecodeVin}
-            disabled={decoding || !vin || vin.length < 11}
+            disabled={decoding || !vin || vin.length < 17}
             className={`px-4 py-2.5 rounded-lg font-semibold text-white transition ${
-              decoding || !vin || vin.length < 11
+              decoding || !vin || vin.length < 17
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-teal-500 hover:bg-teal-600"
             }`}
@@ -261,7 +268,9 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
           </button>
         </div>
         <p className="text-xs text-gray-500 mt-1">
-          {vin && vin.length >= 11 ? "Auto-decoding in progress..." : "Enter 11+ characters to auto-decode. Decodes via NHTSA VPIC if server unavailable."}
+          {vin && vin.length >= 17
+            ? "Ready to decode."
+            : "Enter the full 17-character VIN to auto-decode (or tap Decode)."}
         </p>
       </div>
 
@@ -287,8 +296,11 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
 
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">Model *</label>
-          <select {...register("model")} disabled={!watch("make")}
-            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100">
+          <select
+            {...register("model")}
+            disabled={!watch("make")}
+            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100"
+          >
             <option value="">{watch("make") ? "Select Model" : "Select Make First"}</option>
             {(watch("make") ? (modelsByMake[watch("make")!] || []) : []).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
@@ -296,7 +308,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         </div>
 
         <div>
-          <label className="block text.sm font-semibold text-gray-700 mb-2">Trim</label>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Trim</label>
           <input {...register("trim")} placeholder="e.g., LE, Sport, Limited"
             className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-indigo-500" />
         </div>
