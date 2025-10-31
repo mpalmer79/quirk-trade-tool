@@ -21,11 +21,21 @@ export async function decodeVinClientOnly(vin: string): Promise<DecodedVin | nul
   const row = data?.Results?.[0];
   if (!row) return null;
 
+  // Extract model
+  const model = (row.Model ?? '').toString().trim() || undefined;
+
+  // Extract trim with fallbacks: Trim → Series → ModelVariantDescription
+  const trim =
+    (row.Trim ?? '').toString().trim() ||
+    (row.Series ?? '').toString().trim() ||
+    (row.ModelVariantDescription ?? '').toString().trim() ||
+    undefined;
+
   return {
     year: Number(row.ModelYear) || undefined,
     make: row.Make || undefined,
-    model: row.Model || undefined,
-    trim: row.Trim || undefined,
+    model,
+    trim,
     bodyClass: row.BodyClass || undefined,
     engine: {
       cylinders: row.EngineCylinders || undefined,
