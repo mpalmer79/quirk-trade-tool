@@ -13,9 +13,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
-      "@components/*": ["app/components/*"],
+      "@components/*": ["components/*"],
+      "@hooks/*": ["hooks/*"],
       "@lib/*": ["app/lib/*"]
     }
   },
-  "include": ["app/**/*", "next-env.d.ts"]
+  "include": ["app/**/*", "hooks/**/*", "components/**/*", "next-env.d.ts"]
 }
