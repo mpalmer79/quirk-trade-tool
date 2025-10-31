@@ -64,14 +64,15 @@ export default function DealershipUsersPage() {
       const nameParts = fullName.trim().split(" ");
       if (nameParts.length >= 2) {
         const firstInitial = nameParts[0][0].toLowerCase();
-        const lastName = nameParts.slice(1).join("").toLowerCase();
+        // Remove apostrophes and hyphens from last name parts
+        const lastName = nameParts.slice(1).join("").replace(/['-]/g, "").toLowerCase();
         setFormData((prev) => ({
           ...prev,
           email: `${firstInitial}${lastName}@quirkcars.com`,
         }));
       } else {
         // If only one name, use the full name
-        const firstName = nameParts[0].toLowerCase();
+        const firstName = nameParts[0].replace(/['-]/g, "").toLowerCase();
         setFormData((prev) => ({
           ...prev,
           email: `${firstName}@quirkcars.com`,
@@ -202,11 +203,9 @@ export default function DealershipUsersPage() {
             <AlertCircle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Dealership Not Found</h2>
             <p className="text-gray-600 mb-4">The dealership you're looking for doesn't exist.</p>
-            <Link href="/admin">
-              <button className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-                <Home className="mr-2 h-4 w-4" />
-                Back to Admin Home
-              </button>
+            <Link href="/admin" className="inline-flex items-center text-blue-600 hover:text-blue-700">
+              <Home className="h-4 w-4 mr-2" />
+              Back to Admin Dashboard
             </Link>
           </div>
         </div>
@@ -215,47 +214,23 @@ export default function DealershipUsersPage() {
   }
 
   return (
-    <PermissionGuard
-      permission={Permission.MANAGE_USERS}
-      fallback={
-        <div className="flex items-center justify-center min-h-screen bg-gray-50">
-          <div className="text-center">
-            <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You don't have permission to access the admin panel.</p>
-          </div>
-        </div>
-      }
-    >
+    <PermissionGuard permission={Permission.MANAGE_USERS}>
       <AdminNav />
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
-                    Manage Users - {getDealershipDisplayName(dealership.name)}
-                  </h1>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Add, edit, and remove user accounts and permissions
-                  </p>
-                </div>
-                <Link href="/admin">
-                  <button className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-gray-800 transition">
-                    Admin HOME
-                  </button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Add User Button */}
-          <div className="mb-6">
+          {/* Page Header */}
+          <div className="mb-8">
+            <div className="flex items-center space-x-3 mb-4">
+              <Home className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">
+                {getDealershipDisplayName(dealership.name)}
+              </h1>
+            </div>
+            <p className="text-gray-600">User Management</p>
+          </div>
+
+          {/* Action Bar */}
+          <div className="mb-6 flex justify-end">
             <button
               onClick={() => setShowAddModal(true)}
               className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition font-medium"
