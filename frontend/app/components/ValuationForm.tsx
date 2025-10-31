@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ScanLine } from "lucide-react";
 import { DEALERSHIPS } from "@lib/dealerships";
 import { FormSchema, type FormData, type AppraiseResponse } from "@lib/types";
+import { useVehicleListings } from "@/hooks/useVehicleListings";
+import { WholesalePricing } from "@/components/WholesalePricing";
 
 type Props = {
   apiBase: string;
@@ -70,6 +72,10 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
   const [decoding, setDecoding] = React.useState(false);
   const decodeTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
+  // Initialize listings hook for wholesale pricing
+  const { data: listingsData, loading: listingsLoading, error: listingsError, fetchListings } = 
+    useVehicleListings(apiBase);
+
   const onSubmit = async (data: FormData) => {
     setErrorMsg(null);
     // Hardcode ZIP to 02122 (Boston, MA - Dorchester)
@@ -117,6 +123,18 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
       if (decoded.model) setValue("model", decoded.model);
       if (decoded.trim) setValue("trim", decoded.trim);
       console.log("VIN decode via server OK", decoded);
+
+      // After successful decode, fetch market listings for wholesale pricing
+      if (decoded.make && decoded.model && decoded.year) {
+        const mileageValue = watch("mileage");
+        await fetchListings(
+          decoded.make,
+          decoded.model,
+          decoded.year,
+          decoded.trim,
+          mileageValue ? Number(mileageValue) : undefined
+        );
+      }
       return;
     } catch (e) {
       console.warn("VIN server decode failed, falling back to NHTSA", e);
@@ -140,6 +158,18 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
         if (trm) setValue("trim", trm);
 
         console.log("VIN decode via NHTSA OK", { yr, mk, mdl, trm });
+
+        // After successful decode, fetch market listings for wholesale pricing
+        if (mk && mdl && yr) {
+          const mileageValue = watch("mileage");
+          await fetchListings(
+            mk,
+            mdl,
+            yr,
+            trm,
+            mileageValue ? Number(mileageValue) : undefined
+          );
+        }
         return;
       } catch (err) {
         console.error("VIN decode fallback failed", err);
@@ -147,7 +177,7 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
     } finally {
       setDecoding(false);
     }
-  }, [vin, apiBase, setValue]);
+  }, [vin, apiBase, setValue, watch, fetchListings]);
 
   // Auto-decode VIN as user types (with debounce)
   React.useEffect(() => {
@@ -307,6 +337,22 @@ export default function ValuationForm({ apiBase, onAppraised }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Market Valuation Section */}
+      {(listingsData || listingsLoading || listingsError) && (
+        <div className="mb-8 mt-8 border-t pt-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            Market Valuation
+          </h3>
+          <WholesalePricing
+            pricing={listingsData?.pricing}
+            listings={listingsData?.listings}
+            loading={listingsLoading}
+            error={listingsError}
+            vehicleTitle={`${watch("year")} ${watch("make")} ${watch("model")}`}
+          />
+        </div>
+      )}
 
       <button type="submit" disabled={isSubmitting}
         className={`w-full py-4 rounded-lg font-semibold text-white ${isSubmitting ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}>
