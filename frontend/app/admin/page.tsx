@@ -60,6 +60,13 @@ export default function AdminPage() {
     }
   };
 
+  const getDealershipSlug = (dealership: typeof DEALERSHIPS[0]) => {
+    return dealership.name
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace(/[^\w]/g, "");
+  };
+
   return (
     <PermissionGuard
       permission={Permission.MANAGE_USERS}
@@ -168,20 +175,27 @@ export default function AdminPage() {
             </div>
             <div className="px-6 py-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {DEALERSHIPS.map((dealership) => (
-                  <div
-                    key={dealership.id}
-                    className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
-                  >
-                    <Building2 className="h-5 w-5 text-gray-400 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {dealership.name}
-                      </p>
-                      <p className="text-xs text-gray-500">{dealership.brand}</p>
-                    </div>
-                  </div>
-                ))}
+                {DEALERSHIPS.map((dealership) => {
+                  const slug = getDealershipSlug(dealership);
+                  return (
+                    <Link
+                      key={dealership.id}
+                      href={`/admin/${slug}`}
+                    >
+                      <div
+                        className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition cursor-pointer border border-transparent"
+                      >
+                        <Building2 className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {dealership.name}
+                          </p>
+                          <p className="text-xs text-gray-500">{dealership.brand}</p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </div>
