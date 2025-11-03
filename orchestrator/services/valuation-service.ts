@@ -15,7 +15,7 @@ const log = pino();
 const aggregator = new QuoteAggregator();
 
 export class ValuationService {
-  async performValuation(request: ValuationRequest): Promise<ValuationResult> {
+  async calculateValuation(request: ValuationRequest): Promise<ValuationResult> {
     log.info({
       message: 'Starting valuation calculation',
       vehicle: `${request.year} ${request.make} ${request.model}`,
