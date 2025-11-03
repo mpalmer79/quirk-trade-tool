@@ -14,7 +14,8 @@ import { authenticate } from '../middleware/auth.js';
 import { authorizationService } from '../services/authorization-service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import { auditLog } from '../middleware/logging.js';
-import { valuationService, type ValuationRequest } from '../services/valuation-service';
+import { valuationService } from '../services/valuation-service';
+import type { ValuationRequest } from '../types/valuation.types';
 import { depreciationCalculator } from '../services/depreciation-calculator.js';
 import { Permission, UserRole } from '../types/user.js';
 
