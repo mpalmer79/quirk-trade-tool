@@ -1,11 +1,9 @@
-import '@testing-library/jest-dom';
+import { expect, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import * as matchers from '@testing-library/jest-dom/matchers';
 
-// Mock Next.js router
-vi.mock('next/navigation', () => ({
-  useRouter: () => ({
-    push: vi.fn(),
-    replace: vi.fn(),
-    pathname: '/',
-  }),
-  usePathname: () => '/',
-}));
+expect.extend(matchers);
+
+afterEach(() => {
+  cleanup();
+});
