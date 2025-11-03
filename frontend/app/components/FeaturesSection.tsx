@@ -1,5 +1,5 @@
 import React from 'react';
-https://github.com/mpalmer79/quirk-trade-tool/tree/main/frontend/app/components
+
 export function FeaturesSection() {
   const features = [
     { 
