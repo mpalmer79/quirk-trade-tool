@@ -166,7 +166,7 @@ export class ValuationService {
 }
 
 export const valuationService = new ValuationService();
-export type { ValuationRequest, ValuationResult } from '../types/valuation.types';
+
 ```
 
 **File:** `orchestrator/src/services/valuation-service.ts`
