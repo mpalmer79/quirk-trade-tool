@@ -682,6 +682,7 @@ CREATE TABLE appraisals (
 
 | Document | Purpose |
 |----------|---------|
+| **[CRITICAL_REQUIREMENTS.md](./CRITICAL_REQUIREMENTS.md)** | ⚠️ **Non-negotiable code requirements** |
 | [docs/API.md](./docs/API.md) | Complete API reference with all endpoints |
 | [USER_PERMISSIONS_GUIDE.md](./USER_PERMISSIONS_GUIDE.md) | Detailed permission system explanation |
 | [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) | User management feature summary |
