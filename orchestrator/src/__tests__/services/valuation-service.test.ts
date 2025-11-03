@@ -3,7 +3,6 @@ import { valuationService } from '../../services/valuation-service';
 
 describe('ValuationService', () => {
   it('aggregates multiple provider quotes correctly', async () => {
-    // ACT: Call the actual function name
     const result = await valuationService.performValuation({
       year: 2020,
       make: 'Honda',
@@ -13,7 +12,6 @@ describe('ValuationService', () => {
       dealershipId: 'quirk-chevy-manchester'
     });
 
-    // ASSERT: Check aggregation logic worked
     expect(result.quotes).toBeDefined();
     expect(result.quotes.length).toBeGreaterThan(0);
     expect(result.baseWholesaleValue).toBeGreaterThan(0);
