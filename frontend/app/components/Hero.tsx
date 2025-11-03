@@ -11,21 +11,20 @@ const WaveDivider = () => (
 export function Hero() {
   return (
     <div className="relative bg-gradient-to-br from-[#001a4d] to-[#003d99] text-white overflow-hidden">
-      <div className="absolute inset-0 opacity-10">
+      {/* Background decorations */}
+      <div className="absolute inset-0 overflow-hidden opacity-30">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#00d9a3] rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#00d9a3] rounded-full blur-3xl"></div>
       </div>
 
       <div className="relative max-w-6xl mx-auto px-6 py-20">
-        {/* Header with Logo */}
+        {/* HEADER WITH LOGO */}
         <div className="flex items-start justify-between mb-12">
           {/* Left side: branding */}
           <div>
             <div className="flex items-center gap-3 mb-6">
               <ScanLine className="w-10 h-10 text-[#00d9a3]" />
-              <span className="text-[#00d9a3] font-semibold text-sm tracking-widest uppercase">
-                Trade Valuation Tool
-              </span>
+              <span className="text-[#00d9a3] font-semibold text-sm tracking-widest uppercase">Trade Valuation Tool</span>
             </div>
           </div>
 
@@ -49,8 +48,7 @@ export function Hero() {
           Get Instant Wholesale Valuations
         </h1>
         <p className="text-xl text-gray-200 max-w-2xl mb-8">
-          Real-time vehicle appraisals powered by Black Book, KBB, NADA, Manheim, and more. 
-          Accurate, transparent pricing with condition-based adjustments.
+          Real-time vehicle appraisals powered by Black Book, KBB, NADA, Manheim, and more. Accurate, transparent pricing with condition-based adjustments.
         </p>
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
