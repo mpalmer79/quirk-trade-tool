@@ -61,3 +61,10 @@ export type AppraiseResponse = {
   note?: string;
   depreciation: DepreciationData;  // ✅ NEW
 };
+
+export type DecodedVin = {
+  year?: number;
+  make?: string;
+  model?: string;
+  trim?: string;
+};
