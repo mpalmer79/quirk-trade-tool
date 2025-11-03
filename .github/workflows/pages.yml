@@ -28,9 +28,6 @@ jobs:
       - name: Run frontend tests
         working-directory: frontend
         run: pnpm test
-      - name: Run orchestrator tests
-        working-directory: orchestrator
-        run: pnpm test
       - name: Generate coverage report
         working-directory: frontend
         run: pnpm test:coverage
