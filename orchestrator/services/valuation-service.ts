@@ -125,7 +125,29 @@ export class ValuationService {
     return [];
   }
 
-  async getModelStatistics(year: number, make: string, model: string, days: number = 30) {
+  async getModelStatistics(
+    year: number,
+    make: string,
+    model: string,
+    days: number = 30,
+    dealershipId?: string
+  ): Promise<{
+    totalAppraisals: number;
+    averageValue: number;
+    minValue: number;
+    maxValue: number;
+    avgCondition: number;
+    lastUpdated: string;
+  }> {
+    log.info({
+      message: 'Retrieving model statistics',
+      year,
+      make,
+      model,
+      days,
+      dealershipId,
+    });
+    
     return {
       totalAppraisals: 0,
       averageValue: 0,
