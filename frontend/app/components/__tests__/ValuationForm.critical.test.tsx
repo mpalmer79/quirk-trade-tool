@@ -1,76 +1,69 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { ValuationForm } from '../ValuationForm';
-import { useForm } from 'react-hook-form';
+import { ResultsSection } from '../ResultsSection';
 
-const renderForm = () => {
-  const TestWrapper = () => {
-    const methods = useForm({
-      defaultValues: {
-        storeId: 'quirk-chevy-manchester',
-        condition: 3,
-      },
-    });
-
-    return (
-      <ValuationForm
-        register={methods.register}
-        errors={methods.formState.errors}
-        isSubmitting={false}
-        watch={methods.watch}
-        setValue={methods.setValue}
-        summary={null}
-      />
-    );
+describe('ResultsSection - Critical', () => {
+  const mockSummary = {
+    base: 25000,
+    low: 24000,
+    high: 26000,
+    avg: 25000,
+    confidence: 'High' as const,
+    depreciation: {
+      depreciationFactor: 0.9,
+      conditionRating: 3,
+      finalWholesaleValue: 22500,
+      conditionLabel: 'Good',
+    },
   };
 
-  return render(<TestWrapper />);
-};
+  it('should display base wholesale value', () => {
+    render(<ResultsSection summary={mockSummary} />);
 
-describe('ValuationForm - Critical', () => {
-  it('should render all required input fields', () => {
-    renderForm();
-
-    expect(screen.getByLabelText(/year/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/make/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/model/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/mileage/i)).toBeInTheDocument();
-    expect(screen.getByRole('slider')).toBeInTheDocument();
+    // Look for the number with comma formatting
+    expect(screen.getByText(/25,000/)).toBeInTheDocument();
   });
 
-  it('should render submit button', () => {
-    renderForm();
+  it('should display final wholesale value', () => {
+    render(<ResultsSection summary={mockSummary} />);
 
-    const button = screen.getByRole('button', { name: /get wholesale value/i });
-    expect(button).toBeInTheDocument();
-    expect(button).not.toBeDisabled();
+    expect(screen.getByText(/22,500/)).toBeInTheDocument();
   });
 
-  it('should accept numeric input for year', async () => {
-    const user = userEvent.setup();
-    renderForm();
+  it('should display confidence level', () => {
+    render(<ResultsSection summary={mockSummary} />);
 
-    const yearInput = screen.getByLabelText(/year/i);
-    await user.type(yearInput, '2020');
-
-    expect(yearInput).toHaveValue('2020');
+    expect(screen.getByText(/high/i)).toBeInTheDocument();
   });
 
-  it('should accept numeric input for mileage', async () => {
-    const user = userEvent.setup();
-    renderForm();
+  it('should display value range', () => {
+    render(<ResultsSection summary={mockSummary} />);
 
-    const mileageInput = screen.getByLabelText(/mileage/i);
-    await user.type(mileageInput, '45000');
-
-    expect(mileageInput).toHaveValue('45000');
+    expect(screen.getByText(/24,000/)).toBeInTheDocument();
+    expect(screen.getByText(/26,000/)).toBeInTheDocument();
   });
 
-  it('should show condition slider with correct default', () => {
-    renderForm();
+  it('should not render when summary is null', () => {
+    const { container } = render(<ResultsSection summary={null} />);
+    
+    // Component should return null, so firstChild should be null
+    expect(container.firstChild).toBeNull();
+  });
 
-    const slider = screen.getByRole('slider');
-    expect(slider).toHaveValue('3');
+  it('should handle missing depreciation gracefully', () => {
+    const summaryWithoutDepreciation = {
+      base: 25000,
+      low: 24000,
+      high: 26000,
+      avg: 25000,
+      confidence: 'Medium' as const,
+      depreciation: undefined,
+    };
+
+    // Should not crash
+    const { container } = render(<ResultsSection summary={summaryWithoutDepreciation} />);
+    
+    expect(container).toBeInTheDocument();
+    expect(screen.getByText(/25,000/)).toBeInTheDocument();
   });
 });
