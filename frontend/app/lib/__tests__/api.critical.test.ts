@@ -13,6 +13,10 @@ describe('API Client - Critical', () => {
       id: 'VAL-123',
       baseWholesaleValue: 22000,
       finalWholesaleValue: 19800,
+      quotes: [
+        { source: 'KBB', value: 22000, currency: 'USD' },
+        { source: 'BlackBook', value: 21500, currency: 'USD' },
+      ],
     };
 
     (global.fetch as any).mockResolvedValueOnce({
@@ -64,7 +68,8 @@ describe('API Client - Critical', () => {
   it('should generate correct PDF URL', () => {
     const url = getPdfReceiptUrl('VAL-123');
     
-    expect(url).toContain('/api/receipt/VAL-123/pdf');
+    // Accept both with and without base URL
+    expect(url).toMatch(/\/api\/receipt\/VAL-123\/pdf$/);
   });
 
   it('should handle network errors', async () => {
