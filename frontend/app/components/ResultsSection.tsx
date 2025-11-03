@@ -1,23 +1,30 @@
 import React from 'react';
 import { DollarSign, TrendingUp, TrendingDown, CheckCircle2, ArrowRight } from 'lucide-react';
 import type { SourceQuote, Summary, DepreciationData } from '../lib/types';
-import { CONDITION_LABELS, DEPRECIATION_FACTORS } from '../lib/constants';
 import { getPdfReceiptUrl } from '../lib/api';
 
-interface ResultsSectionProps {
+type ResultsSectionProps = {
   quotes: SourceQuote[];
   summary: Summary;
   depreciation: DepreciationData;
   lastId: string | null;
   condition: number;
-}
+};
+
+const conditionLabels: Record<number, string> = {
+  1: 'Poor',
+  2: 'Fair',
+  3: 'Good',
+  4: 'Very Good',
+  5: 'Excellent'
+};
 
 export function ResultsSection({ quotes, summary, depreciation, lastId, condition }: ResultsSectionProps) {
   return (
     <div id="results-section" className="bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-6">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* MAIN VALUATION CARD */}
+        {/* MAIN VALUATION CARD WITH DEPRECIATION */}
         <div className="bg-gradient-to-br from-[#001a4d] to-[#003d99] rounded-2xl shadow-2xl p-10 text-white">
           <div className="flex items-center gap-3 mb-8">
             <div className="bg-[#00d9a3] bg-opacity-20 p-3 rounded-lg">
@@ -49,7 +56,7 @@ export function ResultsSection({ quotes, summary, depreciation, lastId, conditio
             </div>
           </div>
 
-          {/* FINAL VALUE */}
+          {/* FINAL VALUE - EMPHASIZED */}
           <div className="border-t-2 border-[#00d9a3] border-opacity-30 pt-8">
             <p className="text-[#00d9a3] text-sm font-bold mb-3 uppercase tracking-widest">Final Wholesale Value</p>
             <p className="text-6xl font-bold mb-4">${depreciation.finalWholesaleValue.toLocaleString()}</p>
@@ -132,7 +139,7 @@ export function ResultsSection({ quotes, summary, depreciation, lastId, conditio
 
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
             <p className="text-sm text-blue-900">
-              <strong>💡 Sales Tip:</strong> A detailed inspection could improve condition rating from {CONDITION_LABELS[condition]} to {CONDITION_LABELS[Math.min(condition + 1, 5)]}, potentially increasing value by <strong>${Math.round(summary.base * 0.05).toLocaleString()}</strong>.
+              <strong>💡 Sales Tip:</strong> A detailed inspection could improve condition rating from {conditionLabels[condition]} to {conditionLabels[Math.min(condition + 1, 5)]}, potentially increasing value by <strong>${Math.round(summary.base * (0.05 * Math.min(condition + 1, 5) - condition * 0.05)).toLocaleString()}</strong>.
             </p>
           </div>
         </div>
@@ -147,12 +154,7 @@ export function ResultsSection({ quotes, summary, depreciation, lastId, conditio
               <h3 className="text-2xl font-bold text-gray-800">Valuation Sources</h3>
             </div>
             {lastId && (
-              <a 
-                href={getPdfReceiptUrl(lastId)} 
-                target="_blank" 
-                rel="noreferrer" 
-                className="px-6 py-3 bg-[#ff6b6b] hover:bg-[#ff5252] text-white font-semibold rounded-lg transition-all flex items-center gap-2"
-              >
+              <a href={getPdfReceiptUrl(lastId)} target="_blank" rel="noreferrer" className="px-6 py-3 bg-[#ff6b6b] hover:bg-[#ff5252] text-white font-semibold rounded-lg transition-all flex items-center gap-2">
                 Download PDF <ArrowRight className="w-4 h-4" />
               </a>
             )}
