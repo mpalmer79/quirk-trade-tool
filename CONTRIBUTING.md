@@ -1,3 +1,15 @@
+# Contributing to Quirk Trade Tool
+
+## ⚠️ Before You Start
+
+**REQUIRED READING:** [CRITICAL_REQUIREMENTS.md](./CRITICAL_REQUIREMENTS.md)
+
+This document contains non-negotiable requirements that must be preserved. Familiarize yourself with:
+- Critical UI elements (e.g., Admin Login link)
+- Security requirements
+- Data integrity rules
+- Permission system hierarchy
+
 ## Environment Setup
 
 ### Local Development
