@@ -1,5 +1,20 @@
 'use client';
 
+/**
+ * Quirk Trade Tool - Main Landing Page
+ * 
+ * CRITICAL REQUIREMENTS:
+ * ⚠️ The Admin Login link in the hero section (top-right) MUST be preserved
+ * ⚠️ This is the only access point to the admin dashboard (/login)
+ * ⚠️ Do not remove or hide this link unless explicitly requested
+ * 
+ * Features:
+ * - Vehicle valuation form with VIN decoding
+ * - Multi-source pricing aggregation
+ * - Condition-based depreciation calculator
+ * - Real-time NHTSA VIN decoding
+ */
+
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -279,6 +294,8 @@ export default function Page() {
               </div>
             </div>
 
+            {/* ⚠️ CRITICAL: DO NOT REMOVE - Admin Login Link Required */}
+            {/* This link provides the only access point to the admin dashboard */}
             {/* Right side: Admin Login Link */}
             <div className="flex-shrink-0">
               <Link
