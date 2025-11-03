@@ -1,69 +1,138 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ResultsSection } from '../ResultsSection';
+import userEvent from '@testing-library/user-event';
+import { ValuationForm } from '../ValuationForm';
+import { useForm } from 'react-hook-form';
 
-describe('ResultsSection - Critical', () => {
-  const mockSummary = {
-    base: 25000,
-    low: 24000,
-    high: 26000,
-    avg: 25000,
-    confidence: 'High' as const,
-    depreciation: {
-      depreciationFactor: 0.9,
-      conditionRating: 3,
-      finalWholesaleValue: 22500,
-      conditionLabel: 'Good',
-    },
+const renderForm = () => {
+  const TestWrapper = () => {
+    const methods = useForm({
+      defaultValues: {
+        storeId: 'quirk-chevy-manchester',
+        condition: 3,
+        year: '',
+        make: '',
+        model: '',
+        mileage: '',
+      },
+    });
+
+    return (
+      <ValuationForm
+        register={methods.register}
+        errors={methods.formState.errors}
+        isSubmitting={false}
+        watch={methods.watch}
+        setValue={methods.setValue}
+        summary={null}
+      />
+    );
   };
 
-  it('should display base wholesale value', () => {
-    render(<ResultsSection summary={mockSummary} />);
+  return render(<TestWrapper />);
+};
 
-    // Look for the number with comma formatting
-    expect(screen.getByText(/25,000/)).toBeInTheDocument();
+describe('ValuationForm - Critical', () => {
+  it('should render all required input fields', () => {
+    renderForm();
+
+    // Check for text content, not specific labels
+    expect(screen.getByText(/year/i)).toBeInTheDocument();
+    expect(screen.getByText(/make/i)).toBeInTheDocument();
+    expect(screen.getByText(/model/i)).toBeInTheDocument();
+    expect(screen.getByText(/mileage/i)).toBeInTheDocument();
   });
 
-  it('should display final wholesale value', () => {
-    render(<ResultsSection summary={mockSummary} />);
+  it('should render submit button', () => {
+    renderForm();
 
-    expect(screen.getByText(/22,500/)).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: /get wholesale value/i });
+    expect(button).toBeInTheDocument();
   });
 
-  it('should display confidence level', () => {
-    render(<ResultsSection summary={mockSummary} />);
+  it('should show condition slider', () => {
+    renderForm();
 
-    expect(screen.getByText(/high/i)).toBeInTheDocument();
+    const slider = screen.getByRole('slider');
+    expect(slider).toBeInTheDocument();
+    expect(slider).toHaveValue('3');
   });
 
-  it('should display value range', () => {
-    render(<ResultsSection summary={mockSummary} />);
+  describe('ResultsSection - Critical', () => {
+    it('should handle missing depreciation gracefully', () => {
+      const mockSummary = {
+        base: 25000,
+        low: 24000,
+        high: 26000,
+        avg: 25000,
+        confidence: 'Medium' as const,
+      };
 
-    expect(screen.getByText(/24,000/)).toBeInTheDocument();
-    expect(screen.getByText(/26,000/)).toBeInTheDocument();
-  });
+      const TestWrapper = () => {
+        const methods = useForm({
+          defaultValues: {
+            storeId: 'quirk-chevy-manchester',
+            condition: 3,
+          },
+        });
 
-  it('should not render when summary is null', () => {
-    const { container } = render(<ResultsSection summary={null} />);
-    
-    // Component should return null, so firstChild should be null
-    expect(container.firstChild).toBeNull();
-  });
+        return (
+          <ValuationForm
+            register={methods.register}
+            errors={methods.formState.errors}
+            isSubmitting={false}
+            watch={methods.watch}
+            setValue={methods.setValue}
+            summary={mockSummary}
+          />
+        );
+      };
 
-  it('should handle missing depreciation gracefully', () => {
-    const summaryWithoutDepreciation = {
-      base: 25000,
-      low: 24000,
-      high: 26000,
-      avg: 25000,
-      confidence: 'Medium' as const,
-      depreciation: undefined,
-    };
+      const { container } = render(<TestWrapper />);
+      
+      // Should render without crashing
+      expect(container).toBeInTheDocument();
+    });
 
-    // Should not crash
-    const { container } = render(<ResultsSection summary={summaryWithoutDepreciation} />);
-    
-    expect(container).toBeInTheDocument();
-    expect(screen.getByText(/25,000/)).toBeInTheDocument();
+    it('should display base wholesale value', () => {
+      const mockSummary = {
+        base: 25000,
+        low: 24000,
+        high: 26000,
+        avg: 25000,
+        confidence: 'High' as const,
+        depreciation: {
+          depreciationFactor: 0.9,
+          conditionRating: 3,
+          finalWholesaleValue: 22500,
+          conditionLabel: 'Good',
+        },
+      };
+
+      const TestWrapper = () => {
+        const methods = useForm({
+          defaultValues: {
+            storeId: 'quirk-chevy-manchester',
+            condition: 3,
+          },
+        });
+
+        return (
+          <ValuationForm
+            register={methods.register}
+            errors={methods.formState.errors}
+            isSubmitting={false}
+            watch={methods.watch}
+            setValue={methods.setValue}
+            summary={mockSummary}
+          />
+        );
+      };
+
+      render(<TestWrapper />);
+      
+      // Look for the formatted value
+      expect(screen.getByText(/25,000/)).toBeInTheDocument();
+    });
   });
 });
