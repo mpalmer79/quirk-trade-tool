@@ -1,76 +1,65 @@
-import type { DecodedVin } from '../lib/types';
+/**
+ * VIN Decoder Utilities
+ * Validation and formatting for Vehicle Identification Numbers
+ */
 
 /**
- * Decode VIN using NHTSA API
- * Returns vehicle year, make, model, and trim
+ * Validate VIN format
+ * VINs are exactly 17 characters, alphanumeric, excluding I, O, Q
  */
-export async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
-  const cleaned = (vin || '').trim().toUpperCase();
-  if (cleaned.length < 11) return null;
-
-  try {
-    const response = await fetch(
-      `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(cleaned)}?format=json`
-    );
-    
-    if (!response.ok) return null;
-    
-    const data = await response.json();
-    const row = data?.Results?.[0];
-    if (!row) return null;
-
-    // Debug: Log the raw response
-    console.log('NHTSA Response:', row);
-
-    // Parse year - handle both numeric and string formats
-    let year = undefined;
-    if (row.ModelYear) {
-      const yearNum = parseInt(row.ModelYear.toString());
-      if (!isNaN(yearNum) && yearNum >= 1900 && yearNum <= 2100) {
-        year = yearNum;
-      }
-    }
-
-    // Parse make - clean up formatting
-    let make = row.Make || undefined;
-    if (make && make !== '' && make !== 'Not Applicable') {
-      make = make
-        .split(' ')
-        .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-        .join(' ');
-    } else {
-      make = undefined;
-    }
-
-    // Parse model - handle empty/invalid values
-    let model = row.Model || undefined;
-    if (model && model !== '' && model !== 'Not Applicable') {
-      model = model
-        .split('-')
-        .map((part: string) => 
-          part
-            .split(' ')
-            .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-            .join(' ')
-        )
-        .join('-');
-    } else {
-      model = undefined;
-    }
-
-    // Parse trim
-    let trim = row.Trim || undefined;
-    if (trim && trim !== '' && trim !== 'Not Applicable') {
-      // Keep trim as-is
-    } else {
-      trim = undefined;
-    }
-
-    console.log('Decoded VIN:', { year, make, model, trim });
-
-    return { year, make, model, trim };
-  } catch (e) {
-    console.error('VIN decode failed:', e);
-    return null;
+export function validateVIN(vin: string): boolean {
+  if (!vin || typeof vin !== 'string') {
+    return false;
   }
+
+  // VIN must be exactly 17 characters
+  if (vin.length !== 17) {
+    return false;
+  }
+
+  // VIN uses 0-9, A-Z except I, O, Q
+  const validVinRegex = /^[A-HJ-NPR-Z0-9]{17}$/;
+  
+  return validVinRegex.test(vin.toUpperCase());
+}
+
+/**
+ * Clean VIN by removing spaces, hyphens, and converting to uppercase
+ */
+export function cleanVIN(vin: string): string {
+  if (!vin || typeof vin !== 'string') {
+    return '';
+  }
+
+  return vin
+    .replace(/[\s-]/g, '') // Remove spaces and hyphens
+    .toUpperCase()         // Convert to uppercase
+    .trim();               // Remove leading/trailing whitespace
+}
+
+/**
+ * Validate and clean VIN in one step
+ */
+export function normalizeVIN(vin: string): string | null {
+  const cleaned = cleanVIN(vin);
+  
+  if (validateVIN(cleaned)) {
+    return cleaned;
+  }
+  
+  return null;
+}
+
+/**
+ * Format VIN for display (add spaces for readability)
+ * Example: 1HGCV41JXMN109186 -> 1HG CV41 JXM N109186
+ */
+export function formatVINForDisplay(vin: string): string {
+  const cleaned = cleanVIN(vin);
+  
+  if (cleaned.length !== 17) {
+    return cleaned;
+  }
+
+  return `${cleaned.slice(0, 3)} ${cleaned.slice(3, 7)} ${cleaned.slice(7, 10)} ${cleaned.slice(10)}`;
 }
