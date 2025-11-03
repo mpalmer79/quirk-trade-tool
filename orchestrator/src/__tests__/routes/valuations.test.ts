@@ -1,15 +1,24 @@
 import request from 'supertest';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { app } from '../../app';
+
+// Mock the service module BEFORE importing it
+vi.mock('../../services/valuation-service', () => ({
+  valuationService: {
+    calculateValuation: vi.fn()
+  }
+}));
+
 import { valuationService } from '../../services/valuation-service';
 
-// Mock the entire service
-vi.mock('../../services/valuation-service');
-
 describe('POST /api/valuations/calculate', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('returns 200 and valuation data for valid request', async () => {
     // MOCK: Service returns fake data
-    vi.mocked(valuationService.calculateValuation).mockResolvedValue({
+    (valuationService.calculateValuation as any).mockResolvedValue({
       id: 'val-123',
       baseWholesaleValue: 18000,
       finalWholesaleValue: 16200,
