@@ -143,16 +143,32 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
     const row = data?.Results?.[0];
     if (!row) return null;
 
+    // Debug: Log the raw response to see what we're getting
+    console.log('NHTSA Response:', row);
+
+    // Parse year - handle both numeric and string formats
+    let year = undefined;
+    if (row.ModelYear) {
+      const yearNum = parseInt(row.ModelYear.toString());
+      if (!isNaN(yearNum) && yearNum >= 1900 && yearNum <= 2100) {
+        year = yearNum;
+      }
+    }
+
+    // Parse make - clean up formatting
     let make = row.Make || undefined;
-    if (make) {
+    if (make && make !== '' && make !== 'Not Applicable') {
       make = make
         .split(' ')
         .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join(' ');
+    } else {
+      make = undefined;
     }
 
+    // Parse model - handle empty/invalid values
     let model = row.Model || undefined;
-    if (model) {
+    if (model && model !== '' && model !== 'Not Applicable') {
       model = model
         .split('-')
         .map((part: string) => 
@@ -162,13 +178,25 @@ async function decodeVinWithNhtsa(vin: string): Promise<DecodedVin | null> {
             .join(' ')
         )
         .join('-');
+    } else {
+      model = undefined;
     }
 
+    // Parse trim
+    let trim = row.Trim || undefined;
+    if (trim && trim !== '' && trim !== 'Not Applicable') {
+      // Keep trim as-is
+    } else {
+      trim = undefined;
+    }
+
+    console.log('Decoded VIN:', { year, make, model, trim });
+
     return {
-      year: Number(row.ModelYear) || undefined,
-      make: make,
-      model: model,
-      trim: row.Trim || undefined,
+      year,
+      make,
+      model,
+      trim,
     };
   } catch (e) {
     console.error('VIN decode failed:', e);
