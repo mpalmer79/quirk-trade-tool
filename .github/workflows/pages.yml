@@ -2,6 +2,8 @@ name: Deploy Frontend to GitHub Pages
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 permissions:
   contents: read
   pages: write
@@ -10,7 +12,36 @@ concurrency:
   group: "pages"
   cancel-in-progress: true
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Run frontend tests
+        working-directory: frontend
+        run: pnpm test
+      - name: Run orchestrator tests
+        working-directory: orchestrator
+        run: pnpm test
+      - name: Generate coverage report
+        working-directory: frontend
+        run: pnpm test:coverage
+      - name: Upload coverage to artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: frontend/coverage
+          
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -38,7 +69,9 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: frontend/out
+          
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
