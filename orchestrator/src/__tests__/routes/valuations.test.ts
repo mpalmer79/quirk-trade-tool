@@ -54,8 +54,8 @@ describe('POST /api/valuations/calculate', () => {
         make: 'Honda',
         model: 'Accord',
         mileage: 45000,
-        conditionRating: 3,
-        dealershipId: 'quirk-chevy-manchester'
+        condition: 3,
+        storeId: 'quirk-chevy-manchester'
       });
 
     // ASSERT: Check HTTP response
