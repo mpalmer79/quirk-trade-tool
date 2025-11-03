@@ -120,7 +120,7 @@ router.post(
     // ============================================================================ 
     // STEP 4: CALL VALUATION SERVICE
     // ============================================================================
-    const valuation = await valuationService.performValuation(valuationRequest);
+    const valuation = await valuationService.calculateValuation(valuationRequest);
 
     // ============================================================================ 
     // STEP 5: AUDIT LOG
