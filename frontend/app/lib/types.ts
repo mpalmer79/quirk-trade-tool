@@ -45,7 +45,7 @@ export type Summary = {
   low: number; 
   high: number; 
   avg: number; 
-  confidence: string;
+  confidence: "High" | "Medium" | "Low" | "Very Low";
   base: number;                   
   depreciation: DepreciationData; 
 };
