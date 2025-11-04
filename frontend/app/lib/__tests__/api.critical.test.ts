@@ -17,6 +17,17 @@ describe('API Client - Critical', () => {
         { source: 'KBB', value: 22000, currency: 'USD' },
         { source: 'BlackBook', value: 21500, currency: 'USD' },
       ],
+      summary: {
+        low: 21000,
+        high: 23000,
+        avg: 22000,
+        confidence: 'High' as const,
+      },
+      depreciation: {
+        depreciationFactor: 0.9,
+        conditionRating: 3,
+        finalWholesaleValue: 19800,
+      },
     };
 
     (global.fetch as any).mockResolvedValueOnce({
@@ -34,7 +45,7 @@ describe('API Client - Critical', () => {
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/valuations'),
+      expect.stringContaining('/api/valuations/calculate'),
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
@@ -43,7 +54,9 @@ describe('API Client - Critical', () => {
       })
     );
 
-    expect(result).toEqual(mockResponse);
+    expect(result.id).toBe('VAL-123');
+    expect(result.baseWholesaleValue).toBe(22000);
+    expect(result.quotes).toHaveLength(2);
   });
 
   it('should throw error on API failure', async () => {
@@ -68,8 +81,7 @@ describe('API Client - Critical', () => {
   it('should generate correct PDF URL', () => {
     const url = getPdfReceiptUrl('VAL-123');
     
-    // Accept both with and without base URL
-    expect(url).toMatch(/\/api\/receipt\/VAL-123\/pdf$/);
+    expect(url).toMatch(/\/api\/receipt\/pdf\/VAL-123$/);
   });
 
   it('should handle network errors', async () => {
