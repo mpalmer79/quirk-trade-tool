@@ -6,7 +6,6 @@ import { useAuth } from "@/app/lib/auth-context";
 import { UserRole } from "@/app/lib/auth-types";
 import { ShieldCheck, User as UserIcon, Lock, LogIn, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { navigateWithBasePath } from "@/utils/basePath";
 
 // Mock test users for development
 const TEST_USERS = [
@@ -89,10 +88,10 @@ export default function LoginPage() {
     // Store user in localStorage (mock auth)
     localStorage.setItem("quirk_user", JSON.stringify(testUser));
     
-    // Reload to trigger auth context
-    setTimeout(() => {
-      navigateWithBasePath("/admin");
-    }, 300);
+    // Force a full page reload to trigger auth context
+    // This works better on GitHub Pages than client-side navigation
+    const basePath = process.env.NODE_ENV === 'production' ? '/quirk-trade-tool' : '';
+    window.location.href = `${basePath}/admin`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,10 +114,10 @@ export default function LoginPage() {
       // Store user in localStorage (mock auth)
       localStorage.setItem("quirk_user", JSON.stringify(testUser));
       
-      // Redirect to admin
-      setTimeout(() => {
-        navigateWithBasePath("/admin");
-      }, 300);
+      // Force a full page reload to trigger auth context
+      // This works better on GitHub Pages than client-side navigation
+      const basePath = process.env.NODE_ENV === 'production' ? '/quirk-trade-tool' : '';
+      window.location.href = `${basePath}/admin`;
     } catch (err) {
       setError("Login failed. Please try again.");
       setIsLoading(false);
