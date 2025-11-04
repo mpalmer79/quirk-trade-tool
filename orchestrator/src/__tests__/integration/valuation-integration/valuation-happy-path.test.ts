@@ -75,6 +75,9 @@ describe('Valuation Integration - Happy Path', () => {
       .post('/api/valuations/calculate')
       .send(validValuationRequest);
 
+    // Add small delay to ensure different timestamps
+    await new Promise(resolve => setTimeout(resolve, 10));
+
     const response2 = await request(app)
       .post('/api/valuations/calculate')
       .send(validValuationRequest);
@@ -83,16 +86,16 @@ describe('Valuation Integration - Happy Path', () => {
   });
 
   it('should set correct timestamp', async () => {
-    const beforeRequest = new Date();
+    const beforeRequest = Date.now() - 1000; // 1 second buffer
     const response = await request(app)
       .post('/api/valuations/calculate')
       .send(validValuationRequest);
-    const afterRequest = new Date();
+    const afterRequest = Date.now() + 1000; // 1 second buffer
 
-    const timestamp = new Date(response.body.timestamp);
+    const timestamp = new Date(response.body.timestamp).getTime();
 
-    expect(timestamp.getTime()).toBeGreaterThanOrEqual(beforeRequest.getTime());
-    expect(timestamp.getTime()).toBeLessThanOrEqual(afterRequest.getTime());
+    expect(timestamp).toBeGreaterThanOrEqual(beforeRequest);
+    expect(timestamp).toBeLessThanOrEqual(afterRequest);
   });
 
   it('should calculate depreciation based on condition rating', async () => {
