@@ -12,7 +12,7 @@ describe('ValuationService - Critical Paths', () => {
   });
 
   it('should calculate valuation for standard vehicle', async () => {
-    const result = await valuationService.performValuation({
+    const result = await valuationService.calculateValuation({
       vin: '1HGCV41JXMN109186',
       year: 2020,
       make: 'Honda',
@@ -44,7 +44,7 @@ describe('ValuationService - Critical Paths', () => {
     ];
 
     for (const { condition, factor } of testCases) {
-      const result = await valuationService.performValuation({
+      const result = await valuationService.calculateValuation({
         year: 2020,
         make: 'Honda',
         model: 'Accord',
@@ -67,7 +67,7 @@ describe('ValuationService - Critical Paths', () => {
     
     vi.mocked(cache.getValuationFromCache).mockResolvedValue(cached);
 
-    const result = await valuationService.performValuation({
+    const result = await valuationService.calculateValuation({
       year: 2020,
       make: 'Honda',
       model: 'Accord',
