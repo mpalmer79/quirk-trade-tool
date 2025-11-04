@@ -19,6 +19,10 @@ concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
+env:
+  PNPM_HOME: /home/runner/.pnpm
+  PNPM_VERSION: 9.15.0
+
 jobs:
   # ============================================================================
   # JOB 1: FRONTEND TESTING
@@ -37,11 +41,22 @@ jobs:
           node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: 📂 Add pnpm to PATH
+        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
+
+      - name: 💾 Restore pnpm store (cache)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_HOME }}/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: 📦 Install frontend dependencies
         working-directory: frontend
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 🧪 Run frontend unit tests
         working-directory: frontend
@@ -114,11 +129,22 @@ jobs:
           node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: 📂 Add pnpm to PATH
+        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
+
+      - name: 💾 Restore pnpm store (cache)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_HOME }}/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: 📦 Install orchestrator dependencies
         working-directory: orchestrator
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: ⏳ Wait for database to be ready
         run: |
@@ -174,10 +200,21 @@ jobs:
           node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: 📂 Add pnpm to PATH
+        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
+
+      - name: 💾 Restore pnpm store (cache)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_HOME }}/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: 📦 Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 📝 Lint frontend
         working-directory: frontend
@@ -208,11 +245,22 @@ jobs:
           node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: 📂 Add pnpm to PATH
+        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
+
+      - name: 💾 Restore pnpm store (cache)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_HOME }}/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: 📦 Install frontend dependencies
         working-directory: frontend
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 🗑️ Clear Next.js cache
         working-directory: frontend
@@ -252,11 +300,22 @@ jobs:
           node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+
+      - name: 📂 Add pnpm to PATH
+        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
+
+      - name: 💾 Restore pnpm store (cache)
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.PNPM_HOME }}/store
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       - name: 📦 Install orchestrator dependencies
         working-directory: orchestrator
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: 🏗️ Build TypeScript
         working-directory: orchestrator
