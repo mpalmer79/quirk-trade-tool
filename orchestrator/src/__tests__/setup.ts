@@ -128,7 +128,7 @@ export const validValuationRequest = {
   model: 'Accord',
   mileage: 45000,
   condition: 3,
-  dealershipId: 'test-dealer-01',
+  storeId: 'test-dealer-01',
   vin: 'JHCV12345JM123456',
 };
 
