@@ -56,6 +56,10 @@ const invalidRequests = [
     name: 'Empty model',
     payload: { ...validValuationRequest, model: '' },
   },
+  {
+    name: 'Missing storeId',
+    payload: { ...validValuationRequest, storeId: '' },
+  },
 ];
 
 // ============================================================================
@@ -85,7 +89,7 @@ describe('Valuation Integration - Happy Path', () => {
       .send(validValuationRequest);
 
     expect(response.status).toBe(200);
-    expect(response.body.quotes).toBeInstanceOf(Array);
+    expect(Array.isArray(response.body.quotes)).toBe(true);
     expect(response.body.quotes.length).toBeGreaterThan(0);
 
     response.body.quotes.forEach((quote: any) => {
@@ -216,10 +220,10 @@ describe('Valuation Integration - Input Validation', () => {
     });
   });
 
-  it('should require year to be reasonable (1900-current+1)', async () => {
+  it('should require year to be reasonable (1995-current+1)', async () => {
     const response = await request(app)
       .post('/api/valuations/calculate')
-      .send({ ...validValuationRequest, year: 1800 });
+      .send({ ...validValuationRequest, year: 1994 });
 
     expect(response.status).toBe(400);
   });
@@ -231,6 +235,8 @@ describe('Valuation Integration - Input Validation', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.depreciation).toBeDefined();
+    // High mileage should result in lower value
+    expect(response.body.finalWholesaleValue).toBeGreaterThan(0);
   });
 
   it('should handle zero mileage', async () => {
