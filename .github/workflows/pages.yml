@@ -1,12 +1,12 @@
 name: CI/CD Pipeline - Frontend & Orchestrator
 
-# Trigger on: push to main, PRs to main, and manual trigger
+# Trigger on: push to main/develop and PRs
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  workflow_dispatch: # Manual trigger from GitHub UI
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -18,10 +18,6 @@ permissions:
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
-
-env:
-  NODE_VERSION: "20"
-  PNPM_VERSION: "9.15.0"
 
 jobs:
   # ============================================================================
@@ -38,12 +34,10 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: "frontend/pnpm-lock.yaml"
+          node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
 
       - name: 📦 Install frontend dependencies
         working-directory: frontend
@@ -65,14 +59,6 @@ jobs:
           name: frontend-coverage
           path: frontend/coverage
         if: always()
-
-      - name: 💬 Comment coverage on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-coverage-pr
-          path: frontend/coverage
-        continue-on-error: true
 
   # ============================================================================
   # JOB 2: ORCHESTRATOR TESTING
@@ -125,12 +111,10 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: "orchestrator/pnpm-lock.yaml"
+          node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
 
       - name: 📦 Install orchestrator dependencies
         working-directory: orchestrator
@@ -140,13 +124,13 @@ jobs:
         run: |
           for i in {1..30}; do
             if pg_isready -h localhost -p 5432 -U test_user; then
-              echo "Database is ready"
+              echo "✅ Database is ready"
               exit 0
             fi
-            echo "Waiting for database... attempt $i"
+            echo "⏳ Waiting for database... attempt $i/30"
             sleep 1
           done
-          echo "Database failed to start"
+          echo "❌ Database failed to start"
           exit 1
 
       - name: 🗄️ Setup test database
@@ -173,13 +157,6 @@ jobs:
           path: orchestrator/coverage
         if: always()
 
-      - name: 📋 Test Summary
-        if: always()
-        run: |
-          echo "## Orchestrator Test Summary" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "📊 Coverage report available in artifacts" >> $GITHUB_STEP_SUMMARY
-
   # ============================================================================
   # JOB 3: LINTING & CODE QUALITY
   # ============================================================================
@@ -194,11 +171,10 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
+          node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
 
       - name: 📦 Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -213,10 +189,6 @@ jobs:
         run: pnpm lint
         continue-on-error: true
 
-      - name: ✨ Check formatting
-        run: pnpm format:check
-        continue-on-error: true
-
   # ============================================================================
   # JOB 4: BUILD FRONTEND
   # ============================================================================
@@ -224,7 +196,7 @@ jobs:
     name: 🏗️ Build Frontend
     needs: frontend-test
     runs-on: ubuntu-latest
-    if: always() && needs.frontend-test.result == 'success'
+    if: success()
     
     steps:
       - name: 📥 Checkout code
@@ -233,12 +205,10 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: "frontend/pnpm-lock.yaml"
+          node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
 
       - name: 📦 Install frontend dependencies
         working-directory: frontend
@@ -268,9 +238,9 @@ jobs:
   # ============================================================================
   build-orchestrator:
     name: 🏗️ Build Orchestrator
-    needs: [orchestrator-test]
+    needs: orchestrator-test
     runs-on: ubuntu-latest
-    if: always() && needs.orchestrator-test.result == 'success'
+    if: success()
     
     steps:
       - name: 📥 Checkout code
@@ -279,12 +249,10 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: "orchestrator/pnpm-lock.yaml"
+          node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
 
       - name: 📦 Install orchestrator dependencies
         working-directory: orchestrator
@@ -323,7 +291,7 @@ jobs:
           echo "URL: ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
 
   # ============================================================================
-  # JOB 7: STATUS CHECK (Passes if all critical jobs pass)
+  # JOB 7: FINAL STATUS CHECK
   # ============================================================================
   status-check:
     name: ✅ Pipeline Status
@@ -338,8 +306,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend Tests | ${{ needs.frontend-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Orchestrator Tests | ${{ needs.orchestrator-test.result == 'success' && '✅' || '❌' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend Tests | ${{ needs.frontend-test.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Orchestrator Tests | ${{ needs.orchestrator-test.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
           if [ "${{ needs.frontend-test.result }}" != "success" ] || [ "${{ needs.orchestrator-test.result }}" != "success" ]; then
@@ -348,8 +316,3 @@ jobs:
           fi
           
           echo "✅ All checks passed!"
-
-      - name: 🎉 Success notification
-        if: success()
-        run: |
-          echo "✅ All tests passed! Pipeline is healthy."
