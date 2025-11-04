@@ -1,8 +1,8 @@
 /**
- * Valuation Type Definitions
+ * Core valuation type definitions
  */
 
-import type { DepreciatedValuation } from '../services/depreciation-calculator';
+export type ConditionRating = 1 | 2 | 3 | 4 | 5;
 
 export interface ValuationRequest {
   vin?: string;
@@ -11,38 +11,47 @@ export interface ValuationRequest {
   model: string;
   trim?: string;
   mileage: number;
-  conditionRating: 1 | 2 | 3 | 4 | 5;
+  conditionRating: ConditionRating;
   options?: string[];
   dealershipId: string;
   zip?: string;
 }
 
 export interface SourceValuation {
-  provider: string;
+  source: string;  // Changed from 'provider' to 'source'
   value: number;
   confidence: 'high' | 'medium' | 'low';
   timestamp: string;
+  currency: string;  // Added this field
+}
+
+export interface DepreciationDetails {
+  depreciationFactor: number;
+  conditionRating: ConditionRating;
+  yearFactor?: number;
+  mileageFactor?: number;
+  conditionFactor?: number;
 }
 
 export interface ValuationResult {
   id: string;
   baseWholesaleValue: number;
-  depreciation: DepreciatedValuation;
+  depreciation: DepreciationDetails;
   finalWholesaleValue: number;
   quotes: SourceValuation[];
   vehicle: {
-    vin?: string;
     year: number;
     make: string;
     model: string;
     trim?: string;
     mileage: number;
+    vin?: string;
   };
   dealership: {
     id: string;
   };
   timestamp: string;
-  request?: ValuationRequest;
+  userId?: string;
   _cached?: boolean;
 }
 
