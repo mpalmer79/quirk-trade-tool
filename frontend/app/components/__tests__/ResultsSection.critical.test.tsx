@@ -7,7 +7,7 @@ describe('ResultsSection - Critical', () => {
     base: 25000,
     low: 24000,
     high: 26000,
-    avg: 25000,
+    avg: 25500,  // ← CHANGED FROM 25000
     confidence: 'High' as const,
     depreciation: {
       depreciationFactor: 0.9,
