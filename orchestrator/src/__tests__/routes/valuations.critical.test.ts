@@ -45,7 +45,7 @@ describe('Valuation Routes - Critical', () => {
     vi.mocked(valuationService.calculateValuation).mockResolvedValue(mockResult);
 
     const response = await request(app)
-      .post('/api/valuations')
+      .post('/api/valuations/calculate')
       .send({
         year: 2020,
         make: 'Honda',
@@ -64,7 +64,7 @@ describe('Valuation Routes - Critical', () => {
     const app = createTestApp();
 
     const response = await request(app)
-      .post('/api/valuations')
+      .post('/api/valuations/calculate')
       .send({
         year: 2020,
         // Missing required fields
