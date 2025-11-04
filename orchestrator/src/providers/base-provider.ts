@@ -26,12 +26,16 @@ export abstract class BaseProvider {
       const basePrice = this.basePrices[request.make] || this.config.basePrice;
       const currentYear = new Date().getFullYear();
       
-      // Depreciation calculations
-      const yearAdjustment = (currentYear - request.year) * this.config.yearAdjustmentRate;
-      const mileageAdjustment = (request.mileage / 100000) * this.config.mileageAdjustmentRate;
+      // Depreciation calculations with caps to prevent negative values
+      const yearsSinceManufacture = currentYear - request.year;
+      const yearAdjustment = Math.min(yearsSinceManufacture * this.config.yearAdjustmentRate, 0.85);
+      const mileageAdjustment = Math.min((request.mileage / 100000) * this.config.mileageAdjustmentRate, 0.50);
+      
+      // Ensure total depreciation doesn't exceed 95% (minimum 5% residual value)
+      const totalDepreciation = Math.min(yearAdjustment + mileageAdjustment, 0.95);
       
       // Apply depreciation
-      let adjustedPrice = basePrice * (1 - yearAdjustment - mileageAdjustment);
+      let adjustedPrice = basePrice * (1 - totalDepreciation);
       
       // Regional adjustment
       const regionalMultiplier = getRegionalAdjustment({
@@ -50,7 +54,10 @@ export abstract class BaseProvider {
       // Add random variance for realism
       const variance = Math.random() * this.config.randomVariance - (this.config.randomVariance / 2);
       
-      return Math.round(adjustedPrice + variance);
+      const finalValue = Math.round(adjustedPrice + variance);
+      
+      // Ensure minimum value of $500 (scrap value floor)
+      return Math.max(finalValue, 500);
     } catch (error) {
       log.error({
         message: `${this.config.name} valuation failed`,
