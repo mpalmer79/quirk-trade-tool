@@ -32,10 +32,11 @@ export class QuoteAggregator {
       if (value === null) return null;
 
       return {
-        provider: provider.getName(),
+        source: provider.getName(),
         value: Math.round(value),
         confidence: this.getConfidenceLevel(provider.getName(), elapsed),
         timestamp: new Date().toISOString(),
+        currency: 'USD',
       };
     } catch (error) {
       log.warn({
