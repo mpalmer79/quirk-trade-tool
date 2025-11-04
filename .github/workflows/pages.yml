@@ -222,9 +222,9 @@ jobs:
   # ============================================================================
   build-frontend:
     name: 🏗️ Build Frontend
-    needs: [frontend-test, linting-check]
+    needs: frontend-test
     runs-on: ubuntu-latest
-    if: always() && (needs.frontend-test.result == 'success' || needs.frontend-test.result == 'skipped')
+    if: always() && needs.frontend-test.result == 'success'
     
     steps:
       - name: 📥 Checkout code
