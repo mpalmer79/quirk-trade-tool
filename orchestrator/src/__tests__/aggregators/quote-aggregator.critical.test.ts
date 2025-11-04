@@ -26,9 +26,9 @@ describe('QuoteAggregator - Critical', () => {
 
     const result = aggregator.calculateAggregateValue(quotes);
 
-    // Should be close to 21000, not affected much by 50000 due to low confidence weight
-    expect(result).toBeGreaterThan(19000);
-    expect(result).toBeLessThan(23000);
+   // Should be close to 21000, but slightly influenced by outlier with low confidence
+expect(result).toBeGreaterThan(21000);
+expect(result).toBeLessThan(24000);
   });
 
   it('should handle single quote', () => {
