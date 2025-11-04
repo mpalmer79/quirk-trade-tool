@@ -1,5 +1,15 @@
 {
-  "extends": "./tsconfig.json",
-  "include": ["src"],
-  "exclude": ["src/__tests__/**/*", "**/*.test.ts"]
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["ES2022", "DOM"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "outDir": "dist",
+    "rootDir": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "types": ["node", "vitest"]
+  },
+  "include": ["src/**/*", "vitest.config.ts"]
 }
