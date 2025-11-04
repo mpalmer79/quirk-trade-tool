@@ -6,12 +6,16 @@ import type { User, JwtPayload } from '../types/user.js';
 const log = pino();
 
 export class AuthService {
-  if (!process.env.JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
-private jwtSecret = process.env.JWT_SECRET;
+  private jwtSecret: string;
   private jwtExpiry = process.env.JWT_EXPIRY || '24h';
   private refreshExpiry = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+
+  constructor() {
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is required');
+    }
+    this.jwtSecret = process.env.JWT_SECRET;
+  }
 
   /**
    * Hash a password using bcrypt
