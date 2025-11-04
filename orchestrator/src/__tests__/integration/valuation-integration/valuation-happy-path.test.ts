@@ -71,21 +71,26 @@ describe('Valuation Integration - Happy Path', () => {
   });
 
   it('should generate unique valuation IDs', async () => {
+    // Use DIFFERENT vehicles to ensure unique IDs
     const response1 = await request(app)
       .post('/api/valuations/calculate')
-      .send(validValuationRequest);
-
-    expect(response1.status).toBe(200);
-    expect(response1.body.id).toBeDefined();
-
-    // Add sufficient delay to ensure different ID generation
-    await new Promise(resolve => setTimeout(resolve, 100));
+      .send({
+        ...validValuationRequest,
+        vin: 'JHCV12345JM111111',
+        mileage: 45000,
+      });
 
     const response2 = await request(app)
       .post('/api/valuations/calculate')
-      .send(validValuationRequest);
+      .send({
+        ...validValuationRequest,
+        vin: 'JHCV12345JM222222',
+        mileage: 50000,
+      });
 
+    expect(response1.status).toBe(200);
     expect(response2.status).toBe(200);
+    expect(response1.body.id).toBeDefined();
     expect(response2.body.id).toBeDefined();
     expect(response1.body.id).not.toBe(response2.body.id);
   });
