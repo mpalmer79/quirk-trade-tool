@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata } from 'next'
 import { Providers } from './providers'
+import Script from 'next/script'
 
 export const metadata: Metadata = {
   title: 'Quirk Trade Tool - Vehicle Valuation',
@@ -14,6 +15,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        {/* SPA redirect for GitHub Pages */}
+        <Script id="spa-redirect" strategy="beforeInteractive">
+          {`
+            (function(){
+              var redirect = sessionStorage.redirect;
+              delete sessionStorage.redirect;
+              if (redirect && redirect != location.href) {
+                history.replaceState(null, null, redirect);
+              }
+            })();
+          `}
+        </Script>
+      </head>
       <body>
         <Providers>
           {children}
