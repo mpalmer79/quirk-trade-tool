@@ -22,7 +22,6 @@ export const FormSchema = z.object({
 });
 export type FormData = z.infer<typeof FormSchema>;
 
-// ✅ NEW: Depreciation data type
 export type DepreciationData = {
   baseWholesaleValue: number;
   conditionRating: number;
@@ -42,24 +41,22 @@ export type DepreciationData = {
 
 export type SourceQuote = { source: string; value: number };
 
-// ✅ UPDATED: Added base and depreciation
 export type Summary = { 
   low: number; 
   high: number; 
   avg: number; 
   confidence: string;
-  base: number;                    // ✅ NEW
-  depreciation: DepreciationData;  // ✅ NEW
+  base: number;                   
+  depreciation: DepreciationData; 
 };
 
-// ✅ UPDATED: Added depreciation
 export type AppraiseResponse = {
   id: string;
   quotes: SourceQuote[];
   summary: Summary;
   store?: Dealership;
   note?: string;
-  depreciation: DepreciationData;  // ✅ NEW
+  depreciation: DepreciationData; 
 };
 
 export type DecodedVin = {
