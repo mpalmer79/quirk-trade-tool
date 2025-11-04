@@ -18,6 +18,10 @@ type Summary = {
 
 type ResultsSectionProps = {
   summary: Summary | null;
+  quotes?: any;
+  depreciation?: any;
+  lastId?: string | null;
+  condition?: number;
 };
 
 export const ResultsSection: React.FC<ResultsSectionProps> = ({ summary }) => {
