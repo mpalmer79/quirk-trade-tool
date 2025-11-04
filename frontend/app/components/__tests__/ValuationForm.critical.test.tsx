@@ -36,11 +36,10 @@ describe('ValuationForm - Critical', () => {
   it('should render all required input fields', () => {
     renderForm();
 
-    // Check for text content, not specific labels
-    expect(screen.getByText(/year/i)).toBeInTheDocument();
-    expect(screen.getByText(/make/i)).toBeInTheDocument();
-    expect(screen.getByText(/model/i)).toBeInTheDocument();
-    expect(screen.getByText(/mileage/i)).toBeInTheDocument();
+    expect(screen.getByText("Year *")).toBeInTheDocument();
+    expect(screen.getByText("Make *")).toBeInTheDocument();
+    expect(screen.getByText("Model *")).toBeInTheDocument();
+    expect(screen.getByText("Mileage *")).toBeInTheDocument();
   });
 
   it('should render submit button', () => {
@@ -90,7 +89,6 @@ describe('ValuationForm - Critical', () => {
 
       const { container } = render(<TestWrapper />);
       
-      // Should render without crashing
       expect(container).toBeInTheDocument();
     });
 
@@ -131,7 +129,6 @@ describe('ValuationForm - Critical', () => {
 
       render(<TestWrapper />);
       
-      // Look for the formatted value
       expect(screen.getByText(/25,000/)).toBeInTheDocument();
     });
   });
