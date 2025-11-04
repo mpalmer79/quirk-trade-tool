@@ -75,13 +75,18 @@ describe('Valuation Integration - Happy Path', () => {
       .post('/api/valuations/calculate')
       .send(validValuationRequest);
 
-    // Add small delay to ensure different timestamps
-    await new Promise(resolve => setTimeout(resolve, 10));
+    expect(response1.status).toBe(200);
+    expect(response1.body.id).toBeDefined();
+
+    // Add sufficient delay to ensure different ID generation
+    await new Promise(resolve => setTimeout(resolve, 100));
 
     const response2 = await request(app)
       .post('/api/valuations/calculate')
       .send(validValuationRequest);
 
+    expect(response2.status).toBe(200);
+    expect(response2.body.id).toBeDefined();
     expect(response1.body.id).not.toBe(response2.body.id);
   });
 
