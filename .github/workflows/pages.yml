@@ -2,370 +2,136 @@ name: CI/CD Pipeline - Frontend & Orchestrator
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-  checks: write
-  pull-requests: write
-
-concurrency:
-  group: "${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
-
-env:
-  PNPM_HOME: /home/runner/.pnpm
-  PNPM_VERSION: 9.15.0
-
 jobs:
-  # ============================================================================
-  # JOB 1: FRONTEND TESTING
-  # ============================================================================
-  frontend-test:
+  frontend-tests:
     name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
-    
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run test
 
-      - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
-      - name: 📂 Add pnpm to PATH
-        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
-
-      - name: 💾 Restore pnpm store (cache)
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PNPM_HOME }}/store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 📦 Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: 🧪 Run frontend unit tests
-        working-directory: frontend
-        run: pnpm test
-        continue-on-error: false
-
-      - name: 📊 Generate frontend coverage report
-        working-directory: frontend
-        run: pnpm test:coverage
-        continue-on-error: true
-
-      - name: 📈 Upload frontend coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-coverage
-          path: frontend/coverage
-        if: always()
-
-  # ============================================================================
-  # JOB 2: ORCHESTRATOR TESTING
-  # ============================================================================
-  orchestrator-test:
+  orchestrator-tests:
     name: 🧪 Orchestrator Tests
     runs-on: ubuntu-latest
-    
-    services:
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_DB: quirk_test
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    env:
-      NODE_ENV: test
-      DATABASE_URL: postgresql://test_user:test_password@localhost:5432/quirk_test
-      DB_HOST: localhost
-      DB_PORT: 5432
-      DB_NAME: quirk_test
-      DB_USER: test_user
-      DB_PASSWORD: test_password
-      REDIS_URL: redis://localhost:6379
-      JWT_SECRET: test-secret-key-do-not-use-in-production
-      LOG_LEVEL: error
-
+    defaults:
+      run:
+        working-directory: orchestrator
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run test
 
-      - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
-      - name: 📂 Add pnpm to PATH
-        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
-
-      - name: 💾 Restore pnpm store (cache)
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PNPM_HOME }}/store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 📦 Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: ⏳ Wait for database to be ready
-        run: |
-          for i in {1..30}; do
-            if pg_isready -h localhost -p 5432 -U test_user; then
-              echo "✅ Database is ready"
-              exit 0
-            fi
-            echo "⏳ Waiting for database... attempt $i/30"
-            sleep 1
-          done
-          echo "❌ Database failed to start"
-          exit 1
-
-      - name: 🗄️ Setup test database
-        working-directory: orchestrator
-        run: |
-          psql -h localhost -U test_user -d quirk_test -f src/db/migrations/001_init.sql || true
-        env:
-          PGPASSWORD: test_password
-
-      - name: 🧪 Run orchestrator tests
-        working-directory: orchestrator
-        run: pnpm test
-        continue-on-error: false
-
-      - name: 📊 Generate orchestrator coverage report
-        working-directory: orchestrator
-        run: pnpm test:coverage
-        continue-on-error: true
-
-      - name: 📈 Upload orchestrator coverage
-        uses: actions/upload-artifact@v4
-        with:
-          name: orchestrator-coverage
-          path: orchestrator/coverage
-        if: always()
-
-  # ============================================================================
-  # JOB 3: LINTING & CODE QUALITY
-  # ============================================================================
-  lint:
+  linting:
     name: 🔍 Linting & Code Quality
     runs-on: ubuntu-latest
-    
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run lint
 
-      - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
-      - name: 📂 Add pnpm to PATH
-        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
-
-      - name: 💾 Restore pnpm store (cache)
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PNPM_HOME }}/store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 📦 Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: 📝 Lint frontend
-        working-directory: frontend
-        run: pnpm lint
-        continue-on-error: true
-
-      - name: 📝 Lint orchestrator
-        working-directory: orchestrator
-        run: pnpm lint
-        continue-on-error: true
-
-  # ============================================================================
-  # JOB 4: BUILD FRONTEND
-  # ============================================================================
   build-frontend:
     name: 🏗️ Build Frontend
-    needs: frontend-test
     runs-on: ubuntu-latest
-    if: success()
-    
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run build
 
-      - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
-      - name: 📂 Add pnpm to PATH
-        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
-
-      - name: 💾 Restore pnpm store (cache)
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PNPM_HOME }}/store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 📦 Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: 🗑️ Clear Next.js cache
-        working-directory: frontend
-        run: rm -rf .next
-
-      - name: 🏗️ Build static export for GitHub Pages
-        working-directory: frontend
-        env:
-          NEXT_PUBLIC_API_BASE: ${{ secrets.NEXT_PUBLIC_API_BASE || 'http://localhost:3000' }}
-          GITHUB_PAGES: "true"
-        run: |
-          echo "🚀 Building frontend for deployment..."
-          echo "API Base: ${NEXT_PUBLIC_API_BASE}"
-          pnpm run build:pages
-
-      - name: 📦 Upload build artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: frontend/out
-
-   # ============================================================================
-  # JOB 5: BUILD ORCHESTRATOR
-  # ============================================================================
   build-orchestrator:
     name: 🏗️ Build Orchestrator
-    needs: orchestrator-test
     runs-on: ubuntu-latest
-    if: success()
-    
     steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 📦 Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
-
-      - name: 📂 Add pnpm to PATH
-        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
-
-      - name: 💾 Restore pnpm store (cache)
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.PNPM_HOME }}/store
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: 📦 Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: 🏗️ Build Orchestrator (tsconfig.build.json)
-        working-directory: orchestrator
-        run: pnpm run build:orchestrator
-
-      - name: 🧪 Type Check
-        working-directory: orchestrator
+          cache: 'pnpm'
+      - name: Install Dependencies
+        run: pnpm install
+      - name: Build Orchestrator (tsconfig.build.json)
+        run: pnpm -w run build:orchestrator
+      - name: Type Check (optional but recommended)
         run: pnpm run check:types
 
+  pipeline-status:
+    name: ✅ Pipeline Status
+    runs-on: ubuntu-latest
+    needs: [frontend-tests, orchestrator-tests, linting, build-frontend, build-orchestrator]
+    steps:
+      - name: All checks passed
+        run: echo "🎉 All jobs succeeded!"
 
-  # ============================================================================
-  # JOB 6: DEPLOY FRONTEND TO GITHUB PAGES
-  # ============================================================================
   deploy-frontend:
     name: 🚀 Deploy Frontend
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: build-frontend
     runs-on: ubuntu-latest
+    needs: [build-frontend]
+    defaults:
+      run:
+        working-directory: frontend
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
     steps:
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm run build
+      - run: pnpm run export
+      - uses: actions/configure-pages@v4
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/out
+      - id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: ✅ Deployment successful
-        run: |
-          echo "## 🚀 Frontend Deployed Successfully" >> $GITHUB_STEP_SUMMARY
-          echo "URL: ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
-
-  # ============================================================================
-  # JOB 7: FINAL STATUS CHECK
-  # ============================================================================
-  status-check:
-    name: ✅ Pipeline Status
-    runs-on: ubuntu-latest
-    needs: [frontend-test, orchestrator-test]
-    if: always()
-    
-    steps:
-      - name: 📋 Check pipeline status
-        run: |
-          echo "## 📊 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Component | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Frontend Tests | ${{ needs.frontend-test.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Orchestrator Tests | ${{ needs.orchestrator-test.result == 'success' && '✅ PASSED' || '❌ FAILED' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ "${{ needs.frontend-test.result }}" != "success" ] || [ "${{ needs.orchestrator-test.result }}" != "success" ]; then
-            echo "❌ Pipeline failed. Check logs above for details."
-            exit 1
-          fi
-          
-          echo "✅ All checks passed!"
