@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import { valuationRouter } from '../../routes/valuations';
+import valuationRouter from '../../routes/valuations';
 import { valuationService } from '../../services/valuation-service';
 import jwt from 'jsonwebtoken';
 
@@ -42,7 +42,7 @@ describe('Valuation Routes - Critical', () => {
       quotes: [],
     };
 
-    vi.mocked(valuationService.performValuation).mockResolvedValue(mockResult);
+    vi.mocked(valuationService.calculateValuation).mockResolvedValue(mockResult);
 
     const response = await request(app)
       .post('/api/valuations')
