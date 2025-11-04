@@ -22,9 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm test
+      - run: pnpm run test
 
   orchestrator-tests:
     name: 🧪 Orchestrator Tests
@@ -40,9 +39,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm test
+      - run: pnpm run test
 
   linting:
     name: 🔍 Linting & Code Quality
@@ -55,9 +53,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm lint
+      - run: pnpm run lint
 
   build-frontend:
     name: 🏗️ Build Frontend
@@ -73,9 +70,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm build
+      - run: pnpm run build
 
   build-orchestrator:
     name: 🏗️ Build Orchestrator
@@ -91,13 +87,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - name: Install Dependencies
         run: pnpm install
       - name: Build Orchestrator (tsconfig.build.json)
-        run: pnpm build
+        run: pnpm run build
       - name: Type Check (optional but recommended)
-        run: pnpm tsc --noEmit -p tsconfig.build.json
+        run: pnpm exec tsc --noEmit -p tsconfig.build.json
 
   pipeline-status:
     name: ✅ Pipeline Status
@@ -128,13 +123,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm build
-      - run: pnpm export
+      - run: pnpm run build
+      - run: pnpm run export
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: out
+          path: frontend/out
       - id: deployment
         uses: actions/deploy-pages@v4
