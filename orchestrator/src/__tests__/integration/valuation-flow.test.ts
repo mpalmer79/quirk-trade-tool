@@ -12,7 +12,7 @@ describe('Valuation Flow - Integration', () => {
         model: 'Accord',
         mileage: 45000,
         condition: 3,
-        storeId: 'test-dealer',
+        storeId: 'test-dealer-01',
       });
 
     expect(response.status).toBe(200);
@@ -42,7 +42,7 @@ describe('Valuation Flow - Integration', () => {
         model: 'Accord',
         mileage: 45000,
         condition: 10, // Invalid
-        storeId: 'test-dealer',
+        storeId: 'test-dealer-01',
       });
 
     expect(response.status).toBe(400);
