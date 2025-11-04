@@ -78,7 +78,7 @@ describe('Valuation Routes - Critical', () => {
     const app = createTestApp();
 
     const response = await request(app)
-      .post('/api/valuations')
+      .post('/api/valuations/calculate')
       .send({
         year: 1800, // Invalid year
         make: 'Honda',
@@ -95,7 +95,7 @@ describe('Valuation Routes - Critical', () => {
     const app = createTestApp();
 
     const response = await request(app)
-      .post('/api/valuations')
+      .post('/api/valuations/calculate')
       .send({
         year: 2020,
         make: 'Honda',
