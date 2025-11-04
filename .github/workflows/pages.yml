@@ -24,7 +24,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm run test
+      - run: pnpm test
 
   orchestrator-tests:
     name: 🧪 Orchestrator Tests
@@ -42,7 +42,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm run test
+      - run: pnpm test
 
   linting:
     name: 🔍 Linting & Code Quality
@@ -57,7 +57,7 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm run lint
+      - run: pnpm lint
 
   build-frontend:
     name: 🏗️ Build Frontend
@@ -75,11 +75,14 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm run build
+      - run: pnpm build
 
   build-orchestrator:
     name: 🏗️ Build Orchestrator
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: orchestrator
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -92,9 +95,9 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
       - name: Build Orchestrator (tsconfig.build.json)
-        run: pnpm -w run build:orchestrator
+        run: pnpm build
       - name: Type Check (optional but recommended)
-        run: pnpm run check:types
+        run: pnpm tsc --noEmit -p tsconfig.build.json
 
   pipeline-status:
     name: ✅ Pipeline Status
@@ -127,11 +130,11 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - run: pnpm install
-      - run: pnpm run build
-      - run: pnpm run export
+      - run: pnpm build
+      - run: pnpm export
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: frontend/out
+          path: out
       - id: deployment
         uses: actions/deploy-pages@v4
