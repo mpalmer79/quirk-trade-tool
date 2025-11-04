@@ -7,10 +7,13 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "dev:orchestrator": "pnpm --filter orchestrator dev",
     "dev": "run-p dev:*",
+
+    "build:frontend": "pnpm --filter frontend run build",
+    "build:orchestrator": "pnpm --filter orchestrator exec tsc -p tsconfig.build.json",
+
     "build:pages": "pnpm --filter frontend run build:pages",
     "export:pages": "pnpm --filter frontend run export",
 
-    "build:orchestrator": "tsc -p orchestrator/tsconfig.build.json",
     "check:types": "pnpm --filter orchestrator exec tsc --noEmit"
   },
   "devDependencies": {
