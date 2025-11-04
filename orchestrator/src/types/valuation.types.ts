@@ -15,22 +15,31 @@ export interface ValuationRequest {
   options?: string[];
   dealershipId: string;
   zip?: string;
+  request?: any;
 }
 
 export interface SourceValuation {
-  source: string;  // Changed from 'provider' to 'source'
+  source: string;
   value: number;
   confidence: 'high' | 'medium' | 'low';
   timestamp: string;
-  currency: string;  // Added this field
+  currency: string;
 }
 
 export interface DepreciationDetails {
   depreciationFactor: number;
   conditionRating: ConditionRating;
-  yearFactor?: number;
-  mileageFactor?: number;
-  conditionFactor?: number;
+  conditionLabel?: string;
+  depreciationPercentage?: number;
+  depreciationAmount?: number;
+  finalWholesaleValue?: number;
+  breakdown?: {
+    excellent: number;
+    veryGood: number;
+    good: number;
+    fair: number;
+    poor: number;
+  };
 }
 
 export interface ValuationResult {
@@ -53,6 +62,7 @@ export interface ValuationResult {
   timestamp: string;
   userId?: string;
   _cached?: boolean;
+  request?: ValuationRequest;
 }
 
 export interface ProviderConfig {
