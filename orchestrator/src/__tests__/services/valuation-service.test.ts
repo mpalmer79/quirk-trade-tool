@@ -3,7 +3,7 @@ import { valuationService } from '../../services/valuation-service';
 
 describe('ValuationService', () => {
   it('aggregates multiple provider quotes correctly', async () => {
-    const result = await valuationService.performValuation({
+    const result = await valuationService.calculateValuation({
       year: 2020,
       make: 'Honda',
       model: 'Accord',
