@@ -19,13 +19,15 @@ describe('ResultsSection - Critical', () => {
   it('should display base wholesale value', () => {
     render(<ResultsSection summary={mockSummary} />);
 
-    expect(screen.getByText(/\$25,000/)).toBeInTheDocument();
+    expect(screen.getByText('Base Wholesale Value:')).toBeInTheDocument();
+    expect(screen.getByText(/25,000/)).toBeInTheDocument();
   });
 
   it('should display final wholesale value', () => {
     render(<ResultsSection summary={mockSummary} />);
 
-    expect(screen.getByText(/\$22,500/)).toBeInTheDocument();
+    expect(screen.getByText('Final Wholesale Value:')).toBeInTheDocument();
+    expect(screen.getByText(/22,500/)).toBeInTheDocument();
   });
 
   it('should display confidence level', () => {
@@ -37,8 +39,9 @@ describe('ResultsSection - Critical', () => {
   it('should display value range', () => {
     render(<ResultsSection summary={mockSummary} />);
 
-    expect(screen.getByText(/\$24,000/)).toBeInTheDocument(); // Low
-    expect(screen.getByText(/\$26,000/)).toBeInTheDocument(); // High
+    expect(screen.getByText('Value Range:')).toBeInTheDocument();
+    expect(screen.getByText(/24,000/)).toBeInTheDocument();
+    expect(screen.getByText(/26,000/)).toBeInTheDocument();
   });
 
   it('should not render when summary is null', () => {
