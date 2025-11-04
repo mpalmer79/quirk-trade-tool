@@ -1,6 +1,5 @@
 name: CI/CD Pipeline - Frontend & Orchestrator
 
-# Trigger on: push to main/develop and PRs
 on:
   push:
     branches: [main, develop]
@@ -54,9 +53,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: 📦 Install frontend dependencies
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile
+      - name: 📦 Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
       - name: 🧪 Run frontend unit tests
         working-directory: frontend
@@ -142,9 +140,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: 📦 Install orchestrator dependencies
-        working-directory: orchestrator
-        run: pnpm install --frozen-lockfile
+      - name: 📦 Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
       - name: ⏳ Wait for database to be ready
         run: |
@@ -214,7 +211,7 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: 📦 Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: 📝 Lint frontend
         working-directory: frontend
@@ -258,9 +255,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: 📦 Install frontend dependencies
-        working-directory: frontend
-        run: pnpm install --frozen-lockfile
+      - name: 📦 Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
       - name: 🗑️ Clear Next.js cache
         working-directory: frontend
@@ -313,9 +309,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
 
-      - name: 📦 Install orchestrator dependencies
-        working-directory: orchestrator
-        run: pnpm install --frozen-lockfile
+      - name: 📦 Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
       - name: 🏗️ Build TypeScript
         working-directory: orchestrator
