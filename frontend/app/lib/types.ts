@@ -4,8 +4,8 @@ export type Dealership = {
   id: string; 
   name: string; 
   brand?: string;
-  city: string;      // ✅ ADD THIS
-  state: string;     // ✅ ADD THIS
+  city: string;      
+  state: string;     
 };
 
 export const FormSchema = z.object({
