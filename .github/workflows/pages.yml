@@ -277,15 +277,15 @@ jobs:
         with:
           path: frontend/out
 
-  # ============================================================================
+   # ============================================================================
   # JOB 5: BUILD ORCHESTRATOR
   # ============================================================================
-    build-orchestrator:
+  build-orchestrator:
     name: 🏗️ Build Orchestrator
     needs: orchestrator-test
     runs-on: ubuntu-latest
     if: success()
-
+    
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
@@ -296,15 +296,15 @@ jobs:
           node-version: 20
 
       - name: 🔧 Enable pnpm
-        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+        run: corepack enable && corepack prepare pnpm@${{ env.PNPM_VERSION }} --activate
 
       - name: 📂 Add pnpm to PATH
-        run: echo "/home/runner/.pnpm" >> $GITHUB_PATH
+        run: echo "${{ env.PNPM_HOME }}" >> $GITHUB_PATH
 
       - name: 💾 Restore pnpm store (cache)
         uses: actions/cache@v4
         with:
-          path: /home/runner/.pnpm/store
+          path: ${{ env.PNPM_HOME }}/store
           key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
             ${{ runner.os }}-pnpm-store-
@@ -312,19 +312,13 @@ jobs:
       - name: 📦 Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: 🧪 Type Check Orchestrator
+      - name: 🏗️ Build Orchestrator (tsconfig.build.json)
         working-directory: orchestrator
-        run: pnpm tsc --noEmit
+        run: pnpm run build:orchestrator
 
-      - name: 🏗️ Build Orchestrator
+      - name: 🧪 Type Check
         working-directory: orchestrator
-        run: pnpm tsc --project tsconfig.build.json
-
-      - name: 📦 Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: orchestrator-build
-          path: orchestrator/dist
+        run: pnpm run check:types
 
 
   # ============================================================================
