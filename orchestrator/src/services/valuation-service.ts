@@ -5,13 +5,13 @@
 
 import pino from 'pino';
 import { v4 as uuidv4 } from 'uuid';
-import { BlackBookProvider } from '../providers/black-book';
-import { ManheimProvider } from '../providers/manheim';
-import { NADAProvider } from '../providers/nada';
-import { KBBProvider } from '../providers/kbb';
-import { QuoteAggregator } from '../aggregators/quote-aggregator';
-import { depreciationCalculator } from './depreciation-calculator';
-import type { ValuationRequest, ValuationResult } from '../types/valuation.types';
+import { BlackBookProvider } from '../providers/black-book.js';
+import { ManheimProvider } from '../providers/manheim.js';
+import { NADAProvider } from '../providers/nada.js';
+import { KBBProvider } from '../providers/kbb.js';
+import { QuoteAggregator } from '../aggregators/quote-aggregator.js';
+import { depreciationCalculator } from './depreciation-calculator.js';
+import type { ValuationRequest, ValuationResult } from '../types/valuation.types.js';
 
 const log = pino();
 
@@ -100,4 +100,3 @@ class ValuationService {
 }
 
 export const valuationService = new ValuationService();
-export type { ValuationResult }; // Export the type
