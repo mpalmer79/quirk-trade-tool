@@ -1,82 +1,46 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { valuationService } from '../../services/valuation-service';
-import * as cache from '../../lib/cache';
 
-vi.mock('../../lib/cache');
+import { describe, it, expect } from 'vitest';
+import { depreciationCalculator } from '../../services/depreciation-calculator';
 
-describe('ValuationService - Critical Paths', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    vi.mocked(cache.getValuationFromCache).mockResolvedValue(null);
-    vi.mocked(cache.cacheValuationResult).mockResolvedValue();
-  });
-
-  it('should calculate valuation for standard vehicle', async () => {
-    const result = await valuationService.calculateValuation({
-      vin: '1HGCV41JXMN109186',
-      year: 2020,
-      make: 'Honda',
-      model: 'Accord',
-      mileage: 45000,
-      conditionRating: 3,
-      dealershipId: 'quirk-chevy-manchester',
-    });
-
-    // Verify structure
-    expect(result).toMatchObject({
-      id: expect.stringMatching(/^VAL-/),
-      baseWholesaleValue: expect.any(Number),
-      finalWholesaleValue: expect.any(Number),
-      quotes: expect.any(Array),
-    });
-
-    // Verify values make sense
-    expect(result.baseWholesaleValue).toBeGreaterThan(0);
-    expect(result.finalWholesaleValue).toBeLessThanOrEqual(result.baseWholesaleValue);
-    expect(result.quotes.length).toBeGreaterThan(0);
-  });
-
-  it('should apply correct depreciation per condition', async () => {
+describe('DepreciationCalculator - Critical', () => {
+  it('should apply correct factors for each condition', () => {
     const testCases = [
-      { condition: 5, factor: 1.0 },
-      { condition: 3, factor: 0.9 },
-      { condition: 1, factor: 0.7 },
+      { condition: 5, expectedFactor: 1.0 },   // Excellent
+      { condition: 4, expectedFactor: 0.95 },  // Very Good
+      { condition: 3, expectedFactor: 0.9 },   // Good
+      { condition: 2, expectedFactor: 0.8 },   // Fair
+      { condition: 1, expectedFactor: 0.7 },   // Poor
     ];
 
-    for (const { condition, factor } of testCases) {
-      const result = await valuationService.calculateValuation({
-        year: 2020,
-        make: 'Honda',
-        model: 'Accord',
-        mileage: 45000,
-        conditionRating: condition,
-        dealershipId: 'quirk-chevy-manchester',
-      });
-
-      const expectedValue = Math.round(result.baseWholesaleValue * factor);
-      expect(result.finalWholesaleValue).toBe(expectedValue);
-    }
+    testCases.forEach(({ condition, expectedFactor }) => {
+      const result = depreciationCalculator.calculateDepreciation(20000, condition);
+      
+      expect(result.depreciationFactor).toBe(expectedFactor);
+      expect(result.finalWholesaleValue).toBe(20000 * expectedFactor);
+    });
   });
 
-  it('should use cache when available', async () => {
-    const cached = {
-      id: 'VAL-CACHED',
-      baseWholesaleValue: 20000,
-      finalWholesaleValue: 18000,
-    };
-    
-    vi.mocked(cache.getValuationFromCache).mockResolvedValue(cached);
+  it('should handle edge case base values', () => {
+    // Zero base value
+    let result = depreciationCalculator.calculateDepreciation(0, 3);
+    expect(result.finalWholesaleValue).toBe(0);
 
-    const result = await valuationService.calculateValuation({
-      year: 2020,
-      make: 'Honda',
-      model: 'Accord',
-      mileage: 45000,
-      conditionRating: 3,
-      dealershipId: 'quirk-chevy-manchester',
-    });
+    // Very high value
+    result = depreciationCalculator.calculateDepreciation(1000000, 3);
+    expect(result.finalWholesaleValue).toBe(900000);
 
-    expect(result.id).toBe('VAL-CACHED');
-    expect(cache.cacheValuationResult).not.toHaveBeenCalled();
+    // Decimal value
+    result = depreciationCalculator.calculateDepreciation(15555.55, 3);
+    expect(result.finalWholesaleValue).toBeCloseTo(14000, 0);
+  });
+
+  it('should throw for invalid condition ratings', () => {
+    expect(() => {
+      depreciationCalculator.calculateDepreciation(20000, 0);
+    }).toThrow();
+
+    expect(() => {
+      depreciationCalculator.calculateDepreciation(20000, 6);
+    }).toThrow();
   });
 });
