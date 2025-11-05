@@ -1,31 +1,43 @@
 import { Request, Response, NextFunction } from 'express';
 import pino from 'pino';
-import type { User, UserRole, Permission } from '../types/user.js';
+import type { User, UserRole, Permission, JwtPayload } from '../types/user.js';
 import { ROLE_PERMISSIONS } from '../types/user.js';
 
 const log = pino();
 
+/**
+ * Type guard to check if we have the minimum user info needed for authorization
+ * Works with both full User objects and JwtPayload from tokens
+ */
+interface AuthorizableUser {
+  role: UserRole;
+  dealershipIds: string[];
+}
+
 export class AuthorizationService {
   /**
    * Check if user has a specific permission
+   * Accepts both User and JwtPayload types
    */
-  hasPermission(user: User, permission: Permission): boolean {
+  hasPermission(user: AuthorizableUser, permission: Permission): boolean {
     const rolePermissions = ROLE_PERMISSIONS[user.role];
     return rolePermissions.includes(permission);
   }
 
   /**
    * Check if user can access a specific dealership
+   * Accepts both User and JwtPayload types
    */
-  canAccessDealership(user: User, dealershipId: string): boolean {
+  canAccessDealership(user: AuthorizableUser, dealershipId: string): boolean {
     if (user.role === 'admin') return true;
     return user.dealershipIds.includes(dealershipId);
   }
 
   /**
    * Check if user has any of the given permissions
+   * Accepts both User and JwtPayload types
    */
-  hasAnyPermission(user: User, permissions: Permission[]): boolean {
+  hasAnyPermission(user: AuthorizableUser, permissions: Permission[]): boolean {
     return permissions.some(p => this.hasPermission(user, p));
   }
 
@@ -38,11 +50,14 @@ export class AuthorizationService {
         return res.status(401).json({ error: 'unauthorized' });
       }
 
-      if (!this.hasPermission(req.user, permission)) {
+      // Type assertion: req.user from JWT middleware has the shape of JwtPayload
+      const user = req.user as JwtPayload;
+
+      if (!this.hasPermission(user, permission)) {
         log.warn({
-          userId: req.user.userId,
+          userId: user.userId,
           requiredPermission: permission,
-          userRole: req.user.role,
+          userRole: user.role,
           message: 'Permission denied'
         });
         return res.status(403).json({ error: 'insufficient_permissions' });
@@ -61,17 +76,20 @@ export class AuthorizationService {
         return res.status(401).json({ error: 'unauthorized' });
       }
 
+      // Type assertion: req.user from JWT middleware has the shape of JwtPayload
+      const user = req.user as JwtPayload;
+
       const dealershipId = req.body[dealershipIdParam] || req.params[dealershipIdParam];
 
       if (!dealershipId) {
         return res.status(400).json({ error: 'dealership_id_required' });
       }
 
-      if (!this.canAccessDealership(req.user, dealershipId)) {
+      if (!this.canAccessDealership(user, dealershipId)) {
         log.warn({
-          userId: req.user.userId,
+          userId: user.userId,
           requestedDealership: dealershipId,
-          accessibleDealerships: req.user.dealershipIds,
+          accessibleDealerships: user.dealershipIds,
           message: 'Dealership access denied'
         });
         return res.status(403).json({ error: 'dealership_access_denied' });
@@ -90,10 +108,13 @@ export class AuthorizationService {
         return res.status(401).json({ error: 'unauthorized' });
       }
 
-      if (!roles.includes(req.user.role)) {
+      // Type assertion: req.user from JWT middleware has the shape of JwtPayload
+      const user = req.user as JwtPayload;
+
+      if (!roles.includes(user.role)) {
         log.warn({
-          userId: req.user.userId,
-          userRole: req.user.role,
+          userId: user.userId,
+          userRole: user.role,
           requiredRoles: roles,
           message: 'Role check failed'
         });
