@@ -1,5 +1,9 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Do NOT include Vitest types when compiling for production.
+    "types": ["node"]
+  },
   "include": ["src"],
   "exclude": [
     "src/__tests__",
