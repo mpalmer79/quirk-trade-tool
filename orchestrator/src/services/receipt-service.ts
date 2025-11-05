@@ -7,8 +7,24 @@
 
 import PDFDocument from 'pdfkit';
 import { Readable } from 'stream';
-import type { ValuationResult } from './valuation-service';
-import type { Dealership } from '../types/index';
+import type { ValuationResult } from '../types/valuation.types.js';
+
+// Dealership type (inline definition to avoid import issues)
+interface Dealership {
+  id: string;
+  name: string;
+  city: string;
+  state: string;
+}
+
+// Quote type for proper typing
+interface SourceValuation {
+  source: string;
+  value: number;
+  confidence: 'high' | 'medium' | 'low';
+  timestamp: string;
+  currency: string;
+}
 
 /**
  * Generate PDF receipt for a valuation
@@ -64,12 +80,12 @@ export async function generateReceipt(
       doc.fontSize(9).font('Helvetica').fillColor(DARK_TEXT);
       
       const vehicleDetails = [
-        { label: 'Year:', value: valuation.request.year.toString() },
-        { label: 'Make:', value: valuation.request.make },
-        { label: 'Model:', value: valuation.request.model },
-        { label: 'Trim:', value: valuation.request.trim || 'N/A' },
-        { label: 'Mileage:', value: valuation.request.mileage.toLocaleString() + ' miles' },
-        { label: 'Condition:', value: valuation.depreciation.conditionLabel },
+        { label: 'Year:', value: valuation.vehicle.year.toString() },
+        { label: 'Make:', value: valuation.vehicle.make },
+        { label: 'Model:', value: valuation.vehicle.model },
+        { label: 'Trim:', value: valuation.vehicle.trim || 'N/A' },
+        { label: 'Mileage:', value: valuation.vehicle.mileage.toLocaleString() + ' miles' },
+        { label: 'Condition:', value: valuation.depreciation.conditionLabel || 'N/A' },
       ];
 
       vehicleDetails.forEach(detail => {
@@ -89,21 +105,24 @@ export async function generateReceipt(
       // Base value box
       doc.rect(50, doc.y, 200, 60).fillAndStroke(ACCENT_COLOR, ACCENT_COLOR);
       doc.fillColor('white').fontSize(9).font('Helvetica').text('BASE WHOLESALE VALUE', 60, doc.y + 8);
-      doc.fontSize(18).font('Helvetica-Bold').text(`$${valuation.depreciation.baseWholesaleValue.toLocaleString()}`, 60, doc.y + 5);
+      doc.fontSize(18).font('Helvetica-Bold').text(`$${valuation.baseWholesaleValue.toLocaleString()}`, 60, doc.y + 5);
       
       // Adjustment box
+      const depreciationAmount = valuation.depreciation.depreciationAmount || 0;
+      const depreciationPercentage = valuation.depreciation.depreciationPercentage || 0;
+      
       doc.rect(270, doc.y - 60, 235, 60).fillAndStroke('#fff3e0', '#ffb74d');
       doc.fillColor('#e65100').fontSize(9).font('Helvetica').text('CONDITION ADJUSTMENT', 280, doc.y - 52);
       doc.fontSize(14).font('Helvetica-Bold');
-      doc.text(`−$${valuation.depreciation.depreciationAmount.toLocaleString()}`, 280, doc.y + 2);
-      doc.fontSize(9).fillColor('#ff6f00').text(`(${valuation.depreciation.depreciationPercentage.toFixed(0)}% depreciation)`, 280, doc.y + 2);
+      doc.text(`−$${depreciationAmount.toLocaleString()}`, 280, doc.y + 2);
+      doc.fontSize(9).fillColor('#ff6f00').text(`(${depreciationPercentage.toFixed(0)}% depreciation)`, 280, doc.y + 2);
 
       doc.moveDown(4);
 
       // Final value (BIG)
       doc.rect(50, doc.y, 455, 50).fillAndStroke(PRIMARY_COLOR, PRIMARY_COLOR);
       doc.fillColor('white').fontSize(10).font('Helvetica-Bold').text('FINAL TRADE-IN VALUE', 60, doc.y + 8);
-      doc.fontSize(28).font('Helvetica-Bold').text(`$${valuation.depreciation.finalWholesaleValue.toLocaleString()}`, 60, doc.y + 5, { align: 'center' });
+      doc.fontSize(28).font('Helvetica-Bold').text(`$${valuation.finalWholesaleValue.toLocaleString()}`, 60, doc.y + 5, { align: 'center' });
 
       doc.moveDown(3.5);
 
@@ -138,9 +157,11 @@ export async function generateReceipt(
         { label: '1 - Poor', factor: 0.60, rating: 1 },
       ];
 
+      const currentCondition = valuation.depreciation.conditionRating;
+
       let rowY = tableTop + rowHeight;
       conditions.forEach((condition, idx) => {
-        const isSelected = condition.rating === valuation.request.condition;
+        const isSelected = condition.rating === currentCondition;
         const bgColor = isSelected ? '#e0f7f4' : (idx % 2 === 0 ? 'white' : '#fafafa');
         
         doc.rect(col1 - 10, rowY, 510, rowHeight).fillAndStroke(bgColor, '#eee');
@@ -149,7 +170,7 @@ export async function generateReceipt(
         doc.text(condition.label, col1, rowY + 5);
         doc.text(`${((1 - condition.factor) * 100).toFixed(0)}%`, col2, rowY + 5);
         
-        const value = Math.round(valuation.depreciation.baseWholesaleValue * condition.factor);
+        const value = Math.round(valuation.baseWholesaleValue * condition.factor);
         doc.text(`$${value.toLocaleString()}`, col3, rowY + 5);
         doc.text(isSelected ? '✓ CURRENT' : '', col4, rowY + 5, { align: 'right' });
         
@@ -165,16 +186,23 @@ export async function generateReceipt(
       doc.moveTo(40, doc.y + 2).lineTo(555, doc.y + 2).stroke(ACCENT_COLOR);
       doc.moveDown(0.3);
 
-      valuation.quotes.forEach((quote, idx) => {
+      // Explicitly type the quotes to avoid 'any' type error
+      const quotes: SourceValuation[] = valuation.quotes;
+      
+      quotes.forEach((quote: SourceValuation) => {
         doc.fontSize(9).font('Helvetica-Bold').fillColor(DARK_TEXT).text(quote.source, 50, doc.y);
         doc.font('Helvetica').fillColor(ACCENT_COLOR).fontSize(11).text(`$${quote.value.toLocaleString()}`, 400, doc.y - 9, { align: 'right' });
         doc.moveDown(0.4);
       });
 
-      // Summary stats
+      // Summary stats - safely access properties
+      const summaryLow = valuation.quotes.reduce((min, q) => Math.min(min, q.value), Infinity);
+      const summaryHigh = valuation.quotes.reduce((max, q) => Math.max(max, q.value), 0);
+      const summaryAvg = valuation.quotes.reduce((sum, q) => sum + q.value, 0) / valuation.quotes.length;
+
       doc.moveDown(0.3);
       doc.fontSize(9).font('Helvetica').fillColor(LIGHT_TEXT);
-      doc.text(`Average: $${valuation.summary.avg.toLocaleString()} | Range: $${valuation.summary.low.toLocaleString()} - $${valuation.summary.high.toLocaleString()} | Confidence: ${valuation.summary.confidence}`);
+      doc.text(`Average: $${Math.round(summaryAvg).toLocaleString()} | Range: $${summaryLow.toLocaleString()} - $${summaryHigh.toLocaleString()}`);
 
       doc.moveDown(0.8);
 
@@ -187,8 +215,8 @@ export async function generateReceipt(
 
       doc.fontSize(9).font('Helvetica').fillColor(LIGHT_TEXT);
       doc.text(
-        `This appraisal reflects a ${valuation.depreciation.depreciationPercentage.toFixed(0)}% depreciation adjustment based on the vehicle's reported condition rating of "${valuation.depreciation.conditionLabel}". ` +
-        `The base wholesale value of $${valuation.depreciation.baseWholesaleValue.toLocaleString()} has been adjusted by $${valuation.depreciation.depreciationAmount.toLocaleString()} to arrive at the final trade-in value.`,
+        `This appraisal reflects a ${depreciationPercentage.toFixed(0)}% depreciation adjustment based on the vehicle's reported condition rating of "${valuation.depreciation.conditionLabel || 'N/A'}". ` +
+        `The base wholesale value of $${valuation.baseWholesaleValue.toLocaleString()} has been adjusted by $${depreciationAmount.toLocaleString()} to arrive at the final trade-in value.`,
         { align: 'justify' }
       );
 
@@ -223,8 +251,8 @@ export async function generateReceipt(
       // Finalize PDF
       doc.end();
 
-      // Resolve with the document stream
-      resolve(doc);
+      // Resolve with the document stream - PDFDocument extends Readable
+      resolve(doc as unknown as Readable);
     } catch (error) {
       reject(error);
     }
