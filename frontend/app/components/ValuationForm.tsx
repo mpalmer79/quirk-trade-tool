@@ -20,7 +20,7 @@ const modelsByMake: Record<string, string[]> = {
   Audi: ['A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','e-tron','R8','TT'],
   BMW: ['2 Series','3 Series','4 Series','5 Series','7 Series','X1','X3','X5','X7','i4','iX'],
   Cadillac: ['CT4','CT5','Escalade','XT4','XT5','XT6','Lyriq'],
-  Chevrolet: ['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado','Suburban','Tahoe','Trailblazer','Traverse','Trx'],
+  Chevrolet: ['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado','Suburban','Tahoe','Trailblazer','Traverse'],
   Chrysler: ['300','Pacifica'],
   Dodge: ['Challenger','Charger','Durango','Hornet'],
   Ford: ['Bronco','Bronco Sport','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Maverick','Mustang','Ranger'],
@@ -66,7 +66,7 @@ async function decodeVinWithNhtsa(vin: string) {
   try {
     const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(cleaned)}?format=json`);
     if (!response.ok) return null;
-    
+
     const data = await response.json();
     const row = data?.Results?.[0];
     if (!row) return null;
@@ -88,7 +88,7 @@ async function decodeVinWithNhtsa(vin: string) {
 
     let model = row.Model || undefined;
     if (model && model !== '' && model !== 'Not Applicable') {
-      model = model.split('-').map((part: string) => 
+      model = model.split('-').map((part: string) =>
         part.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')
       ).join('-');
     } else {
@@ -109,26 +109,65 @@ async function decodeVinWithNhtsa(vin: string) {
   }
 }
 
+// ——— helper for fuzzy matching decoded model to our dropdown options
+function chooseModelOption(decodedModel: string | undefined, make: string | undefined) {
+  if (!decodedModel || !make) return undefined;
+
+  const options = modelsByMake[make] || [];
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+  // exact (case-insensitive)
+  const exact = options.find(o => o.toLowerCase() === decodedModel.toLowerCase());
+  if (exact) return exact;
+
+  const nDecoded = norm(decodedModel);
+
+  // contains match: “Frontier Crew Cab” -> “Frontier”
+  const contains = options.find(o => nDecoded.includes(norm(o)));
+  if (contains) return contains;
+
+  // prefix fallback
+  const prefix = options.find(o => norm(o).startsWith(nDecoded.substring(0, 5)));
+  if (prefix) return prefix;
+
+  return undefined;
+}
+
 export function ValuationForm({ register, errors, isSubmitting, watch, setValue, summary }: ValuationFormProps) {
   const currentYear = new Date().getFullYear();
   const make = watch('make');
   const condition = watch('condition');
   const vin = watch('vin');
-  
+
   const [decoding, setDecoding] = React.useState(false);
 
   const handleDecodeVin = async () => {
-    if (!vin) {
-      alert('Please enter a VIN first');
+    const v = (vin || '').trim();
+    if (v.length !== 17) {
+      alert('Please enter a 17-character VIN');
       return;
     }
 
     setDecoding(true);
-    const decoded = await decodeVinWithNhtsa(vin);
+    const decoded = await decodeVinWithNhtsa(v);
+
     if (decoded) {
+      // 1) set year/make FIRST so model options exist
       if (decoded.year) setValue('year', decoded.year);
       if (decoded.make) setValue('make', decoded.make);
-      if (decoded.model) setValue('model', decoded.model);
+
+      // 2) resolve model to a valid option for the selected make
+      const selectedMake = decoded.make || make || '';
+      const chosenModel = chooseModelOption(decoded.model, selectedMake);
+
+      if (chosenModel) {
+        setValue('model', chosenModel);
+      } else {
+        // leave blank so the user can pick
+        setValue('model', '');
+      }
+
+      // 3) trim (optional)
       if (decoded.trim) setValue('trim', decoded.trim);
     } else {
       alert("VIN decode failed. Please enter vehicle details manually.");
@@ -151,14 +190,14 @@ export function ValuationForm({ register, errors, isSubmitting, watch, setValue,
       <div>
         <label className="block text-sm font-semibold text-gray-800 mb-3">VIN (optional) - Auto-fill vehicle details</label>
         <div className="flex gap-2">
-          <input 
-            type="text" 
-            {...register('vin')} 
-            placeholder="e.g., 1G1ZT62812F113456" 
+          <input
+            type="text"
+            {...register('vin')}
+            placeholder="e.g., 1G1ZT62812F113456"
             className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#00d9a3] uppercase"
             maxLength={17}
           />
-          <button 
+          <button
             type="button"
             onClick={handleDecodeVin}
             disabled={!vin || vin.length < 17 || decoding}
@@ -219,19 +258,19 @@ export function ValuationForm({ register, errors, isSubmitting, watch, setValue,
       <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-4">
           <Loader className="w-5 h-5 text-blue-600" />
-          <label className="block text-sm font-semibold text-gray-800">
+        <label className="block text-sm font-semibold text-gray-800">
             Vehicle Condition: <span className="text-[#00d9a3] text-lg">{conditionLabels[condition]}</span>
           </label>
         </div>
-        
-        <input 
-          type="range" 
-          min={1} 
-          max={5} 
-          {...register('condition')} 
+
+        <input
+          type="range"
+          min={1}
+          max={5}
+          {...register('condition')}
           className="w-full h-3 bg-gray-300 rounded-lg accent-[#00d9a3] cursor-pointer"
         />
-        
+
         <div className="flex justify-between text-xs text-gray-600 mt-2 font-medium">
           <span>Poor (1)</span>
           <span>Fair (2)</span>
@@ -239,7 +278,7 @@ export function ValuationForm({ register, errors, isSubmitting, watch, setValue,
           <span>Very Good (4)</span>
           <span>Excellent (5)</span>
         </div>
-        
+
         <p className="text-sm text-gray-700 mt-4 italic font-medium">
           📋 {conditionDescriptions[Number(condition) || 3]}
         </p>
@@ -281,7 +320,7 @@ export function ValuationForm({ register, errors, isSubmitting, watch, setValue,
       </div>
 
       {/* SUBMIT BUTTON */}
-      <button 
+      <button
         type="submit"
         disabled={isSubmitting}
         className="w-full py-4 bg-gradient-to-r from-[#00d9a3] to-[#00b87d] hover:from-[#00b87d] hover:to-[#009966] text-gray-900 font-bold text-lg rounded-lg transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
