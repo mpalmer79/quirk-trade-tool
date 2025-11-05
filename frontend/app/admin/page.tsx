@@ -5,6 +5,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { AdminNav } from "@/components/AdminNav";
 import { Permission } from "@/app/lib/auth-types";
+import { QaaCsvImport } from "@/components/QaaCsvImport";
 import Link from "next/link";
 import {
   Users,
@@ -158,6 +159,11 @@ export default function AdminDashboardPage() {
                 disabled
               />
             </div>
+          </div>
+
+          {/* QAA Data Import */}
+          <div className="mb-8">
+            <QaaCsvImport />
           </div>
 
           {/* Recent Activity (Placeholder) */}
