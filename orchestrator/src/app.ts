@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import { validateOnStartup } from './lib/startup-validation';
 import valuationRoutes from './routes/valuations';
 import listingsRoutes from './routes/listings';
+import qaaRoutes from './routes/qaa';
 
 // ============================================================================
 // INITIALIZE EXPRESS APP
@@ -96,6 +97,9 @@ app.use('/api/valuations', valuationRoutes);
 
 // ✅ Listings routes (vehicle market pricing & wholesale values)
 app.use('/api/listings', listingsRoutes);
+
+// ✅ QAA routes (Quincy Auto Auction data import)
+app.use('/api/qaa', qaaRoutes);
 
 // Add other existing routes here
 // app.use('/api/vehicles', vehicleRoutes);
