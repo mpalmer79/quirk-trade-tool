@@ -53,18 +53,24 @@ export class AuthService {
       dealershipIds: user.dealershipIds
     };
 
-    const accessToken = jwt.sign(payload, this.jwtSecret, {
+    // Explicitly type the options as jwt.SignOptions to avoid TypeScript inference issues
+    const accessTokenOptions: jwt.SignOptions = {
       expiresIn: this.jwtExpiry,
       algorithm: 'HS256'
-    });
+    };
+
+    const accessToken = jwt.sign(payload, this.jwtSecret, accessTokenOptions);
+
+    // Explicitly type the options for refresh token as well
+    const refreshTokenOptions: jwt.SignOptions = {
+      expiresIn: this.refreshExpiry,
+      algorithm: 'HS256'
+    };
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       this.jwtSecret,
-      {
-        expiresIn: this.refreshExpiry,
-        algorithm: 'HS256'
-      }
+      refreshTokenOptions
     );
 
     return { accessToken, refreshToken };
@@ -75,9 +81,12 @@ export class AuthService {
    */
   verifyToken(token: string): JwtPayload | null {
     try {
-      const payload = jwt.verify(token, this.jwtSecret, {
+      // Explicitly type the verify options
+      const verifyOptions: jwt.VerifyOptions = {
         algorithms: ['HS256']
-      });
+      };
+
+      const payload = jwt.verify(token, this.jwtSecret, verifyOptions);
       return payload as JwtPayload;
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {
