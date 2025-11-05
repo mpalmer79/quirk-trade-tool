@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error-handler.js';
@@ -28,7 +28,7 @@ const VinSchema = z.object({
 router.post(
   '/decode',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     // ============================================================================
     // STEP 1: VALIDATE REQUEST
     // ============================================================================
@@ -99,7 +99,7 @@ router.post(
 router.get(
   '/history/:vin',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { vin } = req.params;
     const userId = req.user!.userId;
 
