@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorizationService } from '../services/authorization-service.js';
@@ -31,7 +31,7 @@ const adapters: ProviderAdapter[] = [bb, kbb, nada, mmr, auc];
 router.post(
   '/',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
