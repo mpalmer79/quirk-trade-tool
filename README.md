@@ -831,6 +831,14 @@ See [LICENSE](./LICENSE) for full details.
 
 ---
 
+## Quincy Auto Auction Data Import
+
+Import weekly wholesale auction data to enhance trade valuations with real market prices.
+
+- **Quick Start:** [docs/QAA_QUICK_SETUP.md](docs/QAA_QUICK_SETUP.md)
+- **Full Guide:** [docs/QAA_DATA_IMPORT_GUIDE.md](docs/QAA_DATA_IMPORT_GUIDE.md)
+- **Technical Details:** [docs/QAA_IMPLEMENTATION_SUMMARY.md](docs/QAA_IMPLEMENTATION_SUMMARY.md)
+
 ## 🎉 Ready to Go!
 
 You now have a complete vehicle valuation and dealership management system:
@@ -842,18 +850,11 @@ You now have a complete vehicle valuation and dealership management system:
 - ✅ Comprehensive API
 - ✅ Production-ready architecture
 
-**Next Steps:**
-1. Review [AUTH_SETUP_README.md](./AUTH_SETUP_README.md) for authentication
-2. Explore [docs/API.md](./docs/API.md) for API endpoints
-3. Check [USER_PERMISSIONS_GUIDE.md](./USER_PERMISSIONS_GUIDE.md) for permission system
-4. Implement licensed provider adapters
-5. Deploy to your infrastructure
-
 ---
 
 **Questions?** See the comprehensive guides in the `/docs` folder.
 
 ---
 
-*Last Updated: October 31, 2025*  
+*Last Updated: November 05, 2025*  
 *Version: 2.1.0*
