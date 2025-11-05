@@ -31,6 +31,45 @@ jobs:
     defaults:
       run:
         working-directory: orchestrator
+    
+    # ============================================================================
+    # SERVICES: Redis & PostgreSQL for Integration Tests
+    # ============================================================================
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test_user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    # ============================================================================
+    # ENVIRONMENT VARIABLES for Tests
+    # ============================================================================
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: test-jwt-secret-for-ci
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001
+    
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -40,7 +79,22 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install
-      - run: pnpm run test
+      
+      # Run database migrations before tests
+      - name: Run Database Migrations
+        run: |
+          # Wait for PostgreSQL to be ready
+          sleep 5
+          # Run migrations (adjust this command based on your setup)
+          # If you have a migration script, uncomment and use it:
+          # pnpm run migrate
+        continue-on-error: true
+      
+      - name: Run Tests with Services
+        run: pnpm run test
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379
 
   linting:
     name: 🔍 Linting & Code Quality
@@ -125,7 +179,7 @@ jobs:
           node-version: 20
       - run: pnpm install
       - run: pnpm run build
-      - run: pnpm run export
+      # ❌ REMOVED: pnpm run export (deprecated - now handled by output: 'export' in next.config.mjs)
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
