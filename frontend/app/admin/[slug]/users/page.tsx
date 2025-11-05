@@ -29,15 +29,12 @@ interface User {
 }
 
 export default function DealershipUsersPage() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const params = useParams();
   const slug = params.slug as string;
 
   const dealership = DEALERSHIPS.find((d) => {
-    const dealershipSlug = d.name
-      .toLowerCase()
-      .replace(/\s+/g, "")
-      .replace(/[^\w]/g, "");
+    const dealershipSlug = d.name.toLowerCase().replace(/\s+/g, "").replace(/[^\w]/g, "");
     return dealershipSlug === slug;
   });
 
@@ -192,7 +189,7 @@ export default function DealershipUsersPage() {
             <div className="text-center">
               <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+              <p className="text-gray-600 mb-4">You don&apos;t have permission to manage users.</p>
             </div>
           </div>
         }
@@ -202,7 +199,7 @@ export default function DealershipUsersPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Dealership Not Found</h2>
-            <p className="text-gray-600 mb-4">The dealership you're looking for doesn't exist.</p>
+            <p className="text-gray-600 mb-4">The dealership you&apos;re looking for doesn&apos;t exist.</p>
             <Link href="/admin" className="inline-flex items-center text-blue-600 hover:text-blue-700">
               <Home className="h-4 w-4 mr-2" />
               Back to Admin Dashboard
@@ -341,7 +338,7 @@ export default function DealershipUsersPage() {
             </div>
           </div>
 
-          {/* Add User Modal (Placeholder) */}
+          {/* Add User Modal */}
           {showAddModal && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
@@ -380,9 +377,7 @@ export default function DealershipUsersPage() {
                     </label>
                     <select
                       value={formData.role}
-                      onChange={(e) =>
-                        setFormData({ ...formData, role: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                     >
                       <option value="admin">Admin</option>
@@ -398,9 +393,7 @@ export default function DealershipUsersPage() {
                     <input
                       type="password"
                       value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
+                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                       placeholder="User will be prompted to create"
                     />
