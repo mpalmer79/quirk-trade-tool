@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 
-import { ValuationForm } from './components/ValuationForm';
+import ValuationForm from './components/ValuationForm';
 import type { FormData, Summary } from './lib/types';
 
 // If you later stand up the orchestrator, set this in Pages env:
