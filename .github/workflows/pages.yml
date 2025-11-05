@@ -7,6 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Reusable bits
+defaults:
+  run:
+    shell: bash
+
 jobs:
   frontend-tests:
     name: 🧪 Frontend Tests
@@ -16,13 +21,19 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+
+      # Setup pnpm, but DO NOT auto-install at the repo root
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          check-latest: true
+          # (no cache here; cache needs a lockfile path)
+
       - run: pnpm install --no-frozen-lockfile
       - run: pnpm run test
 
@@ -62,21 +73,30 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
+          check-latest: true
+
+      # Install just the orchestrator’s deps
+      - working-directory: orchestrator
+        run: pnpm install --no-frozen-lockfile
+
       - name: Run DB migrations (optional)
         run: |
           sleep 5
-          echo "Run your migration command here if you have one (optional)."
+          echo "Run your migration command here if you have one (kept optional for now)."
         continue-on-error: true
-      - name: Run Tests with Services (skip if none)
-        run: pnpm --filter orchestrator run test --if-present
+
+      - name: Run Tests with Services
+        working-directory: orchestrator
+        run: pnpm run test
 
   linting:
     name: 🔍 Linting & Code Quality
@@ -84,15 +104,22 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run lint
+          check-latest: true
+
+      # Lint the frontend (the only package with Next lint configured)
+      - working-directory: frontend
+        run: pnpm install --no-frozen-lockfile
+      - working-directory: frontend
+        run: pnpm run lint
 
   build-frontend:
     name: 🏗️ Build Frontend
@@ -102,33 +129,46 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          check-latest: true
+
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run build:pages
+      - run: pnpm run build
 
   build-orchestrator:
     name: 🏗️ Build Orchestrator
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
-      - run: pnpm install --no-frozen-lockfile
+          check-latest: true
+
+      - working-directory: orchestrator
+        run: pnpm install --no-frozen-lockfile
+
       - name: Build Orchestrator (tsconfig.build.json)
-        run: pnpm --filter orchestrator run build
+        working-directory: orchestrator
+        run: pnpm run build
+
       - name: Type Check (noEmit)
-        run: pnpm --filter orchestrator exec tsc --noEmit -p tsconfig.build.json
+        working-directory: orchestrator
+        run: npx tsc --noEmit -p tsconfig.build.json
 
   deploy-frontend:
     name: 🚀 Deploy Frontend
@@ -145,15 +185,20 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          check-latest: true
+
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run build:pages
+      - run: pnpm run build
+
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
