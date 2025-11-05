@@ -7,7 +7,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Reusable bits
 defaults:
   run:
     shell: bash
@@ -16,13 +15,9 @@ jobs:
   frontend-tests:
     name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
-      # Setup pnpm, but DO NOT auto-install at the repo root
       - uses: pnpm/action-setup@v2
         with:
           version: 8
@@ -32,10 +27,15 @@ jobs:
         with:
           node-version: 20
           check-latest: true
-          # (no cache here; cache needs a lockfile path)
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
+      # Single root install creates the shared pnpm-lock.yaml
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run test
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: pnpm run test
 
   orchestrator-tests:
     name: 🧪 Orchestrator Tests
@@ -83,10 +83,10 @@ jobs:
         with:
           node-version: 20
           check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      # Install just the orchestrator’s deps
-      - working-directory: orchestrator
-        run: pnpm install --no-frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
 
       - name: Run DB migrations (optional)
         run: |
@@ -94,7 +94,7 @@ jobs:
           echo "Run your migration command here if you have one (kept optional for now)."
         continue-on-error: true
 
-      - name: Run Tests with Services
+      - name: Run orchestrator tests
         working-directory: orchestrator
         run: pnpm run test
 
@@ -114,19 +114,18 @@ jobs:
         with:
           node-version: 20
           check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      # Lint the frontend (the only package with Next lint configured)
-      - working-directory: frontend
-        run: pnpm install --no-frozen-lockfile
-      - working-directory: frontend
+      - run: pnpm install --no-frozen-lockfile
+
+      - name: Lint frontend (Next.js)
+        working-directory: frontend
         run: pnpm run lint
 
   build-frontend:
     name: 🏗️ Build Frontend
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
 
@@ -139,9 +138,14 @@ jobs:
         with:
           node-version: 20
           check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run build
+
+      - name: Build
+        working-directory: frontend
+        run: pnpm run build
 
   build-orchestrator:
     name: 🏗️ Build Orchestrator
@@ -158,11 +162,12 @@ jobs:
         with:
           node-version: 20
           check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
-      - working-directory: orchestrator
-        run: pnpm install --no-frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
 
-      - name: Build Orchestrator (tsconfig.build.json)
+      - name: Build (tsconfig.build.json)
         working-directory: orchestrator
         run: pnpm run build
 
@@ -174,9 +179,6 @@ jobs:
     name: 🚀 Deploy Frontend
     runs-on: ubuntu-latest
     needs: [build-frontend]
-    defaults:
-      run:
-        working-directory: frontend
     permissions:
       pages: write
       id-token: write
@@ -195,9 +197,14 @@ jobs:
         with:
           node-version: 20
           check-latest: true
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - run: pnpm install --no-frozen-lockfile
-      - run: pnpm run build
+
+      - name: Build static export
+        working-directory: frontend
+        run: pnpm run build
 
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
