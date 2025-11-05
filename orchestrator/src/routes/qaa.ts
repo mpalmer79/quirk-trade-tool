@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error-handler.js';
@@ -106,7 +106,7 @@ router.post(
   '/import',
   authenticate,
   upload.single('file'),
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user!.userId;
     const userRole = req.user!.role;
 
@@ -366,7 +366,7 @@ router.post(
 router.get(
   '/stats',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const userRole = req.user!.role;
 
     if (userRole !== 'admin') {
@@ -419,7 +419,7 @@ router.get(
 router.get(
   '/history',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const userRole = req.user!.role;
 
     if (userRole !== 'admin') {
