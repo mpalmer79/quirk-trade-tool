@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { ValuationForm } from './ValuationForm';
+import ValuationForm from './ValuationForm';
 
 type FormData = {
   storeId: string;
