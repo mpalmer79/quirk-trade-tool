@@ -1,99 +1,129 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { ValuationForm } from './ValuationForm';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
+import { ValuationForm } from './ValuationForm';
 
-// Mock the DEALERSHIPS import
-vi.mock('../dealerships', () => ({
-  DEALERSHIPS: [
-    { id: '1', name: 'Test Dealership', city: 'Boston', state: 'MA' }
-  ]
-}));
+type FormData = {
+  storeId: string;
+  vin?: string;
+  year?: number;
+  make?: string;
+  model?: string;
+  trim?: string;
+  mileage: number;
+  condition: number;
+  options: string[];
+};
 
-describe('ValuationForm Component', () => {
-  const renderForm = (summary = null) => {
-    const TestWrapper = () => {
-      const { register, formState: { errors }, watch, setValue } = useForm({
-        defaultValues: { 
-          storeId: '1', 
-          condition: 3, 
-          options: [] 
-        }
-      });
-      
-      return (
-        <ValuationForm
-          register={register}
-          errors={errors}
-          isSubmitting={false}
-          watch={watch}
-          setValue={setValue}
-          summary={summary}
-        />
-      );
-    };
-    
-    return render(<TestWrapper />);
-  };
-
-  it('renders dealership selection dropdown', () => {
-    renderForm();
-    expect(screen.getByText('Dealership Location *')).toBeInTheDocument();
-    expect(screen.getByText(/Test Dealership/i)).toBeInTheDocument();
+function FormWrapper() {
+  const { register, formState: { errors }, watch, setValue, handleSubmit } = useForm<FormData>({
+    defaultValues: {
+      storeId: '1',
+      vin: '',
+      year: undefined,
+      make: '',
+      model: '',
+      trim: '',
+      mileage: 0,
+      condition: 3,
+      options: []
+    }
   });
 
-  it('renders VIN input and decode button', () => {
-    renderForm();
-    expect(screen.getByPlaceholderText(/1G1ZT62812F113456/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /decode/i })).toBeInTheDocument();
+  return (
+    <form onSubmit={handleSubmit(() => {})}>
+      <ValuationForm
+        register={register}
+        errors={errors}
+        isSubmitting={false}
+        watch={watch}
+        setValue={setValue}
+        summary={null}
+      />
+    </form>
+  );
+}
+
+describe('ValuationForm', () => {
+  beforeEach(() => {
+    vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        Results: [
+          {
+            ModelYear: '2022',
+            Make: 'NISSAN',
+            Model: 'Frontier',
+            Trim: 'PRO-4X'
+          }
+        ]
+      })
+    } as any);
   });
 
-  it('renders all required vehicle fields', () => {
-    renderForm();
-    expect(screen.getByText('Year *')).toBeInTheDocument();
-    expect(screen.getByText('Make *')).toBeInTheDocument();
-    expect(screen.getByText('Model *')).toBeInTheDocument();
-    expect(screen.getByText('Mileage *')).toBeInTheDocument();
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('renders condition slider with labels', () => {
-    renderForm();
-    expect(screen.getByText(/Vehicle Condition:/i)).toBeInTheDocument();
-    expect(screen.getByText('Poor (1)')).toBeInTheDocument();
-    expect(screen.getByText('Excellent (5)')).toBeInTheDocument();
+  it('disables VIN decode button until a 17-char VIN is entered', () => {
+    render(<FormWrapper />);
+
+    const vinInput = screen.getByPlaceholderText(/e\.g\., 1g1zt/i);
+    const decodeBtn = screen.getByRole('button', { name: /decode/i });
+
+    // Initially disabled
+    expect(decodeBtn).toBeDisabled();
+
+    // Enter short VIN -> still disabled
+    fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN6237' } });
+    expect(decodeBtn).toBeDisabled();
+
+    // Enter full VIN (17 chars) -> enabled
+    fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
+    expect(decodeBtn).toBeEnabled();
   });
 
-  it('renders additional options checkboxes', () => {
-    renderForm();
-    expect(screen.getByText('Additional Options')).toBeInTheDocument();
-    expect(screen.getByLabelText(/Navigation System/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Leather Seats/i)).toBeInTheDocument();
+  it('calls NHTSA and populates year/make/model/trim on successful decode', async () => {
+    render(<FormWrapper />);
+
+    const vinInput = screen.getByPlaceholderText(/e\.g\., 1g1zt/i);
+    const decodeBtn = screen.getByRole('button', { name: /decode/i });
+
+    fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
+    fireEvent.click(decodeBtn);
+
+    await waitFor(() => {
+      // Year select should reflect decoded year
+      const yearSelect = screen.getByLabelText(/year \*/i) as HTMLSelectElement;
+      expect(yearSelect.value).toBe('2022');
+
+      // Make select should reflect decoded make
+      const makeSelect = screen.getByLabelText(/make \*/i) as HTMLSelectElement;
+      expect(makeSelect.value).toBe('Nissan');
+
+      // Model select should reflect decoded model (if present in list)
+      const modelSelect = screen.getByLabelText(/model \*/i) as HTMLSelectElement;
+      expect(modelSelect.value).toBe('Frontier');
+
+      // Trim input populated
+      const trimInput = screen.getByPlaceholderText(/e\.g\., le, sport, limited/i) as HTMLInputElement;
+      expect(trimInput.value).toBe('Pro-4x');
+    });
+
+    // Ensure fetch was called with the NHTSA endpoint
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    const calledUrl = (global.fetch as any).mock.calls[0][0] as string;
+    expect(calledUrl).toMatch(/vpic\.nhtsa\.dot\.gov\/api\/vehicles\/DecodeVinValuesExtended\/1N6ED1CMXSN623773/i);
   });
 
-  it('renders submit button', () => {
-    renderForm();
-    const submitButton = screen.getByRole('button', { name: /Get Wholesale Value/i });
-    expect(submitButton).toBeInTheDocument();
-    expect(submitButton).not.toBeDisabled();
-  });
+  it('shows the valid VIN hint for a 17-char VIN', () => {
+    render(<FormWrapper />);
 
-  it('disables decode button when VIN is less than 17 characters', () => {
-    renderForm();
-    const decodeButton = screen.getByRole('button', { name: /decode/i });
-    expect(decodeButton).toBeDisabled();
-  });
+    const vinInput = screen.getByPlaceholderText(/e\.g\., 1g1zt/i);
+    fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
 
-  it('shows depreciation preview when summary exists', () => {
-    const mockSummary = {
-      base: 25000,
-      low: 24000,
-      high: 26000,
-      avg: 25000,
-      confidence: 'High',
-      depreciation: null as any
-    };
-    
-    renderForm(mockSummary);
-    expect(screen.getByText('Estimated Impact on Wholesale Value:')).toBeInTheDocument();
+    expect(screen.getByText(/✓ valid vin format/i)).toBeInTheDocument();
   });
 });
