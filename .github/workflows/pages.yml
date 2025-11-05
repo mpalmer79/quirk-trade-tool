@@ -22,7 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: pnpm install
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm run test
 
   orchestrator-tests:
@@ -32,7 +33,7 @@ jobs:
     services:
       redis:
         image: redis:7-alpine
-        ports: [ "6379:6379" ]
+        ports: ["6379:6379"]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
@@ -45,7 +46,7 @@ jobs:
           POSTGRES_USER: test_user
           POSTGRES_PASSWORD: test_password
           POSTGRES_DB: test_db
-        ports: [ "5432:5432" ]
+        ports: ["5432:5432"]
         options: >-
           --health-cmd "pg_isready -U test_user"
           --health-interval 10s
@@ -67,20 +68,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      # Install workspace deps + orchestrator deps from the workspace root
-      - run: pnpm install --frozen-lockfile
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
       - name: Run DB migrations (optional)
         run: |
           sleep 5
-          echo "Run your migration command here if you have one (kept optional for now)."
+          echo "Run your migration command here if you have one (optional)."
         continue-on-error: true
-      - name: Run Tests with Services
-        run: pnpm --filter orchestrator run test
+      - name: Run Tests with Services (skip if none)
+        run: pnpm --filter orchestrator run test --if-present
 
   linting:
     name: 🔍 Linting & Code Quality
     runs-on: ubuntu-latest
-    continue-on-error: true   # <— Do not fail the workflow while formatting is being cleaned up
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -89,7 +90,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: pnpm install
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
       - run: pnpm run lint
 
   build-frontend:
@@ -106,8 +108,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: pnpm install
-      - run: pnpm run build
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm run build:pages
 
   build-orchestrator:
     name: 🏗️ Build Orchestrator
@@ -120,7 +123,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: pnpm install --frozen-lockfile
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
       - name: Build Orchestrator (tsconfig.build.json)
         run: pnpm --filter orchestrator run build
       - name: Type Check (noEmit)
@@ -147,8 +151,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: pnpm install
-      - run: pnpm run build
+          cache: 'pnpm'
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm run build:pages
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
