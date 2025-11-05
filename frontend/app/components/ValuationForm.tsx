@@ -1,8 +1,8 @@
-import React from 'react';
-import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
-import { Info, AlertCircle } from 'lucide-react';
-import { DEALERSHIPS } from '../dealerships';
-import type { FormData, Summary } from '../lib/types';
+import React from "react";
+import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from "react-hook-form";
+import { Loader } from "lucide-react";
+import { DEALERSHIPS } from "../dealerships";
+import type { FormData, Summary } from "../lib/types";
 
 type ValuationFormProps = {
   register: UseFormRegister<FormData>;
@@ -20,7 +20,7 @@ const modelsByMake: Record<string, string[]> = {
   Audi: ['A3','A4','A5','A6','A7','A8','Q3','Q5','Q7','Q8','e-tron','R8','TT'],
   BMW: ['2 Series','3 Series','4 Series','5 Series','7 Series','X1','X3','X5','X7','i4','iX'],
   Cadillac: ['CT4','CT5','Escalade','XT4','XT5','XT6','Lyriq'],
-  Chevrolet: ['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado','Suburban','Tahoe','Trailblazer','Traverse','Trax'],
+  Chevrolet: ['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado','Suburban','Tahoe','Trailblazer','Traverse','Trx'],
   Chrysler: ['300','Pacifica'],
   Dodge: ['Challenger','Charger','Durango','Hornet'],
   Ford: ['Bronco','Bronco Sport','Edge','Escape','Expedition','Explorer','F-150','F-250','F-350','Maverick','Mustang','Ranger'],
@@ -218,7 +218,7 @@ export function ValuationForm({ register, errors, isSubmitting, watch, setValue,
       {/* CONDITION SLIDER */}
       <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-200 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Info className="w-5 h-5 text-blue-600" />
+          <Loader className="w-5 h-5 text-blue-600" />
           <label className="block text-sm font-semibold text-gray-800">
             Vehicle Condition: <span className="text-[#00d9a3] text-lg">{conditionLabels[condition]}</span>
           </label>
