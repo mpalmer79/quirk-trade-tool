@@ -31,10 +31,7 @@ export default function DealershipAdminPage() {
   const slug = params.slug as string;
 
   const dealership = DEALERSHIPS.find((d) => {
-    const dealershipSlug = d.name
-      .toLowerCase()
-      .replace(/\s+/g, "")
-      .replace(/[^\w]/g, "");
+    const dealershipSlug = d.name.toLowerCase().replace(/\s+/g, "").replace(/[^\w]/g, "");
     return dealershipSlug === slug;
   });
 
@@ -90,7 +87,7 @@ export default function DealershipAdminPage() {
             <div className="text-center">
               <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-              <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+              <p className="text-gray-600">You don&apos;t have permission to access this dealership.</p>
             </div>
           </div>
         }
@@ -100,7 +97,7 @@ export default function DealershipAdminPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Dealership Not Found</h2>
-            <p className="text-gray-600 mb-4">The dealership you're looking for doesn't exist.</p>
+            <p className="text-gray-600 mb-4">The dealership you&apos;re looking for doesn&apos;t exist.</p>
             <Link href="/admin">
               <button className="inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
                 <Home className="mr-2 h-4 w-4" />
@@ -121,7 +118,7 @@ export default function DealershipAdminPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+            <p className="text-gray-600">You don&apos;t have permission to access this dealership.</p>
           </div>
         </div>
       }
