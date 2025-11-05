@@ -57,20 +57,25 @@ export default defineConfig({
     // ============================================================================
     // TEST FILTERING & ORGANIZATION
     // ============================================================================
-    // Include only test files matching these patterns
+    // ✅ FIXED: Only include actual test files (*.test.ts or *.spec.ts)
     include: [
-      'src/**/*.{test,spec}.{js,ts}',
-      'src/__tests__/**/*.{js,ts}'
+      'src/**/*.{test,spec}.{js,ts}'
     ],
     
-    // Exclude specific test files or directories
+    // ✅ FIXED: Explicitly exclude setup and fixture files
     exclude: [
       'node_modules',
       'dist',
       '.idea',
       '.git',
       '.cache',
-      '**/node_modules/**'
+      '**/node_modules/**',
+      '**/setup.ts',                    // ← Exclude any setup.ts files
+      '**/fixtures.ts',                 // ← Exclude any fixtures.ts files
+      '**/__tests__/setup.ts',          // ← Exclude test setup
+      '**/__tests__/**/fixtures.ts',    // ← Exclude test fixtures
+      '**/__tests__/**/helpers.ts',     // ← Exclude test helpers
+      '**/__tests__/**/mocks.ts'        // ← Exclude test mocks
     ],
     
     // ============================================================================
