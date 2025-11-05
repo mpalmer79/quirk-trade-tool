@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { authenticate, optionalAuthenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error-handler.js';
@@ -37,7 +37,7 @@ const ListingsSchema = z.object({
 router.get(
   '/',
   optionalAuthenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     // Parse query parameters
     const { make, model, year, trim, condition, mileage } = req.query;
 
@@ -119,7 +119,7 @@ router.get(
 router.post(
   '/compare',
   authenticate,
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { make, model, year, trim, mileage, condition } = req.body;
 
     // Validate
