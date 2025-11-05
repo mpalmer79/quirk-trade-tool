@@ -7,35 +7,24 @@ on:
     branches: [main]
   workflow_dispatch:
 
-defaults:
-  run:
-    shell: bash
-
 jobs:
   frontend-tests:
     name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
+      # NOTE: no cache inputs here (we don't have lockfiles yet)
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
-      # Single root install creates the shared pnpm-lock.yaml
       - run: pnpm install --no-frozen-lockfile
-
-      - name: Run frontend tests
-        working-directory: frontend
-        run: pnpm run test
+      - run: pnpm run test
 
   orchestrator-tests:
     name: 🧪 Orchestrator Tests
@@ -73,30 +62,21 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
+      # install workspace deps from repo root
       - run: pnpm install --no-frozen-lockfile
-
       - name: Run DB migrations (optional)
         run: |
           sleep 5
-          echo "Run your migration command here if you have one (kept optional for now)."
+          echo "Run your migration command here if you have one (optional)."
         continue-on-error: true
-
-      - name: Run orchestrator tests
-        working-directory: orchestrator
-        run: pnpm run test
+      - name: Run Tests with Services
+        run: pnpm --filter orchestrator run test
 
   linting:
     name: 🔍 Linting & Code Quality
@@ -104,81 +84,56 @@ jobs:
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
       - run: pnpm install --no-frozen-lockfile
-
-      - name: Lint frontend (Next.js)
-        working-directory: frontend
-        run: pnpm run lint
+      - run: pnpm run lint
 
   build-frontend:
     name: 🏗️ Build Frontend
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
       - run: pnpm install --no-frozen-lockfile
-
-      - name: Build
-        working-directory: frontend
-        run: pnpm run build
+      - run: pnpm run build
 
   build-orchestrator:
     name: 🏗️ Build Orchestrator
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
       - run: pnpm install --no-frozen-lockfile
-
-      - name: Build (tsconfig.build.json)
-        working-directory: orchestrator
-        run: pnpm run build
-
+      - name: Build Orchestrator (tsconfig.build.json)
+        run: pnpm --filter orchestrator run build
       - name: Type Check (noEmit)
-        working-directory: orchestrator
-        run: npx tsc --noEmit -p tsconfig.build.json
+        run: pnpm --filter orchestrator exec tsc --noEmit -p tsconfig.build.json
 
   deploy-frontend:
     name: 🚀 Deploy Frontend
     runs-on: ubuntu-latest
     needs: [build-frontend]
+    defaults:
+      run:
+        working-directory: frontend
     permissions:
       pages: write
       id-token: write
@@ -187,25 +142,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-          run_install: false
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          check-latest: true
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
-
       - run: pnpm install --no-frozen-lockfile
-
-      - name: Build static export
-        working-directory: frontend
-        run: pnpm run build
-
+      - run: pnpm run build
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -219,4 +163,4 @@ jobs:
     needs: [frontend-tests, orchestrator-tests, linting, build-frontend, build-orchestrator]
     steps:
       - name: All checks passed
-        run: echo "🎉 All jobs succeeded!"
+        run: echo "🎉 All jobs finished"
