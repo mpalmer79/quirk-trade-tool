@@ -14,7 +14,13 @@
     "build:pages": "pnpm --filter frontend run build:pages",
     "export:pages": "pnpm --filter frontend run export",
 
-    "check:types": "pnpm --filter orchestrator exec tsc --noEmit"
+    "check:types": "pnpm --filter orchestrator exec tsc --noEmit",
+    
+    "lint": "pnpm --filter frontend run lint && pnpm --filter orchestrator run lint",
+    "lint:fix": "pnpm --filter frontend run lint:fix && pnpm --filter orchestrator run lint:fix",
+    
+    "test": "pnpm --filter orchestrator run test",
+    "test:coverage": "pnpm --filter orchestrator run test:coverage"
   },
   "devDependencies": {
     "npm-run-all": "^4.1.5"
