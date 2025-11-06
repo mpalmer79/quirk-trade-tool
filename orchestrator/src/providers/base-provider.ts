@@ -21,10 +21,38 @@ export abstract class BaseProvider {
     'Toyota': 20000, 'Volkswagen': 17000, 'Volvo': 24000,
   };
 
+  /**
+   * Trim multipliers affect base price based on trim level
+   * A "Base" trim vs "Platinum" trim can be $5,000-$15,000 difference
+   */
+  protected readonly trimMultipliers: Record<string, number> = {
+    'base': 0.92,
+    'sport': 1.05,
+    'limited': 1.08,
+    'premium': 1.12,
+    'luxury': 1.15,
+    'platinum': 1.18,
+    'touring': 1.06,
+    'ex': 1.04,
+    'lx': 0.98,
+    'le': 0.96,
+    'xle': 1.03,
+    'sel': 1.02,
+    'sxt': 1.01,
+    'rt': 1.09,
+    'srt': 1.14,
+    'performance': 1.11,
+    'signature': 1.13,
+  };
+
   async getValue(request: ValuationRequest): Promise<number | null> {
     try {
-      const basePrice = this.basePrices[request.make] || this.config.basePrice;
+      let basePrice = this.basePrices[request.make] || this.config.basePrice;
       const currentYear = new Date().getFullYear();
+      
+      // Apply trim multiplier to base price
+      const trimMultiplier = this.getTrimMultiplier(request.trim);
+      basePrice *= trimMultiplier;
       
       // Depreciation calculations with caps to prevent negative values
       const yearsSinceManufacture = currentYear - request.year;
@@ -65,6 +93,32 @@ export abstract class BaseProvider {
       });
       return null;
     }
+  }
+
+  /**
+   * Get trim multiplier based on trim level
+   * Returns 1.0 (no adjustment) if trim is not recognized
+   */
+  protected getTrimMultiplier(trim?: string): number {
+    if (!trim) return 1.0;
+    
+    // Normalize trim to lowercase for comparison
+    const normalizedTrim = trim.toLowerCase();
+    
+    // Check for exact match first
+    if (normalizedTrim in this.trimMultipliers) {
+      return this.trimMultipliers[normalizedTrim];
+    }
+    
+    // Check for partial matches (e.g., "Sport Plus" contains "sport")
+    for (const [key, multiplier] of Object.entries(this.trimMultipliers)) {
+      if (normalizedTrim.includes(key)) {
+        return multiplier;
+      }
+    }
+    
+    // Default to no adjustment
+    return 1.0;
   }
 
   getName(): string {
