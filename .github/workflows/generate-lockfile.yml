@@ -2,11 +2,9 @@ name: Generate pnpm-lock.yaml
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'package.json'
-      - 'frontend/package.json'
-      - 'orchestrator/package.json'
+
+permissions:
+  contents: write
 
 jobs:
   generate:
@@ -14,8 +12,6 @@ jobs:
     
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ github.token }}
       
       - uses: pnpm/action-setup@v2
         with:
@@ -28,9 +24,8 @@ jobs:
       - name: Generate pnpm-lock.yaml
         run: pnpm install --lockfile-only
       
-      - name: Commit and push if changed
-        run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git add pnpm-lock.yaml
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-generate pnpm-lock.yaml" && git push)
+      - name: Commit and push
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'Add pnpm-lock.yaml'
+          file_pattern: 'pnpm-lock.yaml'
