@@ -1,4 +1,4 @@
-""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""" "use client";
+"use client";
 
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/app/lib/auth-context";
@@ -116,7 +116,7 @@ export default function ReportsPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You don\'t have permission to access reports.</p>
+            <p className="text-gray-600">You don&apos;t have permission to access reports.</p>
           </div>
         </div>
       }

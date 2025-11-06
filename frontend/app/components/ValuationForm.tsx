@@ -35,34 +35,39 @@ export default function ValuationForm({
     setVinError('');
     
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${vin}?format=json`);
       const data = await response.json();
       
-      if (data.Results && setValue) {
-        // Map NHTSA variable IDs to values
-        const getValueByVariableId = (id: number) => {
-          const result = data.Results.find((r: any) => r.VariableId === id);
-          return result?.Value || '';
-        };
+      if (data.Results && data.Results[0] && setValue) {
+        const result = data.Results[0];
         
-        // Extract vehicle details
-        const year = parseInt(getValueByVariableId(29)) || 0;
-        const make = getValueByVariableId(26);
-        const model = getValueByVariableId(28);
-        const trim = getValueByVariableId(109); // Trim variable ID
+        // Extract vehicle details from the response
+        const yearStr = (result.ModelYear || '').toString().trim();
+        const year = /^\d{4}$/.test(yearStr) ? parseInt(yearStr) : 0;
+        const make = (result.Make || '').toString().trim();
+        const model = (result.Model || '').toString().trim();
+        const trim = (result.Trim || result.Series || '').toString().trim();
         
         // Update form fields
         if (year > 1980 && year <= new Date().getFullYear() + 1) {
           setValue('year', year);
         }
         if (make && make !== 'Not Applicable') {
-          setValue('make', make);
+          // Title case the make for display
+          const titleCaseMake = make.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ');
+          setValue('make', titleCaseMake);
         }
         if (model && model !== 'Not Applicable') {
           setValue('model', model);
         }
         if (trim && trim !== 'Not Applicable') {
-          setValue('trim', trim);
+          // Title case the trim for display
+          const titleCaseTrim = trim.split(' ').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+          ).join(' ');
+          setValue('trim', titleCaseTrim);
         }
         
         // Success feedback
