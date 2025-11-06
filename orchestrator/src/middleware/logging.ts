@@ -54,6 +54,8 @@ export async function auditLog(data: {
   resourceId: string;
   ipAddress?: string;
   timestamp: Date;
+  dealershipId?: string;
+  metadata?: any;
 }) {
   log.info({
     type: 'AUDIT',

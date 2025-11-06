@@ -11,6 +11,9 @@ import { QuoteAggregator } from '../aggregators/quote-aggregator';
 import { generateValuationId } from '../utils/valuation.utils';
 import type { ValuationRequest, ValuationResult } from '../types/valuation.types';
 
+// Re-export ValuationResult for use in other modules
+export type { ValuationResult };
+
 const log = pino();
 const aggregator = new QuoteAggregator();
 
