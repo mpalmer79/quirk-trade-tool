@@ -1,6 +1,7 @@
-name: CI/CD Pipeline - Frontend & Orchestrator
+name: Pages Deploy
 
 on:
+  Workflow_dipatch:
   push:
     branches: [main]
   pull_request:
