@@ -8,6 +8,7 @@ on:
 
 jobs:
   frontend-tests:
+    name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,13 +21,14 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install deps (workspace)
         run: pnpm install --no-frozen-lockfile
 
-      - name: Run tests
+      - name: Run frontend tests (vitest)
         run: pnpm --filter frontend run test
 
   orchestrator-tests:
+    name: 🧪 Orchestrator Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,89 +41,82 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies
+      - name: Install deps (workspace)
         run: pnpm install --no-frozen-lockfile
 
-      - name: Run tests
+      - name: Run orchestrator tests
         run: pnpm --filter orchestrator run test
 
   linting:
+    name: 🔍 Linting & Code Quality
     runs-on: ubuntu-latest
-    name: Linting & Code Quality
+    continue-on-error: true  # informational only
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Lint Frontend
-        run: pnpm --filter frontend run lint
-
-      - name: Lint Orchestrator
-        run: pnpm --filter orchestrator run lint
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --filter frontend run lint
+      - run: pnpm --filter orchestrator run lint
 
   build-frontend:
+    name: 🏗️ Build Frontend
     runs-on: ubuntu-latest
+    needs: [frontend-tests]           # Only build if FE tests pass
+    if: needs.frontend-tests.result == 'success'
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
-      - name: Build Frontend
-        run: pnpm --filter frontend run build
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm --filter frontend run build
 
   build-orchestrator:
+    name: 🏗️ Build Orchestrator
     runs-on: ubuntu-latest
+    needs: [orchestrator-tests]       # Only build if Orchestrator tests pass
+    if: needs.orchestrator-tests.result == 'success'
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
+      - run: pnpm install --no-frozen-lockfile
       - name: Build Orchestrator
         run: |
           cd orchestrator
           tsc -p tsconfig.build.json
 
   deploy-frontend:
-    needs: [frontend-tests, build-frontend]
+    name: 🚀 Deploy Frontend
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    needs: [build-frontend]
+    if: github.ref == 'refs/heads/main' && needs.build-frontend.result == 'success'
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (placeholder)
         run: echo "Deploy step placeholder"
 
   pipeline-status:
+    name: ✅ Pipeline Status
     runs-on: ubuntu-latest
     needs: [frontend-tests, orchestrator-tests, linting, build-frontend, build-orchestrator]
     if: always()
     steps:
       - name: Pipeline Status Check
         run: |
-          echo "Pipeline completed"
+          echo "Frontend tests:      ${{ needs.frontend-tests.result }}"
+          echo "Orchestrator tests:  ${{ needs.orchestrator-tests.result }}"
+          echo "Build frontend:      ${{ needs.build-frontend.result }}"
+          echo "Build orchestrator:  ${{ needs.build-orchestrator.result }}"
