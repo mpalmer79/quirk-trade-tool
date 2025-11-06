@@ -2,17 +2,14 @@ import './globals.css'
 import type { Metadata } from 'next'
 import { Providers } from './providers'
 import Script from 'next/script'
+import Footer from '@/components/Footer'  // <-- add
 
 export const metadata: Metadata = {
   title: 'Quirk Trade Tool - Vehicle Valuation',
   description: 'Multi-source vehicle valuation powered by industry data providers',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -29,9 +26,10 @@ export default function RootLayout({
           `}
         </Script>
       </head>
-      <body>
+      <body className="min-h-screen flex flex-col">
         <Providers>
-          {children}
+          <div className="flex-1">{children}</div>
+          <Footer /> {/* <-- global footer */}
         </Providers>
       </body>
     </html>
