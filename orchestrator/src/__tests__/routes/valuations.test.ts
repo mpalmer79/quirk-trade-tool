@@ -18,7 +18,7 @@ describe('POST /api/valuations/calculate', () => {
 
   it('returns 200 and valuation data for valid request', async () => {
     // MOCK: Service returns fake data
-    (valuationService.calculateValuation as any).mockResolvedValue({
+    (valuationService.calculateValuation as never).mockResolvedValue({
       id: 'val-123',
       baseWholesaleValue: 18000,
       finalWholesaleValue: 16200,

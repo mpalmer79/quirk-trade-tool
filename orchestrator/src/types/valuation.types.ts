@@ -15,7 +15,7 @@ export interface ValuationRequest {
   options?: string[];
   dealershipId: string;
   zip?: string;
-  request?: any;
+  request?: unknown;
 }
 
 export interface SourceValuation {

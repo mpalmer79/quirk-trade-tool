@@ -6,7 +6,6 @@ import rateLimit from 'express-rate-limit';
 
 import { requestLogger } from './middleware/logging.js';
 import { errorHandler, notFoundHandler, asyncHandler } from './middleware/error-handler.js';
-import { authenticate } from './middleware/auth.js';
 
 import { authService } from './services/auth-service.js';
 import { db, validateDatabaseConnection } from './db/index.js';
@@ -171,7 +170,7 @@ app.use(errorHandler);
 /* ============================================================================
    GRACEFUL SHUTDOWN
 ============================================================================ */
-let server: any;
+let server: ReturnType<typeof app.listen> | undefined;
 
 const gracefulShutdown = (signal: string) => {
   log.info(`${signal} received. Starting graceful shutdown...`);

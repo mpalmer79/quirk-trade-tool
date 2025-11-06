@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 export const AppraiseSchema = z.object({
+  vin: z.string().optional(),
   year: z.coerce.number().min(1990).max(new Date().getFullYear()),
   make: z.string().min(1),
   model: z.string().min(1),

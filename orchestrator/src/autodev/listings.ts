@@ -65,7 +65,7 @@ export async function getVehicleListings(
 
   try {
     // Build query parameters
-    let endpoint = `https://api.auto.dev/listings`;
+    const endpoint = `https://api.auto.dev/listings`;
     const params = new URLSearchParams({
       make: make.trim(),
       model: model.trim(),
@@ -106,7 +106,7 @@ export async function getVehicleListings(
     // Parse listings from response
     const listings: VehicleListing[] = (data.listings || data.results || [])
       .slice(0, 50)
-      .map((listing: any) => ({
+      .map((listing: Record<string, unknown>) => ({
         id: listing.id || listing.vin || 'unknown',
         title: listing.title || `${year} ${make} ${model}`,
         price: Number(listing.price || listing.listPrice || 0),

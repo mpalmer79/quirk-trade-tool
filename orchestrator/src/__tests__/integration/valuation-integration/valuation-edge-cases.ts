@@ -199,7 +199,7 @@ describe('Valuation Integration - Response Format', () => {
       .send(validValuationRequest);
 
     expect(Array.isArray(response.body.quotes)).toBe(true);
-    response.body.quotes.forEach((quote: any) => {
+    response.body.quotes.forEach((quote: Record<string, unknown>) => {
       expect(quote).toHaveProperty('source');
       expect(quote).toHaveProperty('value');
       expect(quote).toHaveProperty('currency');

@@ -33,7 +33,7 @@ describe('Valuation Integration - Happy Path', () => {
     expect(Array.isArray(response.body.quotes)).toBe(true);
     expect(response.body.quotes.length).toBeGreaterThan(0);
 
-    response.body.quotes.forEach((quote: any) => {
+    response.body.quotes.forEach((quote: Record<string, unknown>) => {
       expect(quote).toHaveProperty('source');
       expect(quote).toHaveProperty('value');
       expect(quote).toHaveProperty('currency');

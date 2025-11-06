@@ -46,7 +46,7 @@ export class QuincyAutoProvider extends BaseProvider {
    * 5. Return null if insufficient data
    */
   private async getAuctionValue(request: ValuationRequest): Promise<number | null> {
-    const { vin, year, make, model, mileage } = request;
+    const { vin, year, make, model } = request;
 
     // ============================================================================
     // STRATEGY 1: Exact VIN Match (Best Case)
