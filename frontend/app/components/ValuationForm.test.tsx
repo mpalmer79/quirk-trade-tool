@@ -46,6 +46,8 @@ function FormWrapper() {
   );
 }
 
+const VIN_PLACEHOLDER = /17[-\s]*character\s*vin/i; // matches: "Enter 17-character VIN"
+
 describe('ValuationForm', () => {
   beforeEach(() => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
@@ -70,7 +72,7 @@ describe('ValuationForm', () => {
   it('disables VIN decode button until a 17-char VIN is entered', () => {
     render(<FormWrapper />);
 
-    const vinInput = screen.getByPlaceholderText(/e\.g\., 1g1zt/i);
+    const vinInput = screen.getByPlaceholderText(VIN_PLACEHOLDER);
     const decodeBtn = screen.getByRole('button', { name: /decode/i });
 
     // Initially disabled
@@ -88,7 +90,7 @@ describe('ValuationForm', () => {
   it('calls NHTSA and populates year/make/model/trim on successful decode', async () => {
     render(<FormWrapper />);
 
-    const vinInput = screen.getByPlaceholderText(/e\.g\., 1g1zt/i);
+    const vinInput = screen.getByPlaceholderText(VIN_PLACEHOLDER);
     const decodeBtn = screen.getByRole('button', { name: /decode/i });
 
     fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
@@ -99,16 +101,16 @@ describe('ValuationForm', () => {
       const yearSelect = screen.getByLabelText(/year \*/i) as HTMLSelectElement;
       expect(yearSelect.value).toBe('2022');
 
-      // Make select should reflect decoded make
+      // Make select should reflect decoded make (title-cased in UI)
       const makeSelect = screen.getByLabelText(/make \*/i) as HTMLSelectElement;
       expect(makeSelect.value).toBe('Nissan');
 
-      // Model select should reflect decoded model (if present in list)
+      // Model select should reflect decoded model
       const modelSelect = screen.getByLabelText(/model \*/i) as HTMLSelectElement;
       expect(modelSelect.value).toBe('Frontier');
 
-      // Trim input populated
-      const trimInput = screen.getByPlaceholderText(/e\.g\., le, sport, limited/i) as HTMLInputElement;
+      // Trim input populated (placeholder likely unchanged)
+      const trimInput = screen.getByPlaceholderText(/e\.g\.,\s*le,\s*sport,\s*limited/i) as HTMLInputElement;
       expect(trimInput.value).toBe('Pro-4x');
     });
 
@@ -121,9 +123,9 @@ describe('ValuationForm', () => {
   it('shows the valid VIN hint for a 17-char VIN', () => {
     render(<FormWrapper />);
 
-    const vinInput = screen.getByPlaceholderText(/e\.g\., 1g1zt/i);
+    const vinInput = screen.getByPlaceholderText(VIN_PLACEHOLDER);
     fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
 
-    expect(screen.getByText(/✓ valid vin format/i)).toBeInTheDocument();
+    expect(screen.getByText(/✓\s*valid\s*vin\s*format/i)).toBeInTheDocument();
   });
 });
