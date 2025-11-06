@@ -1,182 +1,264 @@
 'use client';
 
 import React from 'react';
+import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import type { FormData, Summary } from '../lib/types';
 
-type MockForm = {
-  storeId?: string;
-  vin?: string;
-  year?: number;
-  make?: string;
-  model?: string;
-  trim?: string;
-  mileage?: number;
-  condition?: number;
-  options?: string[];
-};
-
-const DEALERSHIP_BY_ID: Record<string, { name: string; city: string; state: string }> = {
-  // Keep in sync with your DEALERSHIPS seed if you want nicer headers
-  // These are safe fallbacks if not found in sessionStorage:
-  '1': { name: 'Quirk Buick GMC', city: 'Braintree', state: 'MA' },
-  '2': { name: 'Quirk Chevrolet', city: 'Braintree', state: 'MA' }
-};
-
-function computeMockValue(input: MockForm) {
-  // Deterministic “ballpark” builder:
-  const year = Number(input.year ?? 2018);
-  const mileage = Number(input.mileage ?? 60000);
-  const condition = Number(input.condition ?? 3);
-
-  // Base by age
-  const age = Math.max(0, new Date().getFullYear() - year);
-  let base = 34000 - age * 1800;
-
-  // Mileage impact
-  const extraMiles = Math.max(0, mileage - 30000);
-  base -= (extraMiles / 1000) * 150;
-
-  // Condition factor
-  const conditionFactor = [0, 0.78, 0.88, 1.0, 1.07, 1.12][condition] || 1.0;
-  base *= conditionFactor;
-
-  // Options bump
-  const optCount = (input.options ?? []).length;
-  base += optCount * 150;
-
-  // Floor & round
-  const wholesale = Math.max(2500, Math.round(base / 50) * 50);
-  const retailAsk = Math.round(wholesale * 1.12 / 50) * 50;
-
-  return {
-    wholesale,
-    retailAsk
-  };
+interface ValuationFormProps {
+  register: UseFormRegister<FormData>;
+  errors: FieldErrors<FormData>;
+  isSubmitting: boolean;
+  watch: UseFormWatch<FormData>;
+  setValue?: UseFormSetValue<FormData>;
+  summary?: Summary | null;
 }
 
-export default function MockReceiptPage() {
-  const [form, setForm] = React.useState<MockForm | null>(null);
-  const [store, setStore] = React.useState<{ name: string; city: string; state: string } | null>(
-    null
-  );
-  const [values, setValues] = React.useState<{ wholesale: number; retailAsk: number } | null>(null);
+export default function ValuationForm({
+  register,
+  errors,
+  isSubmitting,
+  watch,
+  setValue,
+  summary
+}: ValuationFormProps) {
+  const [vinError, setVinError] = React.useState<string>('');
+  const [isDecoding, setIsDecoding] = React.useState(false);
 
-  React.useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem('mockForm');
-      const parsed = raw ? (JSON.parse(raw) as MockForm) : {};
-      setForm(parsed);
-
-      const ds =
-        (parsed.storeId && DEALERSHIP_BY_ID[parsed.storeId]) ||
-        DEALERSHIP_BY_ID['1'] ||
-        { name: 'Quirk Auto Group', city: 'Boston', state: 'MA' };
-      setStore(ds);
-
-      setValues(computeMockValue(parsed));
-    } catch {
-      setForm({});
-      setStore({ name: 'Quirk Auto Group', city: 'Boston', state: 'MA' });
-      setValues(computeMockValue({}));
+  const handleVinDecode = async () => {
+    const vin = watch('vin');
+    if (!vin || vin.length !== 17) {
+      setVinError('Please enter a 17-character VIN');
+      return;
     }
-  }, []);
-
-  const printNow = () => window.print();
+    
+    setIsDecoding(true);
+    setVinError('');
+    
+    try {
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
+      const data = await response.json();
+      
+      if (data.Results && setValue) {
+        // Map NHTSA variable IDs to values
+        const getValueByVariableId = (id: number) => {
+          const result = data.Results.find((r: any) => r.VariableId === id);
+          return result?.Value || '';
+        };
+        
+        // Extract vehicle details
+        const year = parseInt(getValueByVariableId(29)) || 0;
+        const make = getValueByVariableId(26);
+        const model = getValueByVariableId(28);
+        const trim = getValueByVariableId(109); // Trim variable ID
+        
+        // Update form fields
+        if (year > 1980 && year <= new Date().getFullYear() + 1) {
+          setValue('year', year);
+        }
+        if (make && make !== 'Not Applicable') {
+          setValue('make', make);
+        }
+        if (model && model !== 'Not Applicable') {
+          setValue('model', model);
+        }
+        if (trim && trim !== 'Not Applicable') {
+          setValue('trim', trim);
+        }
+        
+        // Success feedback
+        if (make && model) {
+          setVinError(''); // Clear any error
+        } else {
+          setVinError('VIN decoded but some details could not be determined');
+        }
+      }
+    } catch (error) {
+      console.error('VIN decode failed:', error);
+      setVinError('Failed to decode VIN. Please check your connection and try again.');
+    } finally {
+      setIsDecoding(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <div className="max-w-3xl mx-auto p-6 md:p-10">
-        {/* Header */}
-        <div className="bg-white rounded-xl border shadow-sm p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Trade-In Appraisal (Demo)</h1>
-              <p className="text-sm text-gray-600">
-                {store?.name} — {store?.city}, {store?.state}
-              </p>
-            </div>
-            <button
-              onClick={printNow}
-              className="px-4 py-2 rounded-lg border bg-black text-white hover:bg-gray-800"
-            >
-              Print / Save PDF
-            </button>
-          </div>
+    <div className="space-y-6">
+      {/* Dealership Selection */}
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          Dealership <span className="text-red-500">*</span>
+        </label>
+        <select 
+          {...register('storeId', { required: 'Please select a dealership' })} 
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select a dealership</option>
+          <option value="1">Quirk Chevrolet - Manchester, NH</option>
+          <option value="2">Quirk Buick GMC - Braintree, MA</option>
+        </select>
+        {errors.storeId && <p className="text-red-500 text-sm mt-1">{errors.storeId.message}</p>}
+      </div>
+
+      {/* VIN Input with Decode Button */}
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          VIN <span className="text-red-500">*</span>
+        </label>
+        <div className="flex gap-2">
+          <input
+            {...register('vin', { 
+              required: 'VIN is required',
+              minLength: { value: 17, message: 'VIN must be 17 characters' },
+              maxLength: { value: 17, message: 'VIN must be 17 characters' }
+            })}
+            placeholder="Enter 17-character VIN"
+            className="flex-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            maxLength={17}
+            style={{ textTransform: 'uppercase' }}
+            onBlur={(e) => e.target.value = e.target.value.toUpperCase()}
+          />
+          <button
+            type="button"
+            onClick={handleVinDecode}
+            disabled={isDecoding || !watch('vin') || watch('vin').length !== 17}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+          >
+            {isDecoding ? 'Decoding...' : 'Decode VIN'}
+          </button>
         </div>
+        {errors.vin && <p className="text-red-500 text-sm mt-1">{errors.vin.message}</p>}
+        {vinError && <p className="text-amber-600 text-sm mt-1">{vinError}</p>}
+      </div>
 
-        {/* Vehicle Summary */}
-        <div className="bg-white rounded-xl border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-3">Vehicle</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div>
-              <div className="text-gray-600">VIN</div>
-              <div className="font-medium">{form?.vin || '—'}</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Year</div>
-              <div className="font-medium">{form?.year || '—'}</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Make</div>
-              <div className="font-medium">{form?.make || '—'}</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Model</div>
-              <div className="font-medium">{form?.model || '—'}</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Trim</div>
-              <div className="font-medium">{form?.trim || '—'}</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Mileage</div>
-              <div className="font-medium">
-                {form?.mileage ? Number(form.mileage).toLocaleString() : '—'}
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-600">Condition</div>
-              <div className="font-medium">
-                {form?.condition ? `${form.condition} / 5` : '—'}
-              </div>
-            </div>
-            <div className="md:col-span-2">
-              <div className="text-gray-600">Options</div>
-              <div className="font-medium">
-                {form?.options?.length ? form.options.join(', ') : '—'}
-              </div>
-            </div>
-          </div>
+      {/* Vehicle Details Grid */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Year <span className="text-red-500">*</span>
+          </label>
+          <input
+            {...register('year', { 
+              required: 'Year is required',
+              valueAsNumber: true,
+              min: { value: 1980, message: 'Year must be 1980 or later' },
+              max: { value: new Date().getFullYear() + 1, message: 'Invalid year' }
+            })}
+            type="number"
+            placeholder="2020"
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year.message}</p>}
         </div>
-
-        {/* Quote */}
-        <div className="bg-white rounded-xl border shadow-sm p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-3">Estimated Values (Demo)</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-lg border p-4">
-              <div className="text-sm text-gray-600">Estimated Wholesale</div>
-              <div className="text-2xl font-bold">
-                {values ? `$${values.wholesale.toLocaleString()}` : '—'}
-              </div>
-            </div>
-            <div className="rounded-lg border p-4">
-              <div className="text-sm text-gray-600">Suggested Retail Ask</div>
-              <div className="text-2xl font-bold">
-                {values ? `$${values.retailAsk.toLocaleString()}` : '—'}
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-gray-500 mt-3">
-            Demo only. Final numbers may differ once market data, options, condition notes,
-            and book values are applied through the orchestrator.
-          </p>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Make <span className="text-red-500">*</span>
+          </label>
+          <input
+            {...register('make', { required: 'Make is required' })}
+            placeholder="Chevrolet"
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {errors.make && <p className="text-red-500 text-sm mt-1">{errors.make.message}</p>}
         </div>
-
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Quirk Auto Group — Demo Receipt
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            Model <span className="text-red-500">*</span>
+          </label>
+          <input
+            {...register('model', { required: 'Model is required' })}
+            placeholder="Silverado"
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          {errors.model && <p className="text-red-500 text-sm mt-1">{errors.model.message}</p>}
+        </div>
+        
+        <div>
+          <label className="block text-sm font-medium mb-2">Trim</label>
+          <input
+            {...register('trim')}
+            placeholder="LT (optional)"
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
         </div>
       </div>
+
+      {/* Mileage */}
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          Mileage <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register('mileage', { 
+            required: 'Mileage is required',
+            valueAsNumber: true,
+            min: { value: 0, message: 'Mileage must be positive' },
+            max: { value: 999999, message: 'Mileage seems too high' }
+          })}
+          type="number"
+          placeholder="50000"
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
+        {errors.mileage && <p className="text-red-500 text-sm mt-1">{errors.mileage.message}</p>}
+      </div>
+
+      {/* Condition */}
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          Condition <span className="text-red-500">*</span>
+        </label>
+        <select 
+          {...register('condition', { 
+            required: 'Condition is required',
+            valueAsNumber: true 
+          })} 
+          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+          <option value="">Select condition</option>
+          <option value={5}>5 - Excellent (Like New)</option>
+          <option value={4}>4 - Very Good (Minor Wear)</option>
+          <option value={3}>3 - Good (Average)</option>
+          <option value={2}>2 - Fair (Noticeable Issues)</option>
+          <option value={1}>1 - Poor (Significant Problems)</option>
+        </select>
+        {errors.condition && <p className="text-red-500 text-sm mt-1">{errors.condition.message}</p>}
+      </div>
+
+      {/* Options (Optional) */}
+      <div>
+        <label className="block text-sm font-medium mb-2">Additional Options</label>
+        <div className="space-y-2">
+          {['Leather Seats', 'Sunroof', 'Navigation', 'Premium Audio', 'Tow Package'].map(option => (
+            <label key={option} className="flex items-center">
+              <input
+                type="checkbox"
+                value={option}
+                {...register('options')}
+                className="mr-2"
+              />
+              <span className="text-sm">{option}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      >
+        {isSubmitting ? 'Processing...' : 'Get Valuation'}
+      </button>
+
+      {/* Summary Display (if available) */}
+      {summary && (
+        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+          <h3 className="font-semibold mb-2">Valuation Summary</h3>
+          <p>Base Value: ${summary.baseValue?.toLocaleString()}</p>
+          <p>Adjusted Value: ${summary.adjustedValue?.toLocaleString()}</p>
+        </div>
+      )}
     </div>
   );
 }
