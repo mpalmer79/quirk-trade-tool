@@ -1,9 +1,7 @@
 'use client';
-
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-
 import ValuationForm from './components/ValuationForm';
 import type { FormData, Summary } from './lib/types';
 
@@ -14,7 +12,6 @@ const ORCH_BASE = process.env.NEXT_PUBLIC_ORCHESTRATOR_URL || '';
 
 export default function HomePage() {
   const router = useRouter();
-
   const {
     register,
     handleSubmit,
@@ -67,6 +64,7 @@ export default function HomePage() {
       });
 
       if (!res.ok) throw new Error(`orchestrator_${res.status}`);
+
       const data = await res.json();
 
       // If you later create a real receipt page, stash the response here:
