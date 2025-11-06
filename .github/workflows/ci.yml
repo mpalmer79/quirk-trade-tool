@@ -9,110 +9,100 @@ on:
 jobs:
   frontend-tests:
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
-      
+          node-version: 20
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-      
+
       - name: Run tests
         run: pnpm --filter frontend run test
 
   orchestrator-tests:
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
-      
+          node-version: 20
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-      
+
       - name: Run tests
         run: pnpm --filter orchestrator run test
 
   linting:
     runs-on: ubuntu-latest
     name: Linting & Code Quality
-    
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
-      
+          node-version: 20
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-      
+
       - name: Lint Frontend
         run: pnpm --filter frontend run lint
-      
+
       - name: Lint Orchestrator
         run: pnpm --filter orchestrator run lint
 
   build-frontend:
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
-      
+          node-version: 20
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-      
+
       - name: Build Frontend
         run: pnpm --filter frontend run build
 
   build-orchestrator:
     runs-on: ubuntu-latest
-    
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'pnpm'
-      
+          node-version: 20
+
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
-      
+
       - name: Build Orchestrator
         run: |
           cd orchestrator
@@ -122,10 +112,8 @@ jobs:
     needs: [frontend-tests, build-frontend]
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
     steps:
       - uses: actions/checkout@v4
-      
       - name: Deploy to GitHub Pages
         run: echo "Deploy step placeholder"
 
@@ -133,9 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [frontend-tests, orchestrator-tests, linting, build-frontend, build-orchestrator]
     if: always()
-    
     steps:
       - name: Pipeline Status Check
         run: |
           echo "Pipeline completed"
-          echo "Status: ${{ needs.frontend-tests.result }}"
