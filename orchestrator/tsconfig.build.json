@@ -1,12 +1,13 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "__note": "Do NOT include Vitest types when compiling for production.",
-    "types": ["node"],
     "noEmit": false,
+    "declaration": false,
     "strict": false,
+    "noImplicitAny": false,
     "skipLibCheck": true,
-    "noImplicitAny": false
+    "types": ["node"],
+    "lib": ["ES2020", "DOM"]
   },
   "include": ["src"],
   "exclude": [
