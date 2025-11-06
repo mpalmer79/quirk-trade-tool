@@ -10,32 +10,27 @@ on:
 jobs:
   security-check:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '18'
-    
-    - name: Install dependencies
-      run: |
-        cd orchestrator
-        npm install
-    
-    - name: Create test environment file
-      run: |
-        cd orchestrator
-        cp .env.example .env
-    
-    - name: Run Security Validation
-      run: |
-        cd orchestrator
-        npm run validate:security
-      continue-on-error: true  # Don't fail the workflow, just report
-    
-    - name: Security Report
-      if: always()
-      run: |
-        echo "Security check completed. Review the output above for any issues."
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run Security Validation
+        run: pnpm --filter orchestrator run validate:security
+        continue-on-error: true  # Don't fail the workflow, just report
+
+      - name: Security Report
+        if: always()
+        run: |
+          echo "Security check completed. Review the output above for any issues."
