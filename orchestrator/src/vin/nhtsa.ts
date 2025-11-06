@@ -16,13 +16,18 @@ export async function decodeVinWithNhtsa(vin: string): Promise<VinDecodeResult> 
   const yearStr = (row.ModelYear ?? '').toString().trim();
   const year = /^\d{4}$/.test(yearStr) ? Number(yearStr) : undefined;
 
-  // Extract model - NHTSA provides this in the Model field
-  const model = (row.Model ?? '').toString().trim() || undefined;
+  // Extract model with fallbacks: Model → Series
+  // Note: GM/Ford trucks often have model in Series field (e.g., "Silverado 1500", "F-150")
+  const model = 
+    (row.Model ?? '').toString().trim() ||
+    (row.Series ?? '').toString().trim() ||
+    undefined;
 
-  // Extract trim with fallbacks: Trim → Series → ModelVariantDescription
+  // Extract trim with fallbacks: Trim → Trim2 → ModelVariantDescription
+  // Note: Removed Series from trim fallback since it's now used for model
   const trim =
     (row.Trim ?? '').toString().trim() ||
-    (row.Series ?? '').toString().trim() ||
+    (row.Trim2 ?? '').toString().trim() ||
     (row.ModelVariantDescription ?? '').toString().trim() ||
     undefined;
 
