@@ -72,6 +72,8 @@ process.env.DATABASE_URL = 'postgresql://test_user:test_password@localhost:5432/
 
 process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.CACHE_TTL = '3600'; // 1 hour
+// Note: Even though CACHE_ENABLED is false, we mock Redis above to handle any
+// cache operations gracefully. This prevents connection errors during tests.
 process.env.CACHE_ENABLED = 'false'; // Disable cache in tests to avoid Redis connection issues
 
 
