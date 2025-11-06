@@ -11,7 +11,7 @@ export class ApiError extends Error {
     public statusCode: number,
     public code: string,
     message: string,
-    public details?: any
+    public details?: unknown
   ) {
     super(message);
     this.name = 'ApiError';
@@ -23,16 +23,19 @@ export class ApiError extends Error {
  * Must be registered LAST in express app
  */
 export const errorHandler = (
-  err: any,
+  err: unknown,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ) => {
   // Default error response
   let statusCode = 500;
   let code = 'internal_server_error';
   let message = 'Something went wrong';
-  let details: any = undefined;
+  let details: unknown = undefined;
+
+  // Cast to a general error shape for property access
+  const error = err as { name?: string; code?: string; message?: string; issues?: unknown; stack?: string };
 
   // Handle API errors
   if (err instanceof ApiError) {
@@ -42,20 +45,20 @@ export const errorHandler = (
     details = err.details;
   }
   // Handle Zod validation errors
-  else if (err.name === 'ZodError') {
+  else if (error.name === 'ZodError') {
     statusCode = 400;
     code = 'validation_error';
     message = 'Validation failed';
-    details = err.issues;
+    details = error.issues;
   }
   // Handle database errors
-  else if (err.code === 'ECONNREFUSED') {
+  else if (error.code === 'ECONNREFUSED') {
     statusCode = 503;
     code = 'database_unavailable';
     message = 'Database connection failed';
   }
   // Handle file system errors
-  else if (err.code === 'ENOENT') {
+  else if (error.code === 'ENOENT') {
     statusCode = 404;
     code = 'not_found';
     message = 'Resource not found';
@@ -69,8 +72,8 @@ export const errorHandler = (
 
   // Log error
   log.error({
-    error: err.message,
-    stack: err.stack,
+    error: error.message,
+    stack: error.stack,
     code,
     statusCode,
     path: req.path,
@@ -82,7 +85,7 @@ export const errorHandler = (
   });
 
   // Send error response
-  const response: any = {
+  const response: Record<string, unknown> = {
     error: code,
     message
   };
@@ -91,8 +94,8 @@ export const errorHandler = (
     response.details = details;
   }
 
-  if (process.env.NODE_ENV === 'development' && err.stack) {
-    response.stack = err.stack;
+  if (process.env.NODE_ENV === 'development' && error.stack) {
+    response.stack = error.stack;
   }
 
   res.status(statusCode).json(response);
@@ -101,7 +104,7 @@ export const errorHandler = (
 /**
  * Async error wrapper: catches errors in async route handlers
  */
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>) => {
   return (req: Request, res: Response, next: NextFunction) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };

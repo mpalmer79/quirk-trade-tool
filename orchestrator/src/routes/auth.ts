@@ -8,10 +8,7 @@ import { auditLog } from '../middleware/logging.js';
 import {
   LoginSchema,
   RefreshTokenSchema,
-  CreateUserSchema,
-  type LoginInput,
-  type RefreshTokenInput,
-  type CreateUserInput
+  CreateUserSchema
 } from '../types/user.js';
 
 const router = Router();
@@ -25,8 +22,9 @@ router.post(
   '/login',
   asyncHandler(async (req: Request, res: Response) => {
     // Validate input
+    let email, password;
     try {
-      var { email, password } = LoginSchema.parse(req.body);
+      ({ email, password } = LoginSchema.parse(req.body));
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -99,8 +97,9 @@ router.post(
 router.post(
   '/refresh',
   asyncHandler(async (req: Request, res: Response) => {
+    let refreshToken;
     try {
-      var { refreshToken } = RefreshTokenSchema.parse(req.body);
+      ({ refreshToken } = RefreshTokenSchema.parse(req.body));
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -208,8 +207,9 @@ router.post(
   '/register',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
+    let input;
     try {
-      var input = CreateUserSchema.parse(req.body);
+      input = CreateUserSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',

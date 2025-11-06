@@ -29,7 +29,7 @@ const upload = multer({
 /**
  * Validation schema for QAA CSV row
  */
-const QaaRowSchema = z.object({
+const _QaaRowSchema = z.object({
   date: z.string(), // Will be parsed to Date
   vin: z.string().min(11).max(17),
   sale_price: z.number().positive()
@@ -138,7 +138,7 @@ router.post(
     // ============================================================================
     // STEP 3: PARSE CSV FILE
     // ============================================================================
-    let records: any[];
+    let records: unknown[];
     try {
       const csvContent = req.file.buffer.toString('utf-8');
       
@@ -189,7 +189,7 @@ router.post(
 
     for (let i = 0; i < records.length; i++) {
       const rowNum = i + 2; // +2 because row 1 is headers, and we're 0-indexed
-      const record = records[i];
+      const record = records[i] as Record<string, unknown>;
 
       try {
         // Extract and normalize fields (support various column name formats)
@@ -202,19 +202,19 @@ router.post(
         }
 
         // Parse date
-        const saleDate = parseDate(dateField);
+        const saleDate = parseDate(String(dateField));
         if (!saleDate) {
           throw new Error(`Invalid date format: ${dateField}`);
         }
 
         // Parse price
-        const salePrice = parseSalePrice(priceField);
+        const salePrice = parseSalePrice(String(priceField));
         if (!salePrice) {
           throw new Error(`Invalid sale price: ${priceField}`);
         }
 
         // Normalize VIN
-        const vin = normalizeVin(vinField);
+        const vin = normalizeVin(String(vinField));
         if (vin.length < 11 || vin.length > 17) {
           throw new Error(`Invalid VIN length: ${vin}`);
         }
@@ -248,9 +248,10 @@ router.post(
       } catch (error) {
         results.failed++;
         const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+        const recordVin = (record as Record<string, unknown>).vin;
         results.errors.push({
           row: rowNum,
-          vin: record.vin || 'unknown',
+          vin: typeof recordVin === 'string' ? recordVin : 'unknown',
           error: errorMsg
         });
         console.error(`❌ Row ${rowNum} failed: ${errorMsg}`);

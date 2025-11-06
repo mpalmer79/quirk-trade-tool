@@ -174,8 +174,8 @@ router.get(
     // ============================================================================
     try {
       const pdfStream = await generateReceipt(
-        receipt as any,  // Cast to ValuationResult type for now
-        receipt.input as any
+        receipt as never,  // Cast to ValuationResult type for now
+        receipt.input as never
       );
 
       // ============================================================================

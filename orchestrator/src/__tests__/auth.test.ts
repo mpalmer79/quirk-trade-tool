@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { AuthService } from '../../src/services/auth-service';
 import { AuthorizationService } from '../../src/services/authorization-service';
-import type { User, UserRole } from '../../src/types/user';
+import type { User } from '../../src/types/user';
 import { UserRole as UserRoleEnum, Permission } from '../../src/types/user';
 
 // ============================================================================

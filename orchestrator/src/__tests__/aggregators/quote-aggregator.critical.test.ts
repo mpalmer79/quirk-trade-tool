@@ -40,7 +40,7 @@ expect(result).toBeLessThan(24000);
   });
 
   it('should handle empty array', () => {
-    const quotes: any[] = [];
+    const quotes: never[] = [];
     const result = aggregator.calculateAggregateValue(quotes);
     expect(result).toBe(0);
   });

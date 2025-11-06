@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import pino from 'pino';
-import type { User, UserRole, Permission, JwtPayload } from '../types/user.js';
+import type { UserRole, Permission, JwtPayload } from '../types/user.js';
 import { ROLE_PERMISSIONS } from '../types/user.js';
 
 const log = pino();

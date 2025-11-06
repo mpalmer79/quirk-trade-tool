@@ -54,8 +54,8 @@ try {
 
 // Add request ID for tracking
 app.use((req: Request, res: Response, next: NextFunction) => {
-  (req as any).id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  console.log(`📨 ${req.method} ${req.path} [${(req as any).id}]`);
+  (req as Request & { id?: string }).id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`📨 ${req.method} ${req.path} [${(req as Request & { id?: string }).id}]`);
   next();
 });
 
@@ -67,7 +67,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   const originalSend = res.send;
   
   // Override res.send
-  res.send = function (data: any) {
+  res.send = function (data: unknown) {
     const duration = Date.now() - start;
     console.log(`📤 ${req.method} ${req.path} - ${res.statusCode} (${duration}ms)`);
     
@@ -121,17 +121,18 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error handler
-app.use((error: any, req: Request, res: Response, next: NextFunction) => {
+app.use((error: unknown, req: Request, res: Response, _next: NextFunction) => {
   console.error('❌ Unhandled error:', error);
 
-  const status = error.status || error.statusCode || 500;
-  const message = error.message || 'Internal Server Error';
+  const err = error as { status?: number; statusCode?: number; message?: string; stack?: string };
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
 
   res.status(status).json({
     error: 'Internal Server Error',
     message,
-    requestId: (req as any).id,
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+    requestId: (req as Request & { id?: string }).id,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
   });
 });
 

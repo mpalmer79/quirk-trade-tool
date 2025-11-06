@@ -6,6 +6,7 @@ const log = pino();
 
 // Extend Express Request to include requestId
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       requestId?: string;
@@ -55,7 +56,7 @@ export async function auditLog(data: {
   ipAddress?: string;
   timestamp: Date;
   dealershipId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }) {
   log.info({
     type: 'AUDIT',

@@ -164,7 +164,7 @@ export class UserRepository {
 
       // Update user fields
       const updateFields: string[] = [];
-      const params: any[] = [id];
+      const params: (string | boolean)[] = [id];
       let paramIndex = 2;
 
       if (updates.email) {

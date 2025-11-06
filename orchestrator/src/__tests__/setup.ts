@@ -10,7 +10,7 @@
  * - Error handling and logging
  */
 
-import { beforeAll, afterAll, vi, beforeEach } from 'vitest';
+import { beforeAll, afterAll, vi } from 'vitest';
 
 // ============================================================================
 // ENVIRONMENT VARIABLES - TEST CONFIGURATION
@@ -237,7 +237,7 @@ export function generateRandomVIN(): string {
 /**
  * Utility: Generate mock valuation response
  */
-export function generateMockValuation(overrides: any = {}) {
+export function generateMockValuation(overrides: Record<string, unknown> = {}) {
   return {
     id: `val_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     baseWholesaleValue: 15000,
@@ -304,7 +304,7 @@ process.on('uncaughtException', (error) => {
 const originalLog = console.log;
 const originalInfo = console.info;
 
-console.log = (...args: any[]) => {
+console.log = (...args: unknown[]) => {
   // Only log if it contains specific keywords useful for debugging
   const message = args.join(' ');
   if (
