@@ -9,7 +9,12 @@ import { cacheValuationResult, getValuationFromCache } from '../lib/cache';
 import { providers } from '../providers';
 import { QuoteAggregator } from '../aggregators/quote-aggregator';
 import { generateValuationId } from '../utils/valuation.utils';
-import type { ValuationRequest, ValuationResult } from '../types/valuation.types';
+import type { 
+  ValuationRequest, 
+  ValuationResult, 
+  SourceValuation,
+  DepreciationDetails 
+} from '../types/valuation.types';
 
 const log = pino();
 const aggregator = new QuoteAggregator();
@@ -71,9 +76,9 @@ export class ValuationService {
 
   private buildResult(
     request: ValuationRequest,
-    quotes: any[],
+    quotes: SourceValuation[],
     baseWholesaleValue: number,
-    depreciation: any
+    depreciation: DepreciationDetails
   ): ValuationResult {
     return {
       id: generateValuationId(),
