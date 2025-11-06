@@ -1,14 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
 import { authenticate } from '../../middleware/auth';
 import { authService } from '../../services/auth-service';
+import type { Request } from 'express';
 
 vi.mock('../../services/auth-service');
 
-const mockRequest = (overrides = {}) => ({
+const mockRequest = (overrides = {}): Partial<Request> => ({
   headers: {},
   user: undefined,
   ...overrides,
-} as never);
+});
 
 const mockResponse = () => {
   const res = {} as { status: ReturnType<typeof vi.fn>; json: ReturnType<typeof vi.fn> };

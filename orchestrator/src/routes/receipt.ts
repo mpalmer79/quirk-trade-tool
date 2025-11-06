@@ -9,6 +9,7 @@ import { auditLog } from '../middleware/logging.js';
 import { env } from '../config/env.js';
 import { generateReceipt } from '../services/receipt-service.js';
 import { Permission } from '../types/user.js';
+import type { ValuationResult } from '../types/valuation.types.js';
 
 // ✅ EXISTING: Keep your types and functions
 export type AppraisalReceipt = {
@@ -174,8 +175,8 @@ router.get(
     // ============================================================================
     try {
       const pdfStream = await generateReceipt(
-        receipt as never,  // Cast to ValuationResult type for now
-        receipt.input as never
+        receipt as unknown as ValuationResult,  // Receipt structure differs from ValuationResult
+        receipt.input as unknown as { id: string; name: string; city: string; state: string }
       );
 
       // ============================================================================

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { QuoteAggregator } from '../../aggregators/quote-aggregator';
+import type { SourceValuation } from '../../types/valuation.types';
 
 describe('QuoteAggregator - Critical', () => {
   const aggregator = new QuoteAggregator();
@@ -40,7 +41,7 @@ expect(result).toBeLessThan(24000);
   });
 
   it('should handle empty array', () => {
-    const quotes: never[] = [];
+    const quotes: SourceValuation[] = [];
     const result = aggregator.calculateAggregateValue(quotes);
     expect(result).toBe(0);
   });
