@@ -52,6 +52,8 @@ export async function auditLog(data: {
   action: string;
   resourceType: string;
   resourceId: string;
+  dealershipId?: string;
+  metadata?: Record<string, any>;
   ipAddress?: string;
   timestamp: Date;
 }) {

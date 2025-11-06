@@ -120,7 +120,6 @@ router.post(
       resourceId: receipt.id,
       dealershipId,
       metadata: {
-        vin: input.vin || 'unknown',
         year: input.year,
         make: input.make,
         model: input.model,
