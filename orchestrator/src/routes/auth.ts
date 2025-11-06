@@ -214,7 +214,7 @@ router.post(
   '/register',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
-    let input: any;
+    let input: CreateUserInput;
     try {
       input = CreateUserSchema.parse(req.body);
     } catch (error) {

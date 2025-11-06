@@ -79,6 +79,10 @@ export class AuthService {
       dealershipIds: user.dealershipIds
     };
 
+    // Note: Using 'as any' for expiresIn because TypeScript's string type is not compatible
+    // with the StringValue template literal type from the 'ms' package, even though the
+    // values ('24h', '7d') are valid at runtime. The alternative would be to use numeric
+    // values (in seconds) or a complex type guard, which adds unnecessary complexity.
     const accessToken = jwt.sign(payload, this.jwtSecret, {
       expiresIn: this.jwtExpiry as any,
       algorithm: 'HS256'
