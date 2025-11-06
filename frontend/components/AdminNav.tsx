@@ -15,7 +15,7 @@ export function AdminNav() {
 
   // Redirect to login if not authenticated
   React.useEffect(() => {
-    if (!user && typeof window !== 'undefined') {
+    if (!user && typeof window !== "undefined") {
       navigateWithBasePath("/login");
     }
   }, [user]);
@@ -56,12 +56,15 @@ export function AdminNav() {
         <div className="flex items-center justify-between h-16">
           {/* Logo/Brand */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <Link href="/" className="flex items-center space-x-2" aria-label="Quirk Trade Tool Home">
+              {/* Badge (tweak to Quirk green family) */}
+              <div className="w-8 h-8 rounded-lg bg-[#1f6c52] flex items-center justify-center">
                 <span className="text-white font-bold text-sm">Q</span>
               </div>
-              <span className="text-lg font-semibold text-gray-900 hidden sm:block">
-                Quirk Trade Tool
+              {/* Two-tone brand: gray 'Quirk' + green 'Trade Tool' */}
+              <span className="text-lg font-semibold hidden sm:block">
+                <span className="text-gray-700">Quirk</span>
+                <span className="text-[#00d9a3]"> Trade Tool</span>
               </span>
             </Link>
           </div>
@@ -76,7 +79,7 @@ export function AdminNav() {
                     href={item.href}
                     className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition ${
                       pathname === item.href
-                        ? "bg-blue-50 text-blue-700"
+                        ? "bg-green-50 text-[#0fa958]"      /* subtle active state toward the green */
                         : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     }`}
                   >
