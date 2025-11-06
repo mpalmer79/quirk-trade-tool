@@ -1,32 +1,33 @@
 import { render, screen } from '@testing-library/react';
 import { useForm } from 'react-hook-form';
+import { vi } from 'vitest';
 import ValuationForm from '../ValuationForm';
 
-jest.mock('react-hook-form', () => ({
-  useForm: jest.fn(),
-  UseFormRegister: jest.fn(),
-  FieldErrors: jest.fn(),
-  UseFormWatch: jest.fn(),
-  UseFormSetValue: jest.fn(),
+vi.mock('react-hook-form', () => ({
+  useForm: vi.fn(),
+  UseFormRegister: vi.fn(),
+  FieldErrors: vi.fn(),
+  UseFormWatch: vi.fn(),
+  UseFormSetValue: vi.fn(),
 }));
 
 describe('ValuationForm', () => {
   beforeEach(() => {
-    (useForm as jest.Mock).mockReturnValue({
-      register: jest.fn(() => ({})),
+    (useForm as any).mockReturnValue({
+      register: vi.fn(() => ({})),
       formState: { errors: {} },
-      watch: jest.fn(() => ''),
-      setValue: jest.fn(),
+      watch: vi.fn(() => ''),
+      setValue: vi.fn(),
     });
   });
 
   it('should render all required input fields', () => {
     const mockProps = {
-      register: jest.fn(() => ({})),
+      register: vi.fn(() => ({})),
       errors: {},
       isSubmitting: false,
-      watch: jest.fn(() => ''),
-      setValue: jest.fn(),
+      watch: vi.fn(() => ''),
+      setValue: vi.fn(),
       summary: null,
     };
 

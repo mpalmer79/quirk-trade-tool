@@ -54,12 +54,10 @@ describe('ValuationForm', () => {
       ok: true,
       json: async () => ({
         Results: [
-          {
-            ModelYear: '2022',
-            Make: 'NISSAN',
-            Model: 'Frontier',
-            Trim: 'PRO-4X'
-          }
+          { VariableId: 29, Value: '2022' },  // Model Year
+          { VariableId: 26, Value: 'Nissan' }, // Make
+          { VariableId: 28, Value: 'Frontier' }, // Model
+          { VariableId: 109, Value: 'Pro-4x' }  // Trim
         ]
       })
     } as any);

@@ -13,6 +13,34 @@
 import { beforeAll, afterAll, vi, beforeEach } from 'vitest';
 
 // ============================================================================
+// MOCK IOREDIS TO PREVENT REDIS CONNECTION ATTEMPTS
+// ============================================================================
+
+vi.mock('ioredis', () => {
+  // Create a simple in-memory store for the mock
+  const store = new Map<string, string>();
+  
+  const RedisMock = vi.fn().mockImplementation(() => ({
+    on: vi.fn(),
+    setex: vi.fn().mockImplementation((key: string, _ttl: number, value: string) => {
+      store.set(key, value);
+      return Promise.resolve('OK');
+    }),
+    get: vi.fn().mockImplementation((key: string) => {
+      return Promise.resolve(store.get(key) || null);
+    }),
+    del: vi.fn().mockImplementation((key: string) => {
+      store.delete(key);
+      return Promise.resolve(1);
+    }),
+    quit: vi.fn().mockResolvedValue('OK'),
+    disconnect: vi.fn(),
+  }));
+  
+  return { default: RedisMock };
+});
+
+// ============================================================================
 // ENVIRONMENT VARIABLES - TEST CONFIGURATION
 // ============================================================================
 
@@ -44,7 +72,10 @@ process.env.DATABASE_URL = 'postgresql://test_user:test_password@localhost:5432/
 
 process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.CACHE_TTL = '3600'; // 1 hour
-process.env.CACHE_ENABLED = 'true';
+// Note: Even though CACHE_ENABLED is false, we mock Redis above to handle any
+// cache operations gracefully. This prevents connection errors during tests.
+process.env.CACHE_ENABLED = 'false'; // Disable cache in tests to avoid Redis connection issues
+
 
 // ============================================================================
 // EXTERNAL API CONFIGURATION (Providers)

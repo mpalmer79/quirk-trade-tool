@@ -33,7 +33,7 @@ router.post(
     // STEP 1: VALIDATE REQUEST
     // ============================================================================
     try {
-      var parsed = VinSchema.parse(req.body);
+      const parsed = VinSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
