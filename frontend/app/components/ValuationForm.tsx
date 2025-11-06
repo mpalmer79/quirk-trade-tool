@@ -35,34 +35,36 @@ export default function ValuationForm({
     setVinError('');
     
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
+      // Use DecodeVinValuesExtended instead of DecodeVin for better field names and data structure
+      // This endpoint returns fields with names (Make, Model, Series) rather than VariableIds
+      // IMPORTANT: Model field can be empty for some vehicles (e.g., Audi e-tron GT, GM trucks, Ford F-150)
+      // In those cases, the Series field contains the actual model name
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${vin}?format=json`);
       const data = await response.json();
       
-      if (data.Results && setValue) {
-        // Map NHTSA variable IDs to values
-        const getValueByVariableId = (id: number) => {
-          const result = data.Results.find((r: any) => r.VariableId === id);
-          return result?.Value || '';
-        };
+      if (data.Results && data.Results.length > 0 && setValue) {
+        const result = data.Results[0];
         
-        // Extract vehicle details
-        const year = parseInt(getValueByVariableId(29)) || 0;
-        const make = getValueByVariableId(26);
-        const model = getValueByVariableId(28);
-        const trim = getValueByVariableId(109); // Trim variable ID
+        // Extract vehicle details with fallback logic
+        const year = parseInt(result.ModelYear || '') || 0;
+        const make = result.Make || '';
+        // Use Model field, but fallback to Series if Model is empty (e.g., Audi e-tron GT, GM trucks)
+        const model = result.Model || result.Series || '';
+        // Use Trim field with fallbacks
+        const trim = result.Trim || result.Trim2 || '';
         
         // Update form fields
         if (year > 1980 && year <= new Date().getFullYear() + 1) {
           setValue('year', year);
         }
-        if (make && make !== 'Not Applicable') {
-          setValue('make', make);
+        if (make && make !== 'Not Applicable' && make.trim()) {
+          setValue('make', make.trim());
         }
-        if (model && model !== 'Not Applicable') {
-          setValue('model', model);
+        if (model && model !== 'Not Applicable' && model.trim()) {
+          setValue('model', model.trim());
         }
-        if (trim && trim !== 'Not Applicable') {
-          setValue('trim', trim);
+        if (trim && trim !== 'Not Applicable' && trim.trim()) {
+          setValue('trim', trim.trim());
         }
         
         // Success feedback
