@@ -9,21 +9,21 @@ permissions:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: pnpm/action-setup@v2
         with:
           version: 8
-      
+
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      
+          node-version: '20'
+
       - name: Generate pnpm-lock.yaml
         run: pnpm install --lockfile-only
-      
+
       - name: Commit and push
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
