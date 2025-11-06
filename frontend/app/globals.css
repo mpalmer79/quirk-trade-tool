@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==== Quirk brand tokens (Yoga-style gray + green) ==== */
+:root {
+  --quirk-accent: #00d9a3;  /* bright green accent */
+  --quirk-dark:   #1f2a37;  /* deep slate/charcoal for sidebars, lines */
+  --quirk-gray:   #6b7280;  /* medium gray for "Quirk" half of brand */
+}
+
+/* Global body baseline (unchanged from your current file) */
 body {
   margin: 0;
   padding: 0;
@@ -10,4 +18,35 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #ffffff;
+  color: #111827;
+}
+
+/* Subtle selection to match the accent */
+::selection {
+  background: rgba(0, 217, 163, 0.25);
+}
+
+/* Tailwind-friendly utility shims for the brand colors */
+@layer utilities {
+  .text-quirk-accent { color: var(--quirk-accent); }
+  .bg-quirk-dark     { background-color: var(--quirk-dark); }
+  .border-quirk-dark { border-color: var(--quirk-dark); }
+  .text-quirk-gray   { color: var(--quirk-gray); }
+}
+
+/* Optional: anchor default look that fits the palette */
+a {
+  color: var(--quirk-accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Optional: footer image alignment help if you need it */
+.footer-logo {
+  display: inline-block;
+  vertical-align: middle;
+  height: 18px;
 }
