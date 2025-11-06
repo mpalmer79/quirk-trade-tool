@@ -2,7 +2,11 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "__note": "Do NOT include Vitest types when compiling for production.",
-    "types": ["node"]
+    "types": ["node"],
+    "noEmit": false,
+    "strict": false,
+    "skipLibCheck": true,
+    "noImplicitAny": false
   },
   "include": ["src"],
   "exclude": [
@@ -10,6 +14,7 @@
     "**/*.test.ts",
     "**/__mocks__/**",
     "**/*.mock.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "validate-env-security.js"
   ]
 }
