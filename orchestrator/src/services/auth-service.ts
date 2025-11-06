@@ -14,7 +14,33 @@ export class AuthService {
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET environment variable is required');
     }
+    
     this.jwtSecret = process.env.JWT_SECRET;
+    
+    // Validate JWT secret strength
+    if (this.jwtSecret.length < 32) {
+      log.error('JWT_SECRET is too short. Must be at least 32 characters for security.');
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET must be at least 32 characters in production');
+      }
+    }
+    
+    // Check for common weak secrets
+    const weakSecrets = [
+      'change-me-in-production',
+      'my-super-secret-key',
+      'secret',
+      'password',
+      '12345'
+    ];
+    
+    const secretLower = this.jwtSecret.toLowerCase();
+    if (weakSecrets.some(weak => secretLower.includes(weak))) {
+      log.error('JWT_SECRET contains weak or default values');
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET contains weak or default values. Please use a cryptographically secure random value.');
+      }
+    }
   }
 
   /**
@@ -102,10 +128,51 @@ export class AuthService {
    * Validate JWT secret is configured
    */
   validateConfiguration(): boolean {
-    if (process.env.NODE_ENV === 'production' && this.jwtSecret === 'change-me-in-production') {
-      log.error('❌ JWT_SECRET not configured for production!');
-      return false;
+    // Check for weak or default secrets
+    const weakPatterns = [
+      'change-me-in-production',
+      'my-super-secret-key',
+      'secret',
+      'password',
+      '12345',
+      'test',
+      'demo',
+      'example'
+    ];
+    
+    const secretLower = this.jwtSecret.toLowerCase();
+    const hasWeakPattern = weakPatterns.some(pattern => secretLower.includes(pattern));
+    
+    if (hasWeakPattern) {
+      log.error('❌ JWT_SECRET contains weak or default values!');
+      if (process.env.NODE_ENV === 'production') {
+        return false;
+      }
     }
+    
+    if (this.jwtSecret.length < 32) {
+      log.error('❌ JWT_SECRET is too short (minimum 32 characters)!');
+      if (process.env.NODE_ENV === 'production') {
+        return false;
+      }
+    }
+    
+    // Additional entropy check for production
+    if (process.env.NODE_ENV === 'production') {
+      // Check if secret has enough character variety
+      const hasUpperCase = /[A-Z]/.test(this.jwtSecret);
+      const hasLowerCase = /[a-z]/.test(this.jwtSecret);
+      const hasNumbers = /\d/.test(this.jwtSecret);
+      const hasSpecialChars = /[^A-Za-z0-9]/.test(this.jwtSecret);
+      
+      const varietyCount = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChars].filter(Boolean).length;
+      
+      if (varietyCount < 3) {
+        log.error('❌ JWT_SECRET lacks character variety (use mix of uppercase, lowercase, numbers, and special characters)');
+        return false;
+      }
+    }
+    
     return true;
   }
 }
