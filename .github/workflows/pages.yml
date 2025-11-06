@@ -1,12 +1,12 @@
 name: Pages Deploy
 
 on:
-  Workflow_dipatch:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
+
+# (Optional) Avoid overlapping manual runs
+concurrency:
+  group: pages-deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   frontend-tests:
@@ -164,4 +164,4 @@ jobs:
     needs: [frontend-tests, orchestrator-tests, linting, build-frontend, build-orchestrator]
     steps:
       - name: All checks passed
-        run: echo "🎉 All jobs finished"
+        run:
