@@ -79,24 +79,20 @@ export class AuthService {
       dealershipIds: user.dealershipIds
     };
 
-    // Explicitly type the options as jwt.SignOptions to avoid TypeScript inference issues
-    const accessTokenOptions: jwt.SignOptions = {
-      expiresIn: this.jwtExpiry,
+    // Sign tokens - casting to any to work around strict type checking in @types/jsonwebtoken
+    // The jwt library actually accepts string expiry formats like '24h' or '7d'
+    const accessToken = jwt.sign(payload, this.jwtSecret, {
+      expiresIn: this.jwtExpiry as any,
       algorithm: 'HS256'
-    };
-
-    const accessToken = jwt.sign(payload, this.jwtSecret, accessTokenOptions);
-
-    // Explicitly type the options for refresh token as well
-    const refreshTokenOptions: jwt.SignOptions = {
-      expiresIn: this.refreshExpiry,
-      algorithm: 'HS256'
-    };
+    });
 
     const refreshToken = jwt.sign(
       { userId: user.id },
       this.jwtSecret,
-      refreshTokenOptions
+      {
+        expiresIn: this.refreshExpiry as any,
+        algorithm: 'HS256'
+      }
     );
 
     return { accessToken, refreshToken };
