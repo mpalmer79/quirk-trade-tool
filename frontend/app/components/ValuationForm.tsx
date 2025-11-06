@@ -23,6 +23,8 @@ export default function ValuationForm({
 }: ValuationFormProps) {
   const [vinError, setVinError] = React.useState<string>('');
   const [isDecoding, setIsDecoding] = React.useState(false);
+  const vin = watch('vin');
+  const isValidVinFormat = vin && vin.length === 17;
 
   const handleVinDecode = async () => {
     const vin = watch('vin');
@@ -35,7 +37,7 @@ export default function ValuationForm({
     setVinError('');
     
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${vin}?format=json`);
       const data = await response.json();
       
       if (data.Results && setValue) {
@@ -127,15 +129,19 @@ export default function ValuationForm({
         </div>
         {errors.vin && <p className="text-red-500 text-sm mt-1">{errors.vin.message}</p>}
         {vinError && <p className="text-amber-600 text-sm mt-1">{vinError}</p>}
+        {!errors.vin && !vinError && isValidVinFormat && (
+          <p className="text-green-600 text-sm mt-1">✓ Valid VIN format</p>
+        )}
       </div>
 
       {/* Vehicle Details Grid */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="year" className="block text-sm font-medium mb-2">
             Year <span className="text-red-500">*</span>
           </label>
           <input
+            id="year"
             {...register('year', { 
               required: 'Year is required',
               valueAsNumber: true,
@@ -150,10 +156,11 @@ export default function ValuationForm({
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="make" className="block text-sm font-medium mb-2">
             Make <span className="text-red-500">*</span>
           </label>
           <input
+            id="make"
             {...register('make', { required: 'Make is required' })}
             placeholder="Chevrolet"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -162,10 +169,11 @@ export default function ValuationForm({
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="model" className="block text-sm font-medium mb-2">
             Model <span className="text-red-500">*</span>
           </label>
           <input
+            id="model"
             {...register('model', { required: 'Model is required' })}
             placeholder="Silverado"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -174,10 +182,11 @@ export default function ValuationForm({
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">Trim</label>
+          <label htmlFor="trim" className="block text-sm font-medium mb-2">Trim</label>
           <input
+            id="trim"
             {...register('trim')}
-            placeholder="LT (optional)"
+            placeholder="e.g., LE, Sport, Limited"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>

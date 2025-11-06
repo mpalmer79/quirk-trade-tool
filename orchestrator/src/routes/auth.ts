@@ -26,7 +26,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     // Validate input
     try {
-      var { email, password } = LoginSchema.parse(req.body);
+      const { email, password } = LoginSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -100,7 +100,7 @@ router.post(
   '/refresh',
   asyncHandler(async (req: Request, res: Response) => {
     try {
-      var { refreshToken } = RefreshTokenSchema.parse(req.body);
+      const { refreshToken } = RefreshTokenSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -209,7 +209,7 @@ router.post(
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
     try {
-      var input = CreateUserSchema.parse(req.body);
+      const input = CreateUserSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',

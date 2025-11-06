@@ -7,6 +7,8 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/server.js",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "lint": "eslint . --ext .ts",
     "validate:security": "node validate-env-security.js",
     "prestart": "npm run validate:security",
@@ -40,9 +42,13 @@
     "@types/multer": "^1.4.11",
     "@types/uuid": "^9.0.7",
     "@types/pdfkit": "^0.13.0",
+    "@types/supertest": "^6.0.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "typescript": "^5.4.0",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "vitest": "^1.0.4",
+    "supertest": "^6.3.4",
+    "ioredis": "^5.3.2"
   }
 }

@@ -64,7 +64,7 @@ router.post(
     // STEP 3: VALIDATE REQUEST BODY
     // ============================================================================
     try {
-      var input = AppraiseSchema.parse(req.body);
+      const input = AppraiseSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
