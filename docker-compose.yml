@@ -1,0 +1,15 @@
+version: "3.9"
+services:
+  api:
+    build:
+      context: .
+      dockerfile: orchestrator/Dockerfile
+    env_file:
+      - orchestrator/.env
+    ports: ["3001:3001"]
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    ports: ["8080:80"]
+    depends_on: [api]
