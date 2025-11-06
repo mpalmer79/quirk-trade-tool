@@ -24,6 +24,15 @@ export default function ValuationForm({
   const [vinError, setVinError] = React.useState<string>('');
   const [isDecoding, setIsDecoding] = React.useState(false);
 
+  // Helper function to title case a string, handling empty words
+  const toTitleCase = (text: string): string => {
+    return text
+      .split(' ')
+      .filter((word) => word.length > 0)
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const handleVinDecode = async () => {
     const vin = watch('vin');
     if (!vin || vin.length !== 17) {
@@ -53,21 +62,13 @@ export default function ValuationForm({
           setValue('year', year);
         }
         if (make && make !== 'Not Applicable') {
-          // Title case the make for display
-          const titleCaseMake = make.split(' ').map((word: string) => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ');
-          setValue('make', titleCaseMake);
+          setValue('make', toTitleCase(make));
         }
         if (model && model !== 'Not Applicable') {
           setValue('model', model);
         }
         if (trim && trim !== 'Not Applicable') {
-          // Title case the trim for display
-          const titleCaseTrim = trim.split(' ').map((word: string) => 
-            word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-          ).join(' ');
-          setValue('trim', titleCaseTrim);
+          setValue('trim', toTitleCase(trim));
         }
         
         // Success feedback
