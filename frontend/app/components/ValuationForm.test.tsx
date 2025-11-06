@@ -97,20 +97,20 @@ describe('ValuationForm', () => {
     fireEvent.click(decodeBtn);
 
     await waitFor(() => {
-      // Year select should reflect decoded year
-      const yearSelect = screen.getByLabelText(/year \*/i) as HTMLSelectElement;
-      expect(yearSelect.value).toBe('2022');
+      // Year input should reflect decoded year
+      const yearInput = screen.getByPlaceholderText('2020') as HTMLInputElement;
+      expect(yearInput.value).toBe('2022');
 
-      // Make select should reflect decoded make (title-cased in UI)
-      const makeSelect = screen.getByLabelText(/make \*/i) as HTMLSelectElement;
-      expect(makeSelect.value).toBe('Nissan');
+      // Make input should reflect decoded make (title-cased in UI)
+      const makeInput = screen.getByPlaceholderText('Chevrolet') as HTMLInputElement;
+      expect(makeInput.value).toBe('Nissan');
 
-      // Model select should reflect decoded model
-      const modelSelect = screen.getByLabelText(/model \*/i) as HTMLSelectElement;
-      expect(modelSelect.value).toBe('Frontier');
+      // Model input should reflect decoded model
+      const modelInput = screen.getByPlaceholderText('Silverado') as HTMLInputElement;
+      expect(modelInput.value).toBe('Frontier');
 
       // Trim input populated (placeholder likely unchanged)
-      const trimInput = screen.getByPlaceholderText(/e\.g\.,\s*le,\s*sport,\s*limited/i) as HTMLInputElement;
+      const trimInput = screen.getByPlaceholderText(/LT \(optional\)/i) as HTMLInputElement;
       expect(trimInput.value).toBe('Pro-4x');
     });
 
@@ -120,12 +120,17 @@ describe('ValuationForm', () => {
     expect(calledUrl).toMatch(/vpic\.nhtsa\.dot\.gov\/api\/vehicles\/DecodeVinValuesExtended\/1N6ED1CMXSN623773/i);
   });
 
-  it('shows the valid VIN hint for a 17-char VIN', () => {
+  it('enables decode button for a 17-char VIN', () => {
     render(<FormWrapper />);
 
     const vinInput = screen.getByPlaceholderText(VIN_PLACEHOLDER);
-    fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
+    const decodeBtn = screen.getByRole('button', { name: /decode/i });
 
-    expect(screen.getByText(/✓\s*valid\s*vin\s*format/i)).toBeInTheDocument();
+    // Initially disabled
+    expect(decodeBtn).toBeDisabled();
+
+    // Enter 17-char VIN -> enabled
+    fireEvent.change(vinInput, { target: { value: '1N6ED1CMXSN623773' } });
+    expect(decodeBtn).toBeEnabled();
   });
 });

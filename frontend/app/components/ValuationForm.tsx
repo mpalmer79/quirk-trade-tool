@@ -24,6 +24,15 @@ export default function ValuationForm({
   const [vinError, setVinError] = React.useState<string>('');
   const [isDecoding, setIsDecoding] = React.useState(false);
 
+  // Helper function to title case a string, handling empty words
+  const toTitleCase = (text: string): string => {
+    return text
+      .split(' ')
+      .filter((word) => word.length > 0)
+      .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const handleVinDecode = async () => {
     const vin = watch('vin');
     if (!vin || vin.length !== 17) {
@@ -35,34 +44,31 @@ export default function ValuationForm({
     setVinError('');
     
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
+      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${vin}?format=json`);
       const data = await response.json();
       
-      if (data.Results && setValue) {
-        // Map NHTSA variable IDs to values
-        const getValueByVariableId = (id: number) => {
-          const result = data.Results.find((r: any) => r.VariableId === id);
-          return result?.Value || '';
-        };
+      if (data.Results && data.Results[0] && setValue) {
+        const result = data.Results[0];
         
-        // Extract vehicle details
-        const year = parseInt(getValueByVariableId(29)) || 0;
-        const make = getValueByVariableId(26);
-        const model = getValueByVariableId(28);
-        const trim = getValueByVariableId(109); // Trim variable ID
+        // Extract vehicle details from the response
+        const yearStr = (result.ModelYear || '').toString().trim();
+        const year = /^\d{4}$/.test(yearStr) ? parseInt(yearStr) : 0;
+        const make = (result.Make || '').toString().trim();
+        const model = (result.Model || '').toString().trim();
+        const trim = (result.Trim || result.Series || '').toString().trim();
         
         // Update form fields
         if (year > 1980 && year <= new Date().getFullYear() + 1) {
           setValue('year', year);
         }
         if (make && make !== 'Not Applicable') {
-          setValue('make', make);
+          setValue('make', toTitleCase(make));
         }
         if (model && model !== 'Not Applicable') {
           setValue('model', model);
         }
         if (trim && trim !== 'Not Applicable') {
-          setValue('trim', trim);
+          setValue('trim', toTitleCase(trim));
         }
         
         // Success feedback
@@ -119,7 +125,7 @@ export default function ValuationForm({
           <button
             type="button"
             onClick={handleVinDecode}
-            disabled={isDecoding || !watch('vin') || watch('vin').length !== 17}
+            disabled={isDecoding || !watch('vin') || (watch('vin')?.length ?? 0) !== 17}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isDecoding ? 'Decoding...' : 'Decode VIN'}
@@ -255,8 +261,9 @@ export default function ValuationForm({
       {summary && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold mb-2">Valuation Summary</h3>
-          <p>Base Value: ${summary.baseValue?.toLocaleString()}</p>
-          <p>Adjusted Value: ${summary.adjustedValue?.toLocaleString()}</p>
+          <p>Base Value: ${summary.base?.toLocaleString()}</p>
+          <p>Average Value: ${summary.avg?.toLocaleString()}</p>
+          <p>Range: ${summary.low?.toLocaleString()} - ${summary.high?.toLocaleString()}</p>
         </div>
       )}
     </div>

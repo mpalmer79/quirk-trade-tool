@@ -6,6 +6,7 @@ const log = pino();
 
 // Extend Express Request to include requestId
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       requestId?: string;
