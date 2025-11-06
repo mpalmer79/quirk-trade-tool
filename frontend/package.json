@@ -24,7 +24,8 @@
     "react-hook-form": "^7.51.4",
     "@hookform/resolvers": "^3.3.4",
     "zod": "^3.23.8",
-    "lucide-react": "^0.453.0"
+    "lucide-react": "^0.453.0",
+    "recharts": "^2.10.3"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

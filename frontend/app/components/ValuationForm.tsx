@@ -121,7 +121,7 @@ export default function ValuationForm({
           <button
             type="button"
             onClick={handleVinDecode}
-            disabled={isDecoding || !watch('vin') || watch('vin').length !== 17}
+            disabled={isDecoding || !watch('vin') || watch('vin')?.length !== 17}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isDecoding ? 'Decoding...' : 'Decode VIN'}
@@ -257,8 +257,8 @@ export default function ValuationForm({
       {summary && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold mb-2">Valuation Summary</h3>
-          <p>Base Value: ${summary.baseValue?.toLocaleString()}</p>
-          <p>Adjusted Value: ${summary.adjustedValue?.toLocaleString()}</p>
+          <p>Base Value: ${summary.base?.toLocaleString()}</p>
+          <p>Average Value: ${summary.avg?.toLocaleString()}</p>
         </div>
       )}
     </div>
