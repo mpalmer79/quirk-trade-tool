@@ -95,6 +95,10 @@ export async function validateDatabaseConnection(): Promise<boolean> {
 export const db = {
   query: pool.query.bind(pool),
   
+  async getClient() {
+    return pool.connect();
+  },
+  
   async healthCheck(): Promise<boolean> {
     try {
       await pool.query('SELECT 1');
