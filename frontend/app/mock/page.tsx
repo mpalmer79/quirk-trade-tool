@@ -172,12 +172,6 @@ export default function MockReceiptPage() {
             and book values are applied through the orchestrator.
           </p>
         </div>
-
-        {/* Footer */}
-        <div className="text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Quirk Auto Group — Demo Receipt
-        </div>
-      </div>
-    </div>
+        
   );
 }
