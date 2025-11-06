@@ -3,6 +3,7 @@
 import React from "react";
 import { TrendingUp } from "lucide-react";
 import type { SourceQuote, Summary } from "@lib/types";
+import { ProviderQuotesChart } from "./ProviderQuotesChart";
 
 type Props = {
   apiBase: string;
@@ -13,6 +14,13 @@ type Props = {
 
 export default function ValuationResults({ apiBase, appraisalId, quotes, summary }: Props) {
   if (!quotes || !summary) return null;
+
+  // Transform quotes for chart component
+  const chartQuotes = quotes.map(q => ({
+    source: q.source,
+    value: q.value,
+    confidence: 'medium' as const // Default to medium since we don't have this data
+  }));
 
   return (
     <div className="mt-8 space-y-6">
@@ -30,6 +38,9 @@ export default function ValuationResults({ apiBase, appraisalId, quotes, summary
           </p>
         </div>
       </div>
+
+      {/* Provider Quotes Chart */}
+      <ProviderQuotesChart quotes={chartQuotes} />
 
       <div className="bg-gray-50 rounded-xl p-6">
         <div className="flex items-center justify-between mb-4">
