@@ -14,3 +14,8 @@ out
 
 # data
 data/receipts/*.json
+
+# test coverage
+coverage
+.coverage
+*.lcov
