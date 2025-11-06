@@ -7,8 +7,8 @@ const log = pino();
 
 export class AuthService {
   private jwtSecret: string;
-  private jwtExpiry = process.env.JWT_EXPIRY || '24h';
-  private refreshExpiry = process.env.REFRESH_TOKEN_EXPIRY || '7d';
+  private jwtExpiry: string | number = process.env.JWT_EXPIRY || '24h';
+  private refreshExpiry: string | number = process.env.REFRESH_TOKEN_EXPIRY || '7d';
 
   constructor() {
     if (!process.env.JWT_SECRET) {
@@ -81,7 +81,7 @@ export class AuthService {
 
     // Explicitly type the options as jwt.SignOptions to avoid TypeScript inference issues
     const accessTokenOptions: jwt.SignOptions = {
-      expiresIn: this.jwtExpiry,
+      expiresIn: this.jwtExpiry as jwt.SignOptions['expiresIn'],
       algorithm: 'HS256'
     };
 
@@ -89,7 +89,7 @@ export class AuthService {
 
     // Explicitly type the options for refresh token as well
     const refreshTokenOptions: jwt.SignOptions = {
-      expiresIn: this.refreshExpiry,
+      expiresIn: this.refreshExpiry as jwt.SignOptions['expiresIn'],
       algorithm: 'HS256'
     };
 
