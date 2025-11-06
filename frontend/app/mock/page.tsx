@@ -1,4 +1,4 @@
-
+// frontend/app/mock/page.tsx
 'use client';
 
 import React from 'react';
@@ -16,49 +16,36 @@ type MockForm = {
 };
 
 const DEALERSHIP_BY_ID: Record<string, { name: string; city: string; state: string }> = {
-  // Keep in sync with your DEALERSHIPS seed if you want nicer headers
-  // These are safe fallbacks if not found in sessionStorage:
   '1': { name: 'Quirk Buick GMC', city: 'Braintree', state: 'MA' },
-  '2': { name: 'Quirk Chevrolet', city: 'Braintree', state: 'MA' }
+  '2': { name: 'Quirk Chevrolet', city: 'Braintree', state: 'MA' },
 };
 
 function computeMockValue(input: MockForm) {
-  // Deterministic “ballpark” builder:
   const year = Number(input.year ?? 2018);
   const mileage = Number(input.mileage ?? 60000);
   const condition = Number(input.condition ?? 3);
 
-  // Base by age
   const age = Math.max(0, new Date().getFullYear() - year);
   let base = 34000 - age * 1800;
 
-  // Mileage impact
   const extraMiles = Math.max(0, mileage - 30000);
   base -= (extraMiles / 1000) * 150;
 
-  // Condition factor
   const conditionFactor = [0, 0.78, 0.88, 1.0, 1.07, 1.12][condition] || 1.0;
   base *= conditionFactor;
 
-  // Options bump
   const optCount = (input.options ?? []).length;
   base += optCount * 150;
 
-  // Floor & round
   const wholesale = Math.max(2500, Math.round(base / 50) * 50);
-  const retailAsk = Math.round(wholesale * 1.12 / 50) * 50;
+  const retailAsk = Math.round((wholesale * 1.12) / 50) * 50;
 
-  return {
-    wholesale,
-    retailAsk
-  };
+  return { wholesale, retailAsk };
 }
 
 export default function MockReceiptPage() {
   const [form, setForm] = React.useState<MockForm | null>(null);
-  const [store, setStore] = React.useState<{ name: string; city: string; state: string } | null>(
-    null
-  );
+  const [store, setStore] = React.useState<{ name: string; city: string; state: string } | null>(null);
   const [values, setValues] = React.useState<{ wholesale: number; retailAsk: number } | null>(null);
 
   React.useEffect(() => {
@@ -172,6 +159,7 @@ export default function MockReceiptPage() {
             and book values are applied through the orchestrator.
           </p>
         </div>
-        
+      </div>
+    </div>
   );
 }
