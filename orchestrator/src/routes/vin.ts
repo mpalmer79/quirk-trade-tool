@@ -75,12 +75,12 @@ router.post(
       // ============================================================================
       // STEP 4: RETURN RESPONSE
       // ============================================================================
-      return res.json(result);
+      res.json(result);
 
     } catch (error) {
       console.error('VIN decode error:', error);
       
-      return res.status(500).json({
+      res.status(500).json({
         error: 'vin_decode_failed',
         message: 'Failed to decode VIN',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -101,7 +101,7 @@ router.post(
 router.get(
   '/history/:vin',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { vin } = req.params;
     const userId = req.user!.userId;
 
@@ -109,11 +109,12 @@ router.get(
     // STEP 1: VALIDATE VIN FORMAT
     // ============================================================================
     if (!vin || vin.length < 11 || vin.length > 20) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Invalid VIN format',
         details: 'VIN must be 11-20 characters'
       });
+      return;
     }
 
     // ============================================================================
@@ -148,7 +149,7 @@ router.get(
       // ============================================================================
       // STEP 4: RETURN RESPONSE
       // ============================================================================
-      return res.json({
+      res.json({
         success: true,
         vin,
         count: result.rows.length,
@@ -166,7 +167,7 @@ router.get(
     } catch (error) {
       console.error('VIN history fetch error:', error);
       
-      return res.status(500).json({
+      res.status(500).json({
         error: 'history_fetch_failed',
         message: 'Failed to fetch VIN history',
         details: error instanceof Error ? error.message : 'Unknown error'

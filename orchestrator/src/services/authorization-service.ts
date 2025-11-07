@@ -110,7 +110,8 @@ export class AuthorizationService {
   requireRole(...roles: UserRole[]) {
     return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.user) {
-        return res.status(401).json({ error: 'unauthorized' });
+        res.status(401).json({ error: 'unauthorized' });
+        return;
       }
 
       // Type assertion: req.user from JWT middleware has the shape of JwtPayload
@@ -123,7 +124,8 @@ export class AuthorizationService {
           requiredRoles: roles,
           message: 'Role check failed'
         });
-        return res.status(403).json({ error: 'insufficient_role' });
+        res.status(403).json({ error: 'insufficient_role' });
+        return;
       }
 
       next();

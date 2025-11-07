@@ -115,13 +115,16 @@ const loginLimiter = rateLimit({
    - /readyz  : readiness (deps OK)
    Keep your existing /health/* for compatibility.
 ============================================================================ */
-app.get('/healthz', (_req, res) => res.status(200).json({ ok: true }));
+app.get('/healthz', (_req, res): void => { res.status(200).json({ ok: true }); });
 
 app.get(
   '/readyz',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (_req, res): Promise<void> => {
     const dbHealthy = await db.healthCheck();
-    if (!dbHealthy) return res.status(503).json({ ok: false });
+    if (!dbHealthy) {
+      res.status(503).json({ ok: false });
+      return;
+    }
     res.status(200).json({ ok: true });
   }),
 );
@@ -129,13 +132,14 @@ app.get(
 // Backward-compat aliases for anything already pinging these:
 app.get(
   '/health',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (_req, res): Promise<void> => {
     const dbHealthy = await db.healthCheck();
     if (!dbHealthy) {
-      return res.status(503).json({
+      res.status(503).json({
         ok: false,
         error: 'database_unavailable',
       });
+      return;
     }
     res.json({
       ok: true,
@@ -145,12 +149,15 @@ app.get(
     });
   }),
 );
-app.get('/health/live', (_req, res) => res.json({ ok: true }));
+app.get('/health/live', (_req, res): void => { res.json({ ok: true }); });
 app.get(
   '/health/ready',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (_req, res): Promise<void> => {
     const dbHealthy = await db.healthCheck();
-    if (!dbHealthy) return res.status(503).json({ ok: false });
+    if (!dbHealthy) {
+      res.status(503).json({ ok: false });
+      return;
+    }
     res.json({ ok: true });
   }),
 );

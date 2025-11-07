@@ -37,17 +37,18 @@ const ListingsSchema = z.object({
 router.get(
   '/',
   optionalAuthenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Parse query parameters
     const { make, model, year, trim, condition, mileage } = req.query;
 
     // Validate input
     if (!make || !model || !year) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Missing required parameters: make, model, year',
         required: ['make', 'model', 'year']
       });
+      return;
     }
 
     try {
@@ -119,15 +120,16 @@ router.get(
 router.post(
   '/compare',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { make, model, year, trim, mileage, condition } = req.body;
 
     // Validate
     if (!make || !model || !year) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Missing required fields: make, model, year'
       });
+      return;
     }
 
     try {
