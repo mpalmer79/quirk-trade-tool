@@ -21,8 +21,29 @@ export async function decodeVinClientOnly(vin: string): Promise<DecodedVin | nul
   const row = data?.Results?.[0];
   if (!row) return null;
 
-  // Extract model
-  const model = (row.Model ?? '').toString().trim() || undefined;
+  // Build a list of possible fields NHTSA may use for model information and pick the first useful one.
+  const candidateFields = [
+    row.Model,
+    row.ModelName,
+    row.MakeModel,
+    row.ModelVariantDescription,
+    row.Series,
+    row.Trim,
+    row.VehicleType,
+  ];
+
+  function normalize(v: any) {
+    if (v === undefined || v === null) return '';
+    return v.toString().trim();
+  }
+
+  let model = candidateFields.map(normalize).find((s) => !!s) || undefined;
+
+  // Guard against placeholder or numeric-only model values; if found, try additional fallbacks
+  if (model && /^[0-9\-\s]+$/.test(model)) {
+    const fallback = (row.Series ?? row.Trim ?? row.ModelVariantDescription ?? '').toString().trim();
+    model = fallback || undefined;
+  }
 
   // Extract trim with fallbacks: Trim → Series → ModelVariantDescription
   const trim =
@@ -33,15 +54,18 @@ export async function decodeVinClientOnly(vin: string): Promise<DecodedVin | nul
 
   return {
     year: Number(row.ModelYear) || undefined,
-    make: row.Make || undefined,
+    make: (row.Make ?? '').toString().trim() || undefined,
     model,
     trim,
-    bodyClass: row.BodyClass || undefined,
+    bodyClass: (row.BodyClass ?? '').toString().trim() || undefined,
     engine: {
-      cylinders: row.EngineCylinders || undefined,
-      displacementL: row.DisplacementL || undefined,
+      cylinders: (row.EngineCylinders ?? '').toString().trim() || undefined,
+      displacementL: (row.DisplacementL ?? '').toString().trim() || undefined,
     },
-    driveType: row.DriveType || undefined,
-    fuelTypePrimary: row.FuelTypePrimary || undefined,
+    driveType: (row.DriveType ?? '').toString().trim() || undefined,
+    fuelTypePrimary: (row.FuelTypePrimary ?? '').toString().trim() || undefined,
   };
 }
+
+// Backwards-compatible alias: some modules import `decodeVin` from this file.
+export const decodeVin = decodeVinClientOnly;
