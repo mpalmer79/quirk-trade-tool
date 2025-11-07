@@ -7,11 +7,10 @@ on:
     branches: [ main ]
 
 jobs:
-  # ---------- Signal-only jobs (won't fail the pipeline) ----------
+  # ---------- Test jobs (must pass) ----------
   frontend-tests:
-    name: 🧪 Frontend Tests (non-blocking)
+    name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -26,9 +25,8 @@ jobs:
         run: pnpm --filter frontend run test
 
   orchestrator-tests:
-    name: 🧪 Orchestrator Tests (non-blocking)
+    name: 🧪 Orchestrator Tests
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -43,9 +41,8 @@ jobs:
         run: pnpm --filter orchestrator run test
 
   linting:
-    name: 🔍 Linting & Code Quality (non-blocking)
+    name: 🔍 Linting & Code Quality
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2

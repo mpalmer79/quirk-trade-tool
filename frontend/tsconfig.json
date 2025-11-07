@@ -13,6 +13,10 @@
     "isolatedModules": true,
     "strict": true,
     "noEmit": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
     "types": [
       "node"
     ],
