@@ -15,7 +15,8 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "postinstall": "patch-package || true"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.0.5",
@@ -45,6 +46,7 @@
     "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
     "jsdom": "^23.0.1",
+    "patch-package": "^8.0.0",
     "postcss": "^8.4.33",
     "prettier": "^3.2.4",
     "tailwindcss": "^3.4.1",
