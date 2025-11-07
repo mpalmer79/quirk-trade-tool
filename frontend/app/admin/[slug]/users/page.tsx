@@ -41,11 +41,11 @@ export default function DealershipUsersPage() {
   // Extract dealership display name (Brand + State, without city)
   const getDealershipDisplayName = (name: string) => {
     const parts = name.split("–");
-    if (parts.length > 1) {
+    if (parts.length > 1 && parts[0] && parts[1]) {
       const brand = parts[0].trim();
       const location = parts[1].trim();
       const stateMatch = location.match(/([A-Z]{2})$/);
-      const state = stateMatch ? stateMatch[1] : "";
+      const state = stateMatch?.[1] ?? "";
       return `${brand} ${state}`.trim();
     }
     return name;
@@ -59,7 +59,7 @@ export default function DealershipUsersPage() {
     // Extract first initial and full last name, then auto-populate email
     if (fullName.trim()) {
       const nameParts = fullName.trim().split(" ");
-      if (nameParts.length >= 2) {
+      if (nameParts.length >= 2 && nameParts[0] && nameParts[0][0]) {
         const firstInitial = nameParts[0][0].toLowerCase();
         // Remove apostrophes and hyphens from last name parts
         const lastName = nameParts.slice(1).join("").replace(/['-]/g, "").toLowerCase();
@@ -67,7 +67,7 @@ export default function DealershipUsersPage() {
           ...prev,
           email: `${firstInitial}${lastName}@quirkcars.com`,
         }));
-      } else {
+      } else if (nameParts[0]) {
         // If only one name, use the full name
         const firstName = nameParts[0].replace(/['-]/g, "").toLowerCase();
         setFormData((prev) => ({
@@ -167,13 +167,16 @@ export default function DealershipUsersPage() {
   const handleAddUser = async () => {
     // TODO: Implement add user API call
     if (formData.name && formData.email) {
+      const joinDate = new Date().toISOString().split("T")[0];
+      if (!joinDate) return; // Safety check
+      
       const newUser: User = {
         id: String(users.length + 1),
         name: formData.name,
         email: formData.email,
         role: (formData.role as "admin" | "general_manager" | "general_sales_manager" | "sales_manager") || "sales_manager",
         status: "active",
-        joinDate: new Date().toISOString().split("T")[0],
+        joinDate,
       };
       setUsers([...users, newUser]);
       handleCloseModal();
