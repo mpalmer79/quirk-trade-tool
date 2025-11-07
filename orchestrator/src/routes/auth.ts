@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import pino from 'pino';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error-handler.js';
@@ -23,15 +24,20 @@ const log = pino();
  */
 router.post(
   '/login',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Validate input
+    let email: string;
+    let password: string;
     try {
-      var { email, password } = LoginSchema.parse(req.body);
+      const parsed = LoginSchema.parse(req.body);
+      email = parsed.email;
+      password = parsed.password;
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Email and password required'
       });
+      return;
     }
 
     // Find user by email
@@ -40,18 +46,20 @@ router.post(
     if (!user) {
       // Don't reveal whether email exists (security best practice)
       log.warn({ email, message: 'Login attempt with non-existent email' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_credentials',
         message: 'Email or password is incorrect'
       });
+      return;
     }
 
     if (!user.isActive) {
       log.warn({ userId: user.id, message: 'Login attempt with inactive user' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'account_inactive',
         message: 'This account is inactive'
       });
+      return;
     }
 
     // Verify password
@@ -59,10 +67,11 @@ router.post(
 
     if (!isPasswordValid) {
       log.warn({ email, message: 'Login attempt with invalid password' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_credentials',
         message: 'Email or password is incorrect'
       });
+      return;
     }
 
     // Generate tokens
@@ -98,14 +107,17 @@ router.post(
  */
 router.post(
   '/refresh',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    let refreshToken: string;
     try {
-      var { refreshToken } = RefreshTokenSchema.parse(req.body);
+      const parsed = RefreshTokenSchema.parse(req.body);
+      refreshToken = parsed.refreshToken;
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Refresh token required'
       });
+      return;
     }
 
     // Verify refresh token
@@ -113,10 +125,11 @@ router.post(
 
     if (!payload) {
       log.debug({ message: 'Invalid refresh token' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_refresh_token',
         message: 'Refresh token is invalid or expired'
       });
+      return;
     }
 
     // Get user
@@ -124,17 +137,19 @@ router.post(
 
     if (!user) {
       log.warn({ userId: payload.userId, message: 'User not found for refresh' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'user_not_found',
         message: 'User associated with token not found'
       });
+      return;
     }
 
     if (!user.isActive) {
-      return res.status(401).json({
+      res.status(401).json({
         error: 'account_inactive',
         message: 'This account is inactive'
       });
+      return;
     }
 
     // Generate new tokens
@@ -154,14 +169,15 @@ router.post(
 router.get(
   '/me',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const user = await userRepository.findById(req.user!.userId);
 
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'user_not_found',
         message: 'User not found'
       });
+      return;
     }
 
     res.json({
@@ -182,7 +198,7 @@ router.get(
 router.post(
   '/logout',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Audit log
     await auditLog({
       userId: req.user!.userId,
@@ -207,28 +223,32 @@ router.post(
 router.post(
   '/register',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    let input: z.infer<typeof CreateUserSchema>;
     try {
-      var input = CreateUserSchema.parse(req.body);
+      input = CreateUserSchema.parse(req.body);
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Invalid user data'
       });
+      return;
     }
 
     // TODO: Add permission check - only admins can create users
     // if (!authorizationService.hasPermission(req.user!, Permission.MANAGE_USERS)) {
-    //   return res.status(403).json({ error: 'insufficient_permissions' });
+    //   res.status(403).json({ error: 'insufficient_permissions' });
+    //   return;
     // }
 
     // Check if user already exists
     const existing = await userRepository.findByEmail(input.email);
     if (existing) {
-      return res.status(409).json({
+      res.status(409).json({
         error: 'user_exists',
         message: 'User with this email already exists'
       });
+      return;
     }
 
     // Create user

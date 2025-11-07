@@ -82,7 +82,7 @@ pool.on('error', (err: unknown) => {
 // Export a health check function
 export async function validateDatabaseConnection(): Promise<boolean> {
   try {
-    const result = await pool.query('SELECT NOW()');
+    const _result = await pool.query('SELECT NOW()');
     log.info('✅ Database connection verified');
     return true;
   } catch (error) {
@@ -94,6 +94,10 @@ export async function validateDatabaseConnection(): Promise<boolean> {
 // Export database wrapper with common operations
 export const db = {
   query: pool.query.bind(pool),
+  
+  getClient() {
+    return pool.connect();
+  },
   
   async healthCheck(): Promise<boolean> {
     try {

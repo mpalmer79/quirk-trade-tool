@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/app/lib/auth-context";
 import { PermissionGuard } from "@/components/PermissionGuard";
 import { AdminNav } from "@/components/AdminNav";
@@ -59,14 +59,10 @@ export default function GlobalUsersPage() {
     dealershipIds: [],
   });
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
-
   const byName = (name: string) => DEALERSHIPS.find((d) => d.name === name)?.id ?? "";
 
   // Demo users / local persistence
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const saved = localStorage.getItem("quirk_users");
       if (saved) {
@@ -120,7 +116,11 @@ export default function GlobalUsersPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   // Auto-generate email from first initial + last name
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,12 +129,13 @@ export default function GlobalUsersPage() {
 
     if (fullName.trim()) {
       const parts = fullName.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        const firstInitial = parts[0][0].toLowerCase();
+      const firstPart = parts[0];
+      if (parts.length >= 2 && firstPart && firstPart[0]) {
+        const firstInitial = firstPart[0].toLowerCase();
         const lastName = parts.slice(1).join("").toLowerCase();
         setFormData((prev) => ({ ...prev, email: `${firstInitial}${lastName}@quirkcars.com` }));
-      } else {
-        setFormData((prev) => ({ ...prev, email: `${parts[0].toLowerCase()}@quirkcars.com` }));
+      } else if (firstPart) {
+        setFormData((prev) => ({ ...prev, email: `${firstPart.toLowerCase()}@quirkcars.com` }));
       }
     } else {
       setFormData((prev) => ({ ...prev, email: "" }));
@@ -161,6 +162,9 @@ export default function GlobalUsersPage() {
   const handleAddUser = async () => {
     if (!formData.name || !formData.email || formData.dealershipIds.length === 0) return;
 
+    const joinDate = new Date().toISOString().split("T")[0];
+    if (!joinDate) return; // Safety check
+
     const newUser: User = {
       id: String(users.length + 1),
       name: formData.name,
@@ -168,7 +172,7 @@ export default function GlobalUsersPage() {
       role: formData.role,
       dealershipIds: formData.dealershipIds,
       status: "active",
-      joinDate: new Date().toISOString().split("T")[0],
+      joinDate,
     };
 
     const updated = [...users, newUser];
@@ -212,7 +216,7 @@ export default function GlobalUsersPage() {
           <div className="text-center">
             <AlertCircle className="mx-auto h-12 w-12 text-red-500 mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600">You don't have permission to access the admin panel.</p>
+            <p className="text-gray-600">You don&apos;t have permission to access the admin panel.</p>
           </div>
         </div>
       }

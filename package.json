@@ -9,8 +9,13 @@
   ],
   "scripts": {
     "install:all": "pnpm install",
+    "dev": "echo 'Use: pnpm --filter frontend dev OR pnpm --filter orchestrator dev'",
     "build": "pnpm -w --recursive run build",
     "test": "pnpm -w --recursive run test",
-    "lint": "pnpm -w --recursive run lint"
+    "test:all": "pnpm -r run test",
+    "lint": "pnpm -w --recursive run lint",
+    "lint:fix": "pnpm -r run lint:fix",
+    "clean": "pnpm -r exec rm -rf dist .next node_modules",
+    "reset": "pnpm clean && pnpm install"
   }
 }

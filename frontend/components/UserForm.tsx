@@ -49,9 +49,12 @@ export function UserForm({ user, dealerships, onSubmit, onCancel }: UserFormProp
       formData.dealershipIds.length > 1
     ) {
       // These roles should have only one dealership
-      setFormData(prev => ({ ...prev, dealershipIds: [prev.dealershipIds[0]] }));
+      setFormData(prev => {
+        const firstId = prev.dealershipIds[0];
+        return { ...prev, dealershipIds: firstId ? [firstId] : [] };
+      });
     }
-  }, [formData.role, dealerships]);
+  }, [formData.role, formData.dealershipIds, dealerships]);
 
   const handleDealershipToggle = (dealershipId: string) => {
     setFormData(prev => {

@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 
 import { requestLogger } from './middleware/logging.js';
 import { errorHandler, notFoundHandler, asyncHandler } from './middleware/error-handler.js';
-import { authenticate } from './middleware/auth.js';
+// import { authenticate } from './middleware/auth.js';
 
 import { authService } from './services/auth-service.js';
 import { db, validateDatabaseConnection } from './db/index.js';
@@ -62,7 +62,7 @@ const EXTRA_ALLOW = (process.env.ALLOW_ORIGINS || '')
 
 const ALLOW = new Set<string>([...DEFAULT_ALLOW, ...EXTRA_ALLOW]);
 
-app.use((req, res, next) => {
+app.use((req, res, next): void => {
   const origin = (req.headers.origin as string | undefined) || '';
   if (origin && ALLOW.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -70,7 +70,10 @@ app.use((req, res, next) => {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Correlation-ID');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
   next();
 });
 
@@ -112,13 +115,16 @@ const loginLimiter = rateLimit({
    - /readyz  : readiness (deps OK)
    Keep your existing /health/* for compatibility.
 ============================================================================ */
-app.get('/healthz', (_req, res) => res.status(200).json({ ok: true }));
+app.get('/healthz', (_req, res): void => { res.status(200).json({ ok: true }); });
 
 app.get(
   '/readyz',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (_req, res): Promise<void> => {
     const dbHealthy = await db.healthCheck();
-    if (!dbHealthy) return res.status(503).json({ ok: false });
+    if (!dbHealthy) {
+      res.status(503).json({ ok: false });
+      return;
+    }
     res.status(200).json({ ok: true });
   }),
 );
@@ -126,13 +132,14 @@ app.get(
 // Backward-compat aliases for anything already pinging these:
 app.get(
   '/health',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (_req, res): Promise<void> => {
     const dbHealthy = await db.healthCheck();
     if (!dbHealthy) {
-      return res.status(503).json({
+      res.status(503).json({
         ok: false,
         error: 'database_unavailable',
       });
+      return;
     }
     res.json({
       ok: true,
@@ -142,12 +149,15 @@ app.get(
     });
   }),
 );
-app.get('/health/live', (_req, res) => res.json({ ok: true }));
+app.get('/health/live', (_req, res): void => { res.json({ ok: true }); });
 app.get(
   '/health/ready',
-  asyncHandler(async (_req, res) => {
+  asyncHandler(async (_req, res): Promise<void> => {
     const dbHealthy = await db.healthCheck();
-    if (!dbHealthy) return res.status(503).json({ ok: false });
+    if (!dbHealthy) {
+      res.status(503).json({ ok: false });
+      return;
+    }
     res.json({ ok: true });
   }),
 );

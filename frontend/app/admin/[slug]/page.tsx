@@ -39,11 +39,11 @@ export default function DealershipAdminPage() {
   const getDealershipDisplayName = (name: string) => {
     // Format: "Brand Name – City, State" -> "Brand Name State"
     const parts = name.split("–");
-    if (parts.length > 1) {
+    if (parts.length > 1 && parts[0] && parts[1]) {
       const brand = parts[0].trim();
       const location = parts[1].trim();
       const stateMatch = location.match(/([A-Z]{2})$/);
-      const state = stateMatch ? stateMatch[1] : "";
+      const state = stateMatch?.[1] ?? "";
       return `${brand} ${state}`.trim();
     }
     return name;

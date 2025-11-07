@@ -121,7 +121,7 @@ export class ValuationService {
     }
   }
 
-  async getValuationHistory(vin: string, days: number = 30, dealershipId?: string): Promise<ValuationResult[]> {
+  async getValuationHistory(vin: string, days: number = 30, _dealershipId?: string): Promise<ValuationResult[]> {
     return [];
   }
 

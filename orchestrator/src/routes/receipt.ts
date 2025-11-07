@@ -9,6 +9,7 @@ import { auditLog } from '../middleware/logging.js';
 import { env } from '../config/env.js';
 import { generateReceipt } from '../services/receipt-service.js';
 import { Permission } from '../types/user.js';
+import type { ValuationResult, ValuationRequest } from '../types/valuation.types.js';
 
 // ✅ EXISTING: Keep your types and functions
 export type AppraisalReceipt = {
@@ -62,15 +63,16 @@ const router = Router();
 router.get(
   '/json/:id',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to view appraisal history'
       });
+      return;
     }
 
     // ============================================================================
@@ -80,21 +82,23 @@ router.get(
     const receipt = await getReceiptFromStorage(id);
 
     if (!receipt) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'receipt_not_found',
         message: `Receipt ${id} not found`,
         id
       });
+      return;
     }
 
     // ============================================================================
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, receipt.dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${receipt.dealershipId}`
       });
+      return;
     }
 
     // ============================================================================
@@ -134,15 +138,16 @@ router.get(
 router.get(
   '/pdf/:id',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to view appraisals'
       });
+      return;
     }
 
     // ============================================================================
@@ -152,30 +157,40 @@ router.get(
     const receipt = await getReceiptFromStorage(id);
 
     if (!receipt) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'receipt_not_found',
         message: `Receipt ${id} not found`,
         id
       });
+      return;
     }
 
     // ============================================================================
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, receipt.dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${receipt.dealershipId}`
       });
+      return;
     }
 
     // ============================================================================
     // STEP 4: GENERATE PDF
     // ============================================================================
     try {
+      // Create dealership stub from receipt data
+      const dealershipStub = {
+        id: receipt.dealershipId,
+        name: 'Dealership', // Placeholder - ideally fetch from DB
+        city: '',
+        state: ''
+      };
+      
       const pdfStream = await generateReceipt(
-        receipt as any,  // Cast to ValuationResult type for now
-        receipt.input as any
+        receipt as unknown as ValuationResult,
+        dealershipStub
       );
 
       // ============================================================================

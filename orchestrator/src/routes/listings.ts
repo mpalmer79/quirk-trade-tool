@@ -37,17 +37,18 @@ const ListingsSchema = z.object({
 router.get(
   '/',
   optionalAuthenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Parse query parameters
     const { make, model, year, trim, condition, mileage } = req.query;
 
     // Validate input
     if (!make || !model || !year) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Missing required parameters: make, model, year',
         required: ['make', 'model', 'year']
       });
+      return;
     }
 
     try {
@@ -80,19 +81,19 @@ router.get(
         timestamp: new Date()
       });
 
-      return res.json(result);
+      res.json(result);
     } catch (error) {
       console.error('Listings error:', error);
 
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'validation_error',
           message: 'Invalid parameters',
           details: error.errors
         });
       }
 
-      return res.status(500).json({
+      res.status(500).json({
         error: 'listings_failed',
         message: 'Failed to retrieve listings',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -119,15 +120,16 @@ router.get(
 router.post(
   '/compare',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { make, model, year, trim, mileage, condition } = req.body;
 
     // Validate
     if (!make || !model || !year) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Missing required fields: make, model, year'
       });
+      return;
     }
 
     try {
@@ -157,18 +159,18 @@ router.post(
         timestamp: new Date()
       });
 
-      return res.json(result);
+      res.json(result);
     } catch (error) {
       console.error('Compare listings error:', error);
 
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'validation_error',
           details: error.errors
         });
       }
 
-      return res.status(500).json({
+      res.status(500).json({
         error: 'compare_failed',
         message: 'Failed to compare listings'
       });

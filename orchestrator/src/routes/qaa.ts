@@ -106,7 +106,7 @@ router.post(
   '/import',
   authenticate,
   upload.single('file'),
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const userId = req.user!.userId;
     const userRole = req.user!.role;
 
@@ -114,20 +114,22 @@ router.post(
     // STEP 1: AUTHORIZATION CHECK (Admin only)
     // ============================================================================
     if (userRole !== 'admin') {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'forbidden',
         message: 'Only administrators can import QAA auction data'
       });
+      return;
     }
 
     // ============================================================================
     // STEP 2: VALIDATE FILE UPLOAD
     // ============================================================================
     if (!req.file) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'No CSV file uploaded'
       });
+      return;
     }
 
     const filename = req.file.originalname;
@@ -151,20 +153,22 @@ router.post(
       });
 
       if (records.length === 0) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'validation_error',
           message: 'CSV file is empty or has no data rows'
         });
+        return;
       }
 
       console.log(`📊 Parsed ${records.length} rows from CSV`);
     } catch (error) {
       console.error('CSV parsing error:', error);
-      return res.status(400).json({
+      res.status(400).json({
         error: 'csv_parse_error',
         message: 'Failed to parse CSV file',
         details: error instanceof Error ? error.message : 'Invalid CSV format'
       });
+      return;
     }
 
     // ============================================================================
@@ -310,7 +314,7 @@ router.post(
         await db.query('ROLLBACK');
         console.error('Database insert error:', error);
         
-        return res.status(500).json({
+        res.status(500).json({
           error: 'database_error',
           message: 'Failed to save auction data to database',
           details: error instanceof Error ? error.message : 'Unknown error'
@@ -339,7 +343,7 @@ router.post(
     // ============================================================================
     // STEP 7: RETURN RESPONSE
     // ============================================================================
-    return res.json({
+    res.json({
       success: true,
       batchId,
       summary: {
@@ -366,14 +370,15 @@ router.post(
 router.get(
   '/stats',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const userRole = req.user!.role;
 
     if (userRole !== 'admin') {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'forbidden',
         message: 'Only administrators can view QAA statistics'
       });
+      return;
     }
 
     // Get statistics
@@ -399,7 +404,7 @@ router.get(
       FROM qaa_import_logs
     `);
 
-    return res.json({
+    res.json({
       success: true,
       auctionData: statsResult.rows[0],
       imports: importLogsResult.rows[0]
@@ -419,14 +424,15 @@ router.get(
 router.get(
   '/history',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const userRole = req.user!.role;
 
     if (userRole !== 'admin') {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'forbidden',
         message: 'Only administrators can view import history'
       });
+      return;
     }
 
     const result = await db.query(`
@@ -440,7 +446,7 @@ router.get(
       LIMIT 50
     `);
 
-    return res.json({
+    res.json({
       success: true,
       imports: result.rows
     });

@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { validate } from '../middleware/validate.js';
+import { z } from 'zod';
+// import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorizationService } from '../services/authorization-service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import { auditLog } from '../middleware/logging.js';
-import { AppraiseSchema, AppraiseInput } from '../schemas/appraise.js';
+import { AppraiseSchema } from '../schemas/appraise.js';
 import { Permission } from '../types/user.js';
 import { aggregate } from '../valuation/aggregate.js';
 import type { ProviderAdapter, SourceQuote } from '../adapters/types.js';
@@ -31,15 +32,16 @@ const adapters: ProviderAdapter[] = [bb, kbb, nada, mmr, auc];
 router.post(
   '/',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.CREATE_APPRAISAL)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to create appraisals'
       });
+      return;
     }
 
     // ============================================================================
@@ -47,30 +49,34 @@ router.post(
     // ============================================================================
     const dealershipId = req.body.dealershipId;
     if (!dealershipId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'missing_dealership',
         message: 'dealershipId is required'
       });
+      return;
     }
 
     if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${dealershipId}`
       });
+      return;
     }
 
     // ============================================================================
     // STEP 3: VALIDATE REQUEST BODY
     // ============================================================================
+    let input: z.infer<typeof AppraiseSchema>;
     try {
-      var input = AppraiseSchema.parse(req.body);
+      input = AppraiseSchema.parse(req.body);
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Invalid appraisal data',
         details: error instanceof Error ? error.message : 'Unknown validation error'
       });
+      return;
     }
 
     const userId = req.user!.userId;
@@ -85,7 +91,8 @@ router.post(
     // ============================================================================
     const summary = aggregate(quotes);
     if (!summary) {
-      return res.status(500).json({ error: 'aggregation_failed' });
+      res.status(500).json({ error: 'aggregation_failed' });
+      return;
     }
 
     // ============================================================================
@@ -120,7 +127,6 @@ router.post(
       resourceId: receipt.id,
       dealershipId,
       metadata: {
-        vin: input.vin || 'unknown',
         year: input.year,
         make: input.make,
         model: input.model,

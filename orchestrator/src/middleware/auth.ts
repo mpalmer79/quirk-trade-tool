@@ -7,6 +7,7 @@ const log = pino();
 
 // Extend Express Request to include user
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Express {
     interface Request {
       user?: JwtPayload;
@@ -20,21 +21,23 @@ declare global {
  * Authenticate middleware: verify JWT token in Authorization header
  * Expects: Authorization: Bearer <token>
  */
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
+export const authenticate = (req: Request, res: Response, next: NextFunction): void => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'unauthorized',
       message: 'Missing Authorization header'
     });
+    return;
   }
 
   if (!authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'unauthorized',
       message: 'Invalid Authorization header format. Use: Bearer <token>'
     });
+    return;
   }
 
   const token = authHeader.slice(7); // Remove "Bearer "
@@ -46,10 +49,11 @@ export const authenticate = (req: Request, res: Response, next: NextFunction) =>
       message: 'Token verification failed',
       requestId: req.requestId
     });
-    return res.status(401).json({
+    res.status(401).json({
       error: 'invalid_token',
       message: 'Token is invalid or expired'
     });
+    return;
   }
 
   // Attach decoded payload and token to request
@@ -88,17 +92,19 @@ export const optionalAuthenticate = (req: Request, res: Response, next: NextFunc
 /**
  * Verify token is still valid (for endpoints that need to check expiration)
  */
-export const verifyTokenValid = (req: Request, res: Response, next: NextFunction) => {
+export const verifyTokenValid = (req: Request, res: Response, next: NextFunction): void => {
   if (!req.token) {
-    return res.status(401).json({ error: 'unauthorized' });
+    res.status(401).json({ error: 'unauthorized' });
+    return;
   }
 
   const payload = authService.verifyToken(req.token);
   if (!payload) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'token_expired',
       message: 'Your session has expired. Please log in again.'
     });
+    return;
   }
 
   next();
