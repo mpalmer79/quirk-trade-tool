@@ -118,7 +118,7 @@ export default function ValuationForm({
           />
           <button
             type="button"
-            onClick={handleVinDecode}
+            onClick={handleVinDecode || (() => {})}
             disabled={isDecoding || !watch('vin') || watch('vin').length !== 17}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
@@ -203,62 +203,3 @@ export default function ValuationForm({
       </div>
 
       {/* Condition */}
-      <div>
-        <label className="block text-sm font-medium mb-2">
-          Condition <span className="text-red-500">*</span>
-        </label>
-        <select 
-          {...register('condition', { 
-            required: 'Condition is required',
-            valueAsNumber: true 
-          })} 
-          className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        >
-          <option value="">Select condition</option>
-          <option value={5}>5 - Excellent (Like New)</option>
-          <option value={4}>4 - Very Good (Minor Wear)</option>
-          <option value={3}>3 - Good (Average)</option>
-          <option value={2}>2 - Fair (Noticeable Issues)</option>
-          <option value={1}>1 - Poor (Significant Problems)</option>
-        </select>
-        {errors.condition && <p className="text-red-500 text-sm mt-1">{errors.condition.message}</p>}
-      </div>
-
-      {/* Options (Optional) */}
-      <div>
-        <label className="block text-sm font-medium mb-2">Additional Options</label>
-        <div className="space-y-2">
-          {['Leather Seats', 'Sunroof', 'Navigation', 'Premium Audio', 'Tow Package'].map(option => (
-            <label key={option} className="flex items-center">
-              <input
-                type="checkbox"
-                value={option}
-                {...register('options')}
-                className="mr-2"
-              />
-              <span className="text-sm">{option}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full py-3 bg-black text-white rounded-lg hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-      >
-        {isSubmitting ? 'Processing...' : 'Get Valuation'}
-      </button>
-
-      {/* Summary Display (if available) */}
-      {summary && (
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-semibold mb-2">Valuation Summary</h3>
-          <p>Base Value: ${summary.baseValue?.toLocaleString()}</p>
-          <p>Adjusted Value: ${summary.adjustedValue?.toLocaleString()}</p>
-        </div>
-      )}
-    </div>
-  );
-}
