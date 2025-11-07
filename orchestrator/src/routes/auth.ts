@@ -107,13 +107,16 @@ router.post(
 router.post(
   '/refresh',
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    let refreshToken: string;
     try {
-      const { refreshToken } = RefreshTokenSchema.parse(req.body);
+      const parsed = RefreshTokenSchema.parse(req.body);
+      refreshToken = parsed.refreshToken;
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Refresh token required'
       });
+      return;
     }
 
     // Verify refresh token
@@ -121,10 +124,11 @@ router.post(
 
     if (!payload) {
       log.debug({ message: 'Invalid refresh token' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_refresh_token',
         message: 'Refresh token is invalid or expired'
       });
+      return;
     }
 
     // Get user
@@ -132,17 +136,19 @@ router.post(
 
     if (!user) {
       log.warn({ userId: payload.userId, message: 'User not found for refresh' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'user_not_found',
         message: 'User associated with token not found'
       });
+      return;
     }
 
     if (!user.isActive) {
-      return res.status(401).json({
+      res.status(401).json({
         error: 'account_inactive',
         message: 'This account is inactive'
       });
+      return;
     }
 
     // Generate new tokens
@@ -166,10 +172,11 @@ router.get(
     const user = await userRepository.findById(req.user!.userId);
 
     if (!user) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'user_not_found',
         message: 'User not found'
       });
+      return;
     }
 
     res.json({
@@ -216,27 +223,31 @@ router.post(
   '/register',
   authenticate,
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    let input: any;
     try {
-      const input = CreateUserSchema.parse(req.body);
+      input = CreateUserSchema.parse(req.body);
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Invalid user data'
       });
+      return;
     }
 
     // TODO: Add permission check - only admins can create users
     // if (!authorizationService.hasPermission(req.user!, Permission.MANAGE_USERS)) {
-    //   return res.status(403).json({ error: 'insufficient_permissions' });
+    //   res.status(403).json({ error: 'insufficient_permissions' });
+    //   return;
     // }
 
     // Check if user already exists
     const existing = await userRepository.findByEmail(input.email);
     if (existing) {
-      return res.status(409).json({
+      res.status(409).json({
         error: 'user_exists',
         message: 'User with this email already exists'
       });
+      return;
     }
 
     // Create user

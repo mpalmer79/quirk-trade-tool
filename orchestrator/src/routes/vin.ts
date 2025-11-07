@@ -28,18 +28,20 @@ const VinSchema = z.object({
 router.post(
   '/decode',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE REQUEST
     // ============================================================================
+    let parsed: any;
     try {
-      const parsed = VinSchema.parse(req.body);
+      parsed = VinSchema.parse(req.body);
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Invalid VIN format',
         details: error instanceof Error ? error.message : 'VIN must be 11-20 characters'
       });
+      return;
     }
 
     const { vin } = parsed;

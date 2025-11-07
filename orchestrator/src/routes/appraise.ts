@@ -36,10 +36,11 @@ router.post(
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.CREATE_APPRAISAL)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to create appraisals'
       });
+      return;
     }
 
     // ============================================================================
@@ -47,30 +48,34 @@ router.post(
     // ============================================================================
     const dealershipId = req.body.dealershipId;
     if (!dealershipId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'missing_dealership',
         message: 'dealershipId is required'
       });
+      return;
     }
 
     if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${dealershipId}`
       });
+      return;
     }
 
     // ============================================================================
     // STEP 3: VALIDATE REQUEST BODY
     // ============================================================================
+    let input: any;
     try {
-      const input = AppraiseSchema.parse(req.body);
+      input = AppraiseSchema.parse(req.body);
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Invalid appraisal data',
         details: error instanceof Error ? error.message : 'Unknown validation error'
       });
+      return;
     }
 
     const userId = req.user!.userId;
@@ -85,7 +90,8 @@ router.post(
     // ============================================================================
     const summary = aggregate(quotes);
     if (!summary) {
-      return res.status(500).json({ error: 'aggregation_failed' });
+      res.status(500).json({ error: 'aggregation_failed' });
+      return;
     }
 
     // ============================================================================
