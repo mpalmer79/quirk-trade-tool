@@ -60,7 +60,7 @@ router.post(
           action: 'DECODE_VIN',
           resourceType: 'vin',
           resourceId: vin,
-          dealershipId: req.user?.dealershipId || '',
+          dealershipId: req.user?.dealershipId || req.user?.dealershipIds?.[0] || '',
           metadata: {
             year: result.year,
             make: result.make,
@@ -136,7 +136,7 @@ router.get(
           action: 'VIEW_VIN_HISTORY',
           resourceType: 'vin',
           resourceId: vin,
-          dealershipId: req.user?.dealershipId || '',
+          dealershipId: req.user?.dealershipId || req.user?.dealershipIds?.[0] || '',
           metadata: {
             resultCount: result.rows.length
           },
