@@ -52,6 +52,8 @@ export async function auditLog(data: {
   action: string;
   resourceType: string;
   resourceId: string;
+  dealershipId?: string;  // ADD THIS LINE
+  metadata?: any;         // ADD THIS LINE (optional, but useful)
   ipAddress?: string;
   timestamp: Date;
 }) {
