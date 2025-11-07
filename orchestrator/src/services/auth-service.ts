@@ -80,6 +80,8 @@ export class AuthService {
     };
 
     const accessToken = jwt.sign(payload, this.jwtSecret, {
+      // Note: Using 'as any' here due to @types/jsonwebtoken StringValue brand type incompatibility
+      // The value is validated at runtime and this is a safe workaround
       expiresIn: this.jwtExpiry as any,
       algorithm: 'HS256'
     });
@@ -88,6 +90,8 @@ export class AuthService {
       { userId: user.id },
       this.jwtSecret,
       {
+        // Note: Using 'as any' here due to @types/jsonwebtoken StringValue brand type incompatibility
+        // The value is validated at runtime and this is a safe workaround
         expiresIn: this.refreshExpiry as any,
         algorithm: 'HS256'
       }
