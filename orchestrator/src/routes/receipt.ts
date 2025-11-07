@@ -67,10 +67,11 @@ router.get(
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to view appraisal history'
       });
+      return;
     }
 
     // ============================================================================
@@ -80,21 +81,23 @@ router.get(
     const receipt = await getReceiptFromStorage(id);
 
     if (!receipt) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'receipt_not_found',
         message: `Receipt ${id} not found`,
         id
       });
+      return;
     }
 
     // ============================================================================
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, receipt.dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${receipt.dealershipId}`
       });
+      return;
     }
 
     // ============================================================================
@@ -139,10 +142,11 @@ router.get(
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to view appraisals'
       });
+      return;
     }
 
     // ============================================================================
@@ -152,21 +156,23 @@ router.get(
     const receipt = await getReceiptFromStorage(id);
 
     if (!receipt) {
-      return res.status(404).json({
+      res.status(404).json({
         error: 'receipt_not_found',
         message: `Receipt ${id} not found`,
         id
       });
+      return;
     }
 
     // ============================================================================
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, receipt.dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${receipt.dealershipId}`
       });
+      return;
     }
 
     // ============================================================================
