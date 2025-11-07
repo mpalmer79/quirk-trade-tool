@@ -62,7 +62,7 @@ const EXTRA_ALLOW = (process.env.ALLOW_ORIGINS || '')
 
 const ALLOW = new Set<string>([...DEFAULT_ALLOW, ...EXTRA_ALLOW]);
 
-app.use((req, res, next) => {
+app.use((req, res, next): void => {
   const origin = (req.headers.origin as string | undefined) || '';
   if (origin && ALLOW.has(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin);
@@ -70,7 +70,10 @@ app.use((req, res, next) => {
   res.setHeader('Vary', 'Origin');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Correlation-ID');
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(204);
+    return;
+  }
   next();
 });
 

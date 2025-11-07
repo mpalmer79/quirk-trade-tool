@@ -23,10 +23,10 @@ const log = pino();
  */
 router.post(
   '/login',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Validate input
     try {
-      var { email, password } = LoginSchema.parse(req.body);
+      const { email, password } = LoginSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -98,9 +98,9 @@ router.post(
  */
 router.post(
   '/refresh',
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     try {
-      var { refreshToken } = RefreshTokenSchema.parse(req.body);
+      const { refreshToken } = RefreshTokenSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -154,7 +154,7 @@ router.post(
 router.get(
   '/me',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const user = await userRepository.findById(req.user!.userId);
 
     if (!user) {
@@ -182,7 +182,7 @@ router.get(
 router.post(
   '/logout',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Audit log
     await auditLog({
       userId: req.user!.userId,
@@ -207,9 +207,9 @@ router.post(
 router.post(
   '/register',
   authenticate,
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     try {
-      var input = CreateUserSchema.parse(req.body);
+      const input = CreateUserSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',

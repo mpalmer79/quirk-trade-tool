@@ -31,7 +31,7 @@ const adapters: ProviderAdapter[] = [bb, kbb, nada, mmr, auc];
 router.post(
   '/',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
@@ -64,7 +64,7 @@ router.post(
     // STEP 3: VALIDATE REQUEST BODY
     // ============================================================================
     try {
-      var input = AppraiseSchema.parse(req.body);
+      const input = AppraiseSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',

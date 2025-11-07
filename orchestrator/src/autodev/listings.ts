@@ -65,7 +65,7 @@ export async function getVehicleListings(
 
   try {
     // Build query parameters
-    let endpoint = `https://api.auto.dev/listings`;
+    const endpoint = `https://api.auto.dev/listings`;
     const params = new URLSearchParams({
       make: make.trim(),
       model: model.trim(),

@@ -62,7 +62,7 @@ const router = Router();
 router.get(
   '/json/:id',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
@@ -134,7 +134,7 @@ router.get(
 router.get(
   '/pdf/:id',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================

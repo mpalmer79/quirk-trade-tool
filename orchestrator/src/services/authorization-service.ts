@@ -45,9 +45,10 @@ export class AuthorizationService {
    * Middleware factory: require a specific permission
    */
   requirePermission(permission: Permission) {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.user) {
-        return res.status(401).json({ error: 'unauthorized' });
+        res.status(401).json({ error: 'unauthorized' });
+        return;
       }
 
       // Type assertion: req.user from JWT middleware has the shape of JwtPayload
@@ -60,7 +61,8 @@ export class AuthorizationService {
           userRole: user.role,
           message: 'Permission denied'
         });
-        return res.status(403).json({ error: 'insufficient_permissions' });
+        res.status(403).json({ error: 'insufficient_permissions' });
+        return;
       }
 
       next();
@@ -71,9 +73,10 @@ export class AuthorizationService {
    * Middleware factory: require dealership access
    */
   requireDealershipAccess(dealershipIdParam: string = 'storeId') {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.user) {
-        return res.status(401).json({ error: 'unauthorized' });
+        res.status(401).json({ error: 'unauthorized' });
+        return;
       }
 
       // Type assertion: req.user from JWT middleware has the shape of JwtPayload
@@ -82,7 +85,8 @@ export class AuthorizationService {
       const dealershipId = req.body[dealershipIdParam] || req.params[dealershipIdParam];
 
       if (!dealershipId) {
-        return res.status(400).json({ error: 'dealership_id_required' });
+        res.status(400).json({ error: 'dealership_id_required' });
+        return;
       }
 
       if (!this.canAccessDealership(user, dealershipId)) {
@@ -92,7 +96,8 @@ export class AuthorizationService {
           accessibleDealerships: user.dealershipIds,
           message: 'Dealership access denied'
         });
-        return res.status(403).json({ error: 'dealership_access_denied' });
+        res.status(403).json({ error: 'dealership_access_denied' });
+        return;
       }
 
       next();
@@ -103,7 +108,7 @@ export class AuthorizationService {
    * Middleware factory: require any of the given roles
    */
   requireRole(...roles: UserRole[]) {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
       if (!req.user) {
         return res.status(401).json({ error: 'unauthorized' });
       }
