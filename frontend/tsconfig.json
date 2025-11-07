@@ -9,7 +9,7 @@
     "isolatedModules": true,
     "strict": true,
     "noEmit": true,
-    "types": ["node"],
+    "types": ["vitest/globals", "node"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"],
@@ -18,5 +18,12 @@
       "@lib/*": ["app/lib/*"]
     }
   },
-  "include": ["app/**/*", "components/**/*", "hooks/**/*", "next-env.d.ts"]
+  "include": [
+    "app/**/*",
+    "components/**/*",
+    "hooks/**/*",
+    "next-env.d.ts",
+    "vitest.setup.ts",
+    "vitest.config.ts"
+  ]
 }
