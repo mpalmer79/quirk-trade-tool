@@ -255,8 +255,8 @@ export default function ValuationForm({
       {summary && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold mb-2">Valuation Summary</h3>
-          <p>Base Value: ${summary.baseValue?.toLocaleString()}</p>
-          <p>Adjusted Value: ${summary.adjustedValue?.toLocaleString()}</p>
+         <p>Base Value: ${summary.base?.toLocaleString()}</p>
+         <p>Adjusted Value: ${summary.avg?.toLocaleString()}</p> 
         </div>
       )}
     </div>
