@@ -6,6 +6,7 @@ import type { JwtPayload } from '../types/user.js';
 const log = pino();
 
 // Extend Express Request to include user
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface Request {
@@ -15,6 +16,7 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 /**
  * Authenticate middleware: verify JWT token in Authorization header

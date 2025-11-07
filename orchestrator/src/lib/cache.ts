@@ -8,7 +8,7 @@
  */
 
 import Redis from 'ioredis';
-import type { ValuationResult } from '../services/valuation-service';
+import type { ValuationResult } from '../types/valuation.types';
 
 // Initialize Redis client
 const redis = new Redis({
