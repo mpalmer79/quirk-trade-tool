@@ -7,6 +7,14 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     
     // ============================================================================
+    // MOCKING CONFIGURATION
+    // ============================================================================
+    // Mock ioredis to prevent tests from hanging on Redis connection
+    alias: {
+      'ioredis': '/home/runner/work/quirk-trade-tool/quirk-trade-tool/orchestrator/src/__tests__/mocks/ioredis.ts'
+    },
+    
+    // ============================================================================
     // TIMEOUT CONFIGURATION
     // ============================================================================
     // Increase timeouts for integration tests that may need to:
