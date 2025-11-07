@@ -54,12 +54,10 @@ describe('ValuationForm', () => {
       ok: true,
       json: async () => ({
         Results: [
-          {
-            ModelYear: '2022',
-            Make: 'NISSAN',
-            Model: 'Frontier',
-            Trim: 'PRO-4X'
-          }
+          { VariableId: 29, Value: '2022' },  // Model Year
+          { VariableId: 26, Value: 'NISSAN' }, // Make
+          { VariableId: 28, Value: 'Frontier' }, // Model
+          { VariableId: 109, Value: 'PRO-4X' } // Trim
         ]
       })
     } as any);
@@ -97,27 +95,27 @@ describe('ValuationForm', () => {
     fireEvent.click(decodeBtn);
 
     await waitFor(() => {
-      // Year select should reflect decoded year
-      const yearSelect = screen.getByLabelText(/year \*/i) as HTMLSelectElement;
-      expect(yearSelect.value).toBe('2022');
+      // Year input should reflect decoded year
+      const yearInput = screen.getByLabelText(/year \*/i) as HTMLInputElement;
+      expect(yearInput.value).toBe('2022');
 
-      // Make select should reflect decoded make (title-cased in UI)
-      const makeSelect = screen.getByLabelText(/make \*/i) as HTMLSelectElement;
-      expect(makeSelect.value).toBe('Nissan');
+      // Make input should reflect decoded make
+      const makeInput = screen.getByLabelText(/make \*/i) as HTMLInputElement;
+      expect(makeInput.value).toBe('NISSAN');
 
-      // Model select should reflect decoded model
-      const modelSelect = screen.getByLabelText(/model \*/i) as HTMLSelectElement;
-      expect(modelSelect.value).toBe('Frontier');
+      // Model input should reflect decoded model
+      const modelInput = screen.getByLabelText(/model \*/i) as HTMLInputElement;
+      expect(modelInput.value).toBe('Frontier');
 
-      // Trim input populated (placeholder likely unchanged)
-      const trimInput = screen.getByPlaceholderText(/e\.g\.,\s*le,\s*sport,\s*limited/i) as HTMLInputElement;
-      expect(trimInput.value).toBe('Pro-4x');
+      // Trim input populated
+      const trimInput = screen.getByLabelText(/trim/i) as HTMLInputElement;
+      expect(trimInput.value).toBe('PRO-4X');
     });
 
     // Ensure fetch was called with the NHTSA endpoint
     expect(global.fetch).toHaveBeenCalledTimes(1);
     const calledUrl = (global.fetch as any).mock.calls[0][0] as string;
-    expect(calledUrl).toMatch(/vpic\.nhtsa\.dot\.gov\/api\/vehicles\/DecodeVinValuesExtended\/1N6ED1CMXSN623773/i);
+    expect(calledUrl).toMatch(/vpic\.nhtsa\.dot\.gov\/api\/vehicles\/DecodeVin\/1N6ED1CMXSN623773/i);
   });
 
   it('shows the valid VIN hint for a 17-char VIN', () => {
