@@ -244,6 +244,7 @@ router.post(
       action: 'VALIDATE_DEPRECIATION',
       resourceType: 'system_config',
       resourceId: 'depreciation_calculator',
+      dealershipId: req.user!.dealershipId || '',
       metadata: { valid: isValid },
       ipAddress: req.ip,
       timestamp: new Date()
