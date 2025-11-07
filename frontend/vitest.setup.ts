@@ -4,11 +4,19 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 
 expect.extend(matchers);
 
-// --- Jest shim so existing tests can keep calling jest.fn / jest.spyOn etc. ---
+// --- Global mock: react-hook-form.useForm is a vi mock in all tests
+vi.mock('react-hook-form', async () => {
+  const actual = await vi.importActual<typeof import('react-hook-form')>('react-hook-form');
+  return {
+    ...actual,
+    // tests can now do: (useForm as jest.Mock).mockReturnValue(...)
+    useForm: vi.fn()
+  };
+});
+
+// --- Jest shim so legacy jest.* calls keep working under Vitest ---
 const jestLike = new Proxy(vi, {
-  // Try to return the vi method if it exists; otherwise a harmless no-op
   get(target, prop: string) {
-    // Common 1:1 mappings
     if (prop === 'fn') return vi.fn;
     if (prop === 'spyOn') return vi.spyOn;
     if (prop === 'mock') return vi.mock;
@@ -20,17 +28,14 @@ const jestLike = new Proxy(vi, {
     if (prop === 'useRealTimers') return vi.useRealTimers;
     if (prop === 'advanceTimersByTime') return vi.advanceTimersByTime;
     if (prop === 'runAllTimers') return vi.runAllTimers;
-
-    // Fallback to any other vi API or a no-op
-    // @ts-expect-error dynamic
+    // @ts-expect-error dynamic index
     return target[prop] ?? (() => {});
   },
 });
+// @ts-expect-error exposing global for legacy tests
+globalThis.jest = jestLike;
 
-// Expose as global `jest`
-(globalThis as any).jest = jestLike;
-
-// Clean up between tests and reset spies/mocks
+// Clean up between tests & reset mocks
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
