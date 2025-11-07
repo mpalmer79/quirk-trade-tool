@@ -1,44 +1,42 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { useForm } from 'react-hook-form';
+import { vi } from 'vitest';
+
+// 1) Mock react-hook-form so useForm is a vi.fn()
+vi.mock('react-hook-form', async () => {
+  const actual = await vi.importActual<typeof import('react-hook-form')>('react-hook-form');
+  return {
+    ...actual,
+    useForm: vi.fn(() => ({
+      register: vi.fn(() => ({})),
+      watch: vi.fn(() => ''),
+      setValue: vi.fn(),
+      formState: { errors: {} }
+    }))
+  };
+});
+
 import ValuationForm from '../ValuationForm';
 
-jest.mock('react-hook-form', () => ({
-  useForm: jest.fn(),
-  UseFormRegister: jest.fn(),
-  FieldErrors: jest.fn(),
-  UseFormWatch: jest.fn(),
-  UseFormSetValue: jest.fn(),
-}));
+// Minimal props to render
+const baseProps = {
+  register: vi.fn() as any,
+  errors: {},
+  isSubmitting: false,
+  watch: vi.fn() as any,
+  setValue: vi.fn() as any,
+  summary: null
+};
 
-describe('ValuationForm', () => {
-  beforeEach(() => {
-    (useForm as jest.Mock).mockReturnValue({
-      register: jest.fn(() => ({})),
-      formState: { errors: {} },
-      watch: jest.fn(() => ''),
-      setValue: jest.fn(),
-    });
-  });
-
+describe('ValuationForm (critical)', () => {
   it('should render all required input fields', () => {
-    const mockProps = {
-      register: jest.fn(() => ({})),
-      errors: {},
-      isSubmitting: false,
-      watch: jest.fn(() => ''),
-      setValue: jest.fn(),
-      summary: null,
-    };
-
-    render(<ValuationForm {...mockProps} />);
-    
-    // Check for the VIN input
-    expect(screen.getByPlaceholderText(/Enter 17-character VIN/i)).toBeInTheDocument();
-    
-    // Check for other inputs
-    expect(screen.getByPlaceholderText(/2020/)).toBeInTheDocument(); // Year
-    expect(screen.getByPlaceholderText(/Chevrolet/)).toBeInTheDocument(); // Make
-    expect(screen.getByPlaceholderText(/Silverado/)).toBeInTheDocument(); // Model
-    expect(screen.getByPlaceholderText(/50000/)).toBeInTheDocument(); // Mileage
+    render(<ValuationForm {...baseProps} />);
+    expect(screen.getByLabelText(/dealership/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/vin/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/year \*/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/make \*/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/model \*/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/mileage \*/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/condition \*/i)).toBeInTheDocument();
   });
 });
