@@ -25,13 +25,18 @@ router.post(
   '/login',
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // Validate input
+    let email: string;
+    let password: string;
     try {
-      const { email, password } = LoginSchema.parse(req.body);
+      const parsed = LoginSchema.parse(req.body);
+      email = parsed.email;
+      password = parsed.password;
     } catch (error) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'validation_error',
         message: 'Email and password required'
       });
+      return;
     }
 
     // Find user by email
@@ -40,18 +45,20 @@ router.post(
     if (!user) {
       // Don't reveal whether email exists (security best practice)
       log.warn({ email, message: 'Login attempt with non-existent email' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_credentials',
         message: 'Email or password is incorrect'
       });
+      return;
     }
 
     if (!user.isActive) {
       log.warn({ userId: user.id, message: 'Login attempt with inactive user' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'account_inactive',
         message: 'This account is inactive'
       });
+      return;
     }
 
     // Verify password
@@ -59,10 +66,11 @@ router.post(
 
     if (!isPasswordValid) {
       log.warn({ email, message: 'Login attempt with invalid password' });
-      return res.status(401).json({
+      res.status(401).json({
         error: 'invalid_credentials',
         message: 'Email or password is incorrect'
       });
+      return;
     }
 
     // Generate tokens
