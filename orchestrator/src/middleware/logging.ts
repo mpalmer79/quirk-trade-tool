@@ -5,6 +5,7 @@ import { nanoid } from 'nanoid';
 const log = pino();
 
 // Extend Express Request to include requestId
+/* eslint-disable @typescript-eslint/no-namespace */
 declare global {
   namespace Express {
     interface Request {
@@ -12,6 +13,7 @@ declare global {
     }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 export function requestLogger(req: Request, res: Response, next: NextFunction) {
   const start = process.hrtime.bigint();

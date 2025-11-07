@@ -32,8 +32,9 @@ router.post(
     // ============================================================================
     // STEP 1: VALIDATE REQUEST
     // ============================================================================
+    let parsed;
     try {
-      var parsed = VinSchema.parse(req.body);
+      parsed = VinSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -60,7 +61,7 @@ router.post(
           action: 'DECODE_VIN',
           resourceType: 'vin',
           resourceId: vin,
-          dealershipId: req.user?.dealershipId || '',
+          dealershipId: req.user?.dealershipIds?.[0] || '',
           metadata: {
             year: result.year,
             make: result.make,
@@ -136,7 +137,7 @@ router.get(
           action: 'VIEW_VIN_HISTORY',
           resourceType: 'vin',
           resourceId: vin,
-          dealershipId: req.user?.dealershipId || '',
+          dealershipId: req.user?.dealershipIds?.[0] || '',
           metadata: {
             resultCount: result.rows.length
           },

@@ -25,8 +25,9 @@ router.post(
   '/login',
   asyncHandler(async (req: Request, res: Response) => {
     // Validate input
+    let email, password;
     try {
-      var { email, password } = LoginSchema.parse(req.body);
+      ({ email, password } = LoginSchema.parse(req.body));
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -100,8 +101,9 @@ router.post(
 router.post(
   '/refresh',
   asyncHandler(async (req: Request, res: Response) => {
+    let refreshToken;
     try {
-      var { refreshToken } = RefreshTokenSchema.parse(req.body);
+      ({ refreshToken } = RefreshTokenSchema.parse(req.body));
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
@@ -190,7 +192,7 @@ router.post(
       action: 'LOGOUT',
       resourceType: 'user',
       resourceId: req.user!.userId,
-      dealershipId: req.user!.dealershipId || '',
+      dealershipId: req.user!.dealershipIds?.[0] || '',
       ipAddress: req.ip,
       timestamp: new Date()
     });
@@ -210,8 +212,9 @@ router.post(
   '/register',
   authenticate,
   asyncHandler(async (req: Request, res: Response) => {
+    let input;
     try {
-      var input = CreateUserSchema.parse(req.body);
+      input = CreateUserSchema.parse(req.body);
     } catch (error) {
       return res.status(400).json({
         error: 'validation_error',
