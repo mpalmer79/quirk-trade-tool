@@ -39,19 +39,16 @@ export default function ValuationForm({
       const data = await response.json();
       
       if (data.Results && setValue) {
-        // Map NHTSA variable IDs to values
         const getValueByVariableId = (id: number) => {
           const result = data.Results.find((r: any) => r.VariableId === id);
           return result?.Value || '';
         };
         
-        // Extract vehicle details
         const year = parseInt(getValueByVariableId(29)) || 0;
         const make = getValueByVariableId(26);
         const model = getValueByVariableId(28);
-        const trim = getValueByVariableId(109); // Trim variable ID
-        
-        // Update form fields
+        const trim = getValueByVariableId(109);
+
         if (year > 1980 && year <= new Date().getFullYear() + 1) {
           setValue('year', year);
         }
@@ -65,9 +62,8 @@ export default function ValuationForm({
           setValue('trim', trim);
         }
         
-        // Success feedback
         if (make && model) {
-          setVinError(''); // Clear any error
+          setVinError('');
         } else {
           setVinError('VIN decoded but some details could not be determined');
         }
@@ -84,11 +80,13 @@ export default function ValuationForm({
     <div className="space-y-6">
       {/* Dealership Selection */}
       <div>
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="storeId" className="block text-sm font-medium mb-2">
           Dealership <span className="text-red-500">*</span>
         </label>
-        <select 
-          {...register('storeId', { required: 'Please select a dealership' })} 
+        <select
+          id="storeId"
+          name="storeId"
+          {...register('storeId', { required: 'Please select a dealership' })}
           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Select a dealership</option>
@@ -100,11 +98,13 @@ export default function ValuationForm({
 
       {/* VIN Input with Decode Button */}
       <div>
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="vin" className="block text-sm font-medium mb-2">
           VIN <span className="text-red-500">*</span>
         </label>
         <div className="flex gap-2">
           <input
+            id="vin"
+            name="vin"
             {...register('vin', { 
               required: 'VIN is required',
               minLength: { value: 17, message: 'VIN must be 17 characters' },
@@ -132,10 +132,12 @@ export default function ValuationForm({
       {/* Vehicle Details Grid */}
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="year" className="block text-sm font-medium mb-2">
             Year <span className="text-red-500">*</span>
           </label>
           <input
+            id="year"
+            name="year"
             {...register('year', { 
               required: 'Year is required',
               valueAsNumber: true,
@@ -150,10 +152,12 @@ export default function ValuationForm({
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="make" className="block text-sm font-medium mb-2">
             Make <span className="text-red-500">*</span>
           </label>
           <input
+            id="make"
+            name="make"
             {...register('make', { required: 'Make is required' })}
             placeholder="Chevrolet"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -162,10 +166,12 @@ export default function ValuationForm({
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">
+          <label htmlFor="model" className="block text-sm font-medium mb-2">
             Model <span className="text-red-500">*</span>
           </label>
           <input
+            id="model"
+            name="model"
             {...register('model', { required: 'Model is required' })}
             placeholder="Silverado"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -174,8 +180,10 @@ export default function ValuationForm({
         </div>
         
         <div>
-          <label className="block text-sm font-medium mb-2">Trim</label>
+          <label htmlFor="trim" className="block text-sm font-medium mb-2">Trim</label>
           <input
+            id="trim"
+            name="trim"
             {...register('trim')}
             placeholder="LT (optional)"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -185,10 +193,12 @@ export default function ValuationForm({
 
       {/* Mileage */}
       <div>
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="mileage" className="block text-sm font-medium mb-2">
           Mileage <span className="text-red-500">*</span>
         </label>
         <input
+          id="mileage"
+          name="mileage"
           {...register('mileage', { 
             required: 'Mileage is required',
             valueAsNumber: true,
@@ -204,14 +214,16 @@ export default function ValuationForm({
 
       {/* Condition */}
       <div>
-        <label className="block text-sm font-medium mb-2">
+        <label htmlFor="condition" className="block text-sm font-medium mb-2">
           Condition <span className="text-red-500">*</span>
         </label>
-        <select 
+        <select
+          id="condition"
+          name="condition"
           {...register('condition', { 
             required: 'Condition is required',
             valueAsNumber: true 
-          })} 
+          })}
           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">Select condition</option>
@@ -255,8 +267,8 @@ export default function ValuationForm({
       {summary && (
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="font-semibold mb-2">Valuation Summary</h3>
-         <p>Base Value: ${summary.base?.toLocaleString()}</p>
-         <p>Adjusted Value: ${summary.avg?.toLocaleString()}</p> 
+          <p>Base Value: ${summary.base?.toLocaleString()}</p>
+          <p>Adjusted Value: ${summary.avg?.toLocaleString()}</p>
         </div>
       )}
     </div>
