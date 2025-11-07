@@ -160,3 +160,6 @@ export class ValuationService {
 }
 
 export const valuationService = new ValuationService();
+
+// ✅ Re-export types so other modules importing from this service compile cleanly
+export type { ValuationRequest, ValuationResult } from '../types/valuation.types';
