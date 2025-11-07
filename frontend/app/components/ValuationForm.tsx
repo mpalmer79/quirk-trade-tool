@@ -23,9 +23,10 @@ export default function ValuationForm({
 }: ValuationFormProps) {
   const [vinError, setVinError] = React.useState<string>('');
   const [isDecoding, setIsDecoding] = React.useState(false);
+  const vinValue = watch('vin');
 
   const handleVinDecode = async () => {
-    const vin = watch('vin');
+    const vin = vinValue;
     if (!vin || vin.length !== 17) {
       setVinError('Please enter a 17-character VIN');
       return;
@@ -121,7 +122,7 @@ export default function ValuationForm({
           <button
             type="button"
             onClick={handleVinDecode}
-            disabled={isDecoding || !watch('vin') || (watch('vin')?.length ?? 0) !== 17}
+            disabled={isDecoding || !vinValue || (vinValue?.length ?? 0) !== 17}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isDecoding ? 'Decoding...' : 'Decode VIN'}
