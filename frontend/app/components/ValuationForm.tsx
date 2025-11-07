@@ -25,6 +25,13 @@ export default function ValuationForm({
   const [isDecoding, setIsDecoding] = React.useState(false);
   const [isVinValid, setIsVinValid] = React.useState(false);
 
+  const vinValue = watch('vin');
+
+  // Monitor VIN changes to update validation state
+  React.useEffect(() => {
+    setIsVinValid(vinValue?.length === 17);
+  }, [vinValue]);
+
   const handleVinDecode = async () => {
     const vin = watch('vin');
     if (!vin || vin.length !== 17) {
@@ -111,11 +118,7 @@ export default function ValuationForm({
             {...register('vin', { 
               required: 'VIN is required',
               minLength: { value: 17, message: 'VIN must be 17 characters' },
-              maxLength: { value: 17, message: 'VIN must be 17 characters' },
-              onChange: (e) => {
-                const value = e.target.value;
-                setIsVinValid(value.length === 17);
-              }
+              maxLength: { value: 17, message: 'VIN must be 17 characters' }
             })}
             placeholder="Enter 17-character VIN"
             className="flex-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -126,7 +129,7 @@ export default function ValuationForm({
           <button
             type="button"
             onClick={handleVinDecode}
-            disabled={isDecoding || !watch('vin') || (watch('vin')?.length || 0) !== 17}
+            disabled={isDecoding || !vinValue || vinValue.length !== 17}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isDecoding ? 'Decoding...' : 'Decode VIN'}
