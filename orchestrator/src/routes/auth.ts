@@ -74,6 +74,7 @@ router.post(
       action: 'LOGIN',
       resourceType: 'user',
       resourceId: user.id,
+      dealershipId: user.dealershipIds?.[0] || '',
       ipAddress: req.ip,
       timestamp: new Date()
     });
@@ -189,6 +190,7 @@ router.post(
       action: 'LOGOUT',
       resourceType: 'user',
       resourceId: req.user!.userId,
+      dealershipId: req.user!.dealershipId || '',
       ipAddress: req.ip,
       timestamp: new Date()
     });
