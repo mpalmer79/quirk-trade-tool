@@ -82,7 +82,7 @@ export class AuthService {
     // Explicitly type the options as jwt.SignOptions to avoid TypeScript inference issues
     const accessTokenOptions: jwt.SignOptions = {
       expiresIn: this.jwtExpiry,
-      algorithm: 'HS256'
+      algorithm: 'HS256' as const
     };
 
     const accessToken = jwt.sign(payload, this.jwtSecret, accessTokenOptions);
@@ -90,7 +90,7 @@ export class AuthService {
     // Explicitly type the options for refresh token as well
     const refreshTokenOptions: jwt.SignOptions = {
       expiresIn: this.refreshExpiry,
-      algorithm: 'HS256'
+      algorithm: 'HS256' as const
     };
 
     const refreshToken = jwt.sign(

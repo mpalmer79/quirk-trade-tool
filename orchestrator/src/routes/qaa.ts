@@ -326,7 +326,7 @@ router.post(
       action: 'IMPORT_QAA_DATA',
       resourceType: 'qaa_auction_data',
       resourceId: batchId,
-      dealershipId: req.user?.dealershipId || '',
+      dealershipId: req.user?.dealershipId || req.user?.dealershipIds?.[0] || '',
       metadata: {
         filename,
         totalRows: results.total,

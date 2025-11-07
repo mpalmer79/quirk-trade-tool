@@ -190,7 +190,7 @@ router.post(
       action: 'LOGOUT',
       resourceType: 'user',
       resourceId: req.user!.userId,
-      dealershipId: req.user!.dealershipId || '',
+      dealershipId: req.user!.dealershipId || req.user!.dealershipIds?.[0] || '',
       ipAddress: req.ip,
       timestamp: new Date()
     });

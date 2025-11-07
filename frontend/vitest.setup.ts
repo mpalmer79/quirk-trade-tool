@@ -9,8 +9,8 @@ vi.mock('react-hook-form', async () => {
   const actual = await vi.importActual<typeof import('react-hook-form')>('react-hook-form');
   return {
     ...actual,
-    // tests can now do: (useForm as jest.Mock).mockReturnValue(...)
-    useForm: vi.fn()
+    // Default implementation that returns actual useForm - tests can override if needed
+    useForm: actual.useForm
   };
 });
 
