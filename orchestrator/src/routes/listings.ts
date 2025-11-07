@@ -81,19 +81,19 @@ router.get(
         timestamp: new Date()
       });
 
-      return res.json(result);
+      res.json(result);
     } catch (error) {
       console.error('Listings error:', error);
 
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'validation_error',
           message: 'Invalid parameters',
           details: error.errors
         });
       }
 
-      return res.status(500).json({
+      res.status(500).json({
         error: 'listings_failed',
         message: 'Failed to retrieve listings',
         details: error instanceof Error ? error.message : 'Unknown error'
@@ -159,18 +159,18 @@ router.post(
         timestamp: new Date()
       });
 
-      return res.json(result);
+      res.json(result);
     } catch (error) {
       console.error('Compare listings error:', error);
 
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'validation_error',
           details: error.errors
         });
       }
 
-      return res.status(500).json({
+      res.status(500).json({
         error: 'compare_failed',
         message: 'Failed to compare listings'
       });

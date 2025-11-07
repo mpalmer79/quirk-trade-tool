@@ -56,7 +56,7 @@ router.post(
     }
     return next();
   },
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================ 
     // STEP 1: VALIDATE REQUEST
     // ============================================================================
@@ -66,7 +66,7 @@ router.post(
       payload = ValuationRequestSchema.parse(req.body);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'validation_error',
           message: 'Validation failed',
           details: error.errors.map(e => ({
@@ -74,6 +74,7 @@ router.post(
             message: e.message,
           })),
         });
+        return;
       }
       throw error;
     }
@@ -85,17 +86,19 @@ router.post(
     // ============================================================================
     if (isAuthenticated) {
       if (!authorizationService.hasPermission(req.user!, Permission.CREATE_APPRAISAL)) {
-        return res.status(403).json({
+        res.status(403).json({
           error: 'insufficient_permissions',
           message: 'You do not have permission to calculate valuations'
         });
+        return;
       }
 
       if (!authorizationService.canAccessDealership(req.user!, payload.storeId)) {
-        return res.status(403).json({
+        res.status(403).json({
           error: 'dealership_access_denied',
           message: `You do not have access to dealership ${payload.storeId}`
         });
+        return;
       }
     }
 
@@ -148,7 +151,7 @@ router.post(
     // ============================================================================
     console.log(`✅ Returning valuation to ${payload.storeId}: $${valuation.finalWholesaleValue.toLocaleString()}`);
 
-    return res.json({
+    res.json({
       id: valuation.id,
       userId,
       dealershipId: payload.storeId,
@@ -177,7 +180,7 @@ router.get(
     try {
       const config = depreciationCalculator.exportConfiguration();
       
-      return res.json({
+      res.json({
         status: 'ok',
         service: 'valuation-api',
         timestamp: new Date().toISOString(),
@@ -188,7 +191,7 @@ router.get(
       });
     } catch (error) {
       console.error('Health check failed:', error);
-      return res.status(500).json({
+      res.status(500).json({
         status: 'error',
         service: 'valuation-api',
         message: 'Health check failed',
@@ -215,15 +218,16 @@ router.get(
 router.post(
   '/validate-depreciation',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================ 
     // STEP 1: VALIDATE ADMIN ROLE
     // ============================================================================
     if (req.user!.role !== UserRole.ADMIN) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'admin_only',
         message: 'This endpoint is for administrators only'
       });
+      return;
     }
 
     // ============================================================================ 
@@ -252,7 +256,7 @@ router.post(
     // ============================================================================ 
     // STEP 4: RETURN RESPONSE
     // ============================================================================
-    return res.json({
+    res.json({
       valid: isValid,
       configuration: config,
       status: isValid 
@@ -285,15 +289,16 @@ router.post(
 router.get(
   '/history/:vin',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================ 
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_APPRAISAL_HISTORY)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to view appraisal history'
       });
+      return;
     }
 
     // ============================================================================ 
@@ -304,21 +309,21 @@ router.get(
     const dealershipId = req.query.dealershipId as string;
 
     if (!vin || vin.length < 11) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'invalid_vin',
         message: 'VIN must be at least 11 characters',
       });
     }
 
     if (days < 1 || days > 365) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'invalid_days',
         message: 'Days must be between 1 and 365',
       });
     }
 
     if (!dealershipId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'missing_dealership',
         message: 'dealershipId query parameter is required',
       });
@@ -328,7 +333,7 @@ router.get(
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${dealershipId}`
       });
@@ -366,7 +371,7 @@ router.get(
     // ============================================================================ 
     // STEP 7: RETURN RESPONSE
     // ============================================================================
-    return res.json({
+    res.json({
       vin,
       dealershipId,
       valuationCount: valuations.length,
@@ -407,15 +412,16 @@ router.get(
 router.get(
   '/statistics/:year/:make/:model',
   authenticate,                                    // ← Verify JWT token
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response): Promise<void> => {
     // ============================================================================ 
     // STEP 1: VALIDATE PERMISSION
     // ============================================================================
     if (!authorizationService.hasPermission(req.user!, Permission.VIEW_DEALERSHIP_REPORTS)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'insufficient_permissions',
         message: 'You do not have permission to view reports'
       });
+      return;
     }
 
     // ============================================================================ 
@@ -426,21 +432,21 @@ router.get(
     const dealershipId = req.query.dealershipId as string;
 
     if (!year || !make || !model) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'invalid_parameters',
         message: 'year, make, and model are required',
       });
     }
 
     if (days < 1 || days > 365) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'invalid_days',
         message: 'Days must be between 1 and 365',
       });
     }
 
     if (!dealershipId) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'missing_dealership',
         message: 'dealershipId query parameter is required',
       });
@@ -450,7 +456,7 @@ router.get(
     // STEP 3: VALIDATE DEALERSHIP ACCESS
     // ============================================================================
     if (!authorizationService.canAccessDealership(req.user!, dealershipId)) {
-      return res.status(403).json({
+      res.status(403).json({
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${dealershipId}`
       });
@@ -487,7 +493,7 @@ router.get(
     // ============================================================================ 
     // STEP 6: RETURN RESPONSE
     // ============================================================================
-    return res.json({
+    res.json({
       year: parseInt(year),
       make,
       model,
