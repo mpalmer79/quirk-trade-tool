@@ -1,16 +1,52 @@
-# general
+# Dependencies
 node_modules
+.pnpm-store
+
+# Build outputs
 dist
 .build
-.DS_Store
+out
+.next
 
-# env
+# Environment variables - NEVER COMMIT THESE
 .env
 .env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
 
-# next
-.next
-out
+# OS
+.DS_Store
+Thumbs.db
 
-# data
+# IDEs
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.swp
+*.swo
+*~
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Data
 data/receipts/*.json
+data/receipts/*.pdf
+
+# Testing
+coverage
+.nyc_output
+
+# Temporary files
+*.tmp
+.cache
