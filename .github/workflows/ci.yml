@@ -6,11 +6,17 @@ on:
   pull_request:
     branches: [ main ]
 
+# Limit permissions following security best practices
+permissions:
+  contents: read
+
 jobs:
   # ---------- Test jobs (must pass) ----------
   frontend-tests:
     name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -27,6 +33,8 @@ jobs:
   orchestrator-tests:
     name: 🧪 Orchestrator Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
@@ -43,6 +51,8 @@ jobs:
   linting:
     name: 🔍 Linting & Code Quality
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
