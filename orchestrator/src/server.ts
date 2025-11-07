@@ -6,7 +6,7 @@ import rateLimit from 'express-rate-limit';
 
 import { requestLogger } from './middleware/logging.js';
 import { errorHandler, notFoundHandler, asyncHandler } from './middleware/error-handler.js';
-import { authenticate } from './middleware/auth.js';
+// import { authenticate } from './middleware/auth.js';
 
 import { authService } from './services/auth-service.js';
 import { db, validateDatabaseConnection } from './db/index.js';

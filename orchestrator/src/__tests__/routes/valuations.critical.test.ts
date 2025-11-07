@@ -3,7 +3,7 @@ import request from 'supertest';
 import express from 'express';
 import valuationRouter from '../../routes/valuations';
 import { valuationService } from '../../services/valuation-service';
-import jwt from 'jsonwebtoken';
+// import jwt from 'jsonwebtoken';
 
 vi.mock('../../services/valuation-service');
 

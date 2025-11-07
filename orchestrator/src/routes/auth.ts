@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import { z } from 'zod';
 import pino from 'pino';
 import { authenticate } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/error-handler.js';
@@ -223,7 +224,7 @@ router.post(
   '/register',
   authenticate,
   asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    let input: any;
+    let input: z.infer<typeof CreateUserSchema>;
     try {
       input = CreateUserSchema.parse(req.body);
     } catch (error) {

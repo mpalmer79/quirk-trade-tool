@@ -32,7 +32,7 @@ router.post(
     // ============================================================================
     // STEP 1: VALIDATE REQUEST
     // ============================================================================
-    let parsed: any;
+    let parsed: z.infer<typeof VinSchema>;
     try {
       parsed = VinSchema.parse(req.body);
     } catch (error) {

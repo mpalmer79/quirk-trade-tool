@@ -313,6 +313,7 @@ router.get(
         error: 'invalid_vin',
         message: 'VIN must be at least 11 characters',
       });
+      return;
     }
 
     if (days < 1 || days > 365) {
@@ -320,6 +321,7 @@ router.get(
         error: 'invalid_days',
         message: 'Days must be between 1 and 365',
       });
+      return;
     }
 
     if (!dealershipId) {
@@ -327,6 +329,7 @@ router.get(
         error: 'missing_dealership',
         message: 'dealershipId query parameter is required',
       });
+      return;
     }
 
     // ============================================================================ 
@@ -337,6 +340,7 @@ router.get(
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${dealershipId}`
       });
+      return;
     }
 
     const userId = req.user!.userId;
@@ -436,6 +440,7 @@ router.get(
         error: 'invalid_parameters',
         message: 'year, make, and model are required',
       });
+      return;
     }
 
     if (days < 1 || days > 365) {
@@ -443,6 +448,7 @@ router.get(
         error: 'invalid_days',
         message: 'Days must be between 1 and 365',
       });
+      return;
     }
 
     if (!dealershipId) {
@@ -450,6 +456,7 @@ router.get(
         error: 'missing_dealership',
         message: 'dealershipId query parameter is required',
       });
+      return;
     }
 
     // ============================================================================ 
@@ -460,6 +467,7 @@ router.get(
         error: 'dealership_access_denied',
         message: `You do not have access to dealership ${dealershipId}`
       });
+      return;
     }
 
     const userId = req.user!.userId;

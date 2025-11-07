@@ -1,10 +1,11 @@
 import { Router, Request, Response } from 'express';
-import { validate } from '../middleware/validate.js';
+import { z } from 'zod';
+// import { validate } from '../middleware/validate.js';
 import { authenticate } from '../middleware/auth.js';
 import { authorizationService } from '../services/authorization-service.js';
 import { asyncHandler } from '../middleware/error-handler.js';
 import { auditLog } from '../middleware/logging.js';
-import { AppraiseSchema, AppraiseInput } from '../schemas/appraise.js';
+import { AppraiseSchema } from '../schemas/appraise.js';
 import { Permission } from '../types/user.js';
 import { aggregate } from '../valuation/aggregate.js';
 import type { ProviderAdapter, SourceQuote } from '../adapters/types.js';
@@ -66,7 +67,7 @@ router.post(
     // ============================================================================
     // STEP 3: VALIDATE REQUEST BODY
     // ============================================================================
-    let input: any;
+    let input: z.infer<typeof AppraiseSchema>;
     try {
       input = AppraiseSchema.parse(req.body);
     } catch (error) {
@@ -126,7 +127,6 @@ router.post(
       resourceId: receipt.id,
       dealershipId,
       metadata: {
-        vin: input.vin || 'unknown',
         year: input.year,
         make: input.make,
         model: input.model,

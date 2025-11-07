@@ -9,6 +9,7 @@ import { auditLog } from '../middleware/logging.js';
 import { env } from '../config/env.js';
 import { generateReceipt } from '../services/receipt-service.js';
 import { Permission } from '../types/user.js';
+import type { ValuationResult, ValuationRequest } from '../types/valuation.types.js';
 
 // ✅ EXISTING: Keep your types and functions
 export type AppraisalReceipt = {
@@ -179,9 +180,17 @@ router.get(
     // STEP 4: GENERATE PDF
     // ============================================================================
     try {
+      // Create dealership stub from receipt data
+      const dealershipStub = {
+        id: receipt.dealershipId,
+        name: 'Dealership', // Placeholder - ideally fetch from DB
+        city: '',
+        state: ''
+      };
+      
       const pdfStream = await generateReceipt(
-        receipt as any,  // Cast to ValuationResult type for now
-        receipt.input as any
+        receipt as unknown as ValuationResult,
+        dealershipStub
       );
 
       // ============================================================================

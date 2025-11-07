@@ -129,6 +129,7 @@ router.post(
         error: 'validation_error',
         message: 'No CSV file uploaded'
       });
+      return;
     }
 
     const filename = req.file.originalname;
@@ -156,6 +157,7 @@ router.post(
           error: 'validation_error',
           message: 'CSV file is empty or has no data rows'
         });
+        return;
       }
 
       console.log(`📊 Parsed ${records.length} rows from CSV`);
@@ -166,6 +168,7 @@ router.post(
         message: 'Failed to parse CSV file',
         details: error instanceof Error ? error.message : 'Invalid CSV format'
       });
+      return;
     }
 
     // ============================================================================
