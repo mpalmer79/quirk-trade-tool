@@ -1,11 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Don't fail `next build` on ESLint/Prettier nits (you still have a separate lint job)
+  // Keep builds resilient, lint runs separately
   eslint: { ignoreDuringBuilds: true },
 
-  // Existing settings for GitHub Pages/static export
+  // Static export for Netlify (produces frontend/out)
   output: 'export',
-  basePath: process.env.NODE_ENV === 'production' ? '/quirk-trade-tool' : '',
+
+  // Netlify should be root — no basePath
+  basePath: '',
+
   images: { unoptimized: true },
   trailingSlash: true,
 };
