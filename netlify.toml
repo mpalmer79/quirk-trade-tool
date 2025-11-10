@@ -1,19 +1,27 @@
 [build]
-  base = "frontend"
-  command = "npm run build"
-  publish = "out"
-  
-[functions]
-  node_bundler = "esbuild"
+  # If your Next.js project lives in /frontend, keep this:
+  base     = "frontend"
+  # Run the Next build (no "next export")
+  command  = "npm run build"
+  # Publish the Next build output so Netlify's Next runtime can pick it up
+  publish  = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--no-audit --no-fund"
 
-# REMOVED the @netlify/plugin-nextjs plugin
-# (It conflicts with static export mode)
+# Enable Netlify's official Next.js runtime for SSR/ISR, routing, etc.
+[[plugins]]
+  package = "@netlify/next"
 
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+# (Optional) If you want to hard-block the mock route in production at the edge:
+# Remove these if you are using middleware instead.
+# [[redirects]]
+#   from = "/mock"
+#   to = "/"
+#   status = 301
+#   force = true
+# [[redirects]]
+#   from = "/mock/*"
+#   to = "/"
+#   status = 301
+#   force = true
