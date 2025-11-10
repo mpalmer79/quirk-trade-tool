@@ -49,7 +49,16 @@ export default function ValuationForm({
       if (data.Results && setValue) {
         const getValueByVariableId = (id: number) => {
           const result = data.Results.find((r: any) => r.VariableId === id);
-          return result?.Value || '';
+          const v = result?.Value || '';
+          return v && v !== 'Not Applicable' ? v : '';
+        };
+
+        const getValueByName = (name: string) => {
+          const result = data.Results.find(
+            (r: any) => String(r.Variable || '').toLowerCase() === name.toLowerCase()
+          );
+          const v = result?.Value || '';
+          return v && v !== 'Not Applicable' ? v : '';
         };
 
         const year = parseInt(getValueByVariableId(29)) || 0;
@@ -57,18 +66,32 @@ export default function ValuationForm({
         const model = getValueByVariableId(28);
         const trim = getValueByVariableId(109);
 
+        // --- NEW: Body Style (prefer Cab Type, fallback to Body Class) ---
+        let bodyStyle =
+          getValueByName('Cab Type') || // pickup-specific
+          getValueByVariableId(4) ||    // Cab Type by ID (defensive)
+          getValueByName('Body Class') ||
+          getValueByVariableId(5);      // Body Class by ID
+
+        // Normalize to dealership-friendly labels
+        if (bodyStyle) {
+          const s = bodyStyle.toLowerCase();
+          if (s.includes('crew')) bodyStyle = 'Crew Cab';
+          else if (s.includes('double')) bodyStyle = 'Double Cab';
+          else if (s.includes('quad')) bodyStyle = 'Crew/Quad Cab';
+          else if (s.includes('extended')) bodyStyle = 'Extended Cab';
+          else if (s.includes('regular')) bodyStyle = 'Regular Cab';
+          else if (s.includes('pickup')) bodyStyle = 'Pickup';
+        }
+        // -----------------------------------------------------------------
+
         if (year > 1980 && year <= new Date().getFullYear() + 1) {
           setValue('year', year);
         }
-        if (make && make !== 'Not Applicable') {
-          setValue('make', make);
-        }
-        if (model && model !== 'Not Applicable') {
-          setValue('model', model);
-        }
-        if (trim && trim !== 'Not Applicable') {
-          setValue('trim', trim);
-        }
+        if (make) setValue('make', make);
+        if (model) setValue('model', model);
+        if (trim) setValue('trim', trim);
+        if (bodyStyle) setValue('bodyStyle', bodyStyle); // NEW
 
         if (make && model) {
           setVinError('');
@@ -198,6 +221,20 @@ export default function ValuationForm({
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
+
+        {/* NEW: Body Style */}
+        <div className="col-span-2">
+          <label htmlFor="bodyStyle" className="block text-sm font-medium mb-2">
+            Body Style
+          </label>
+          <input
+            id="bodyStyle"
+            {...register('bodyStyle')}
+            placeholder="Auto-filled from VIN (e.g., Crew Cab)"
+            className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+        {/* END NEW */}
       </div>
 
       {/* Mileage */}
