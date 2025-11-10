@@ -1,7 +1,7 @@
 name: Generate orchestrator/package-lock.json
 
 on:
-  workflow_dispatch: {}   # run it manually from the Actions tab
+  workflow_dispatch: {}
 
 jobs:
   lockfile:
@@ -20,13 +20,9 @@ jobs:
           cache: 'npm'
           cache-dependency-path: orchestrator/package-lock.json
 
-      # This resolves dependencies and writes ONLY the lockfile.
+      # Create/refresh ONLY the lockfile based on orchestrator/package.json
       - name: Generate package-lock.json
         run: npm install --package-lock-only --no-audit --no-fund
-
-      - name: Show lockfile summary
-        run: |
-          node -e "const f=require('./package-lock.json'); console.log({ name:f.name, lockfileVersion:f.lockfileVersion, deps:Object.keys(f.packages?.['']?.dependencies||{}).length })"
 
       - name: Commit lockfile
         uses: stefanzweifel/git-auto-commit-action@v5
