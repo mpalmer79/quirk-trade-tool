@@ -4,7 +4,8 @@ A comprehensive multi-source vehicle valuation and dealership management platfor
 
 **Status:** Production-ready demo with licensed provider adapter stubs  
 **Organization:** Full-stack monorepo (frontend + API)  
-**Tech Stack:** Next.js 14, TypeScript, React, Tailwind CSS, Express, PostgreSQL
+**Tech Stack:** Next.js 14, TypeScript, React, Tailwind CSS, Express, PostgreSQL  
+**Deployment:** Netlify (Frontend) + API Server
 
 ---
 
@@ -281,41 +282,73 @@ POST /api/auctions/search
 
 ```
 quirk-trade-tool/
-├── frontend/                          # Next.js 14 application
+├── .github/                          # GitHub Actions CI/CD workflows
+│   └── workflows/
+│       └── ci.yml                    # Lint and test workflow
+│
+├── frontend/                         # Next.js 14 application (Static Export)
 │   ├── app/
-│   │   ├── admin/                    # Admin dashboard pages
-│   │   │   ├── [slug]/               # Dynamic dealership routes
-│   │   │   │   ├── page.tsx          # Admin home
-│   │   │   │   └── users/
-│   │   │   │       └── page.tsx      # ⭐ User management (with apostrophe fix)
-│   │   │   └── page.tsx
-│   │   ├── api/                      # API routes
-│   │   ├── components/               # Shared UI components
-│   │   │   ├── AdminNav.tsx
-│   │   │   ├── PermissionGuard.tsx
-│   │   │   ├── UserForm.tsx
-│   │   │   ├── UserList.tsx
-│   │   │   └── ValuationForm.tsx
-│   │   ├── lib/
-│   │   │   ├── auth-context.tsx      # Auth state management
-│   │   │   ├── auth-types.ts         # User/role/permission types
-│   │   │   ├── permissions.ts        # Permission utilities
-│   │   │   ├── dealerships.ts        # Dealership list
-│   │   │   └── api.ts                # API client
-│   │   ├── login/
-│   │   │   └── page.tsx              # Login page with test users
-│   │   ├── users/
-│   │   │   └── page.tsx              # User management page
-│   │   ├── page.tsx                  # Home/trade tool
-│   │   └── layout.tsx                # Root layout with AuthProvider
-│   ├── components/                   # Global components
-│   ├── hooks/
-│   │   └── useVehicleData.ts         # NHTSA hooks
-│   ├── public/                       # Static assets
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tailwind.config.ts
-│   └── next.config.mjs
+│   │   ├── active-users/            # Active users tracking
+│   │   ├── admin/                   # Admin dashboard
+│   │   │   └── [slug]/              # Dynamic dealership routes
+│   │   ├── components/              # App-level components
+│   │   │   └── __tests__/           # Component tests
+│   │   ├── history/                 # Valuation history
+│   │   ├── lib/                     # Core libraries
+│   │   │   ├── __tests__/           # Library tests
+│   │   │   ├── providers/           # Auth/data providers
+│   │   │   ├── auth-context.tsx     # Auth state management
+│   │   │   ├── auth-types.ts        # User/role types
+│   │   │   ├── permissions.ts       # Permission utilities
+│   │   │   └── dealerships.ts       # Dealership configuration
+│   │   ├── login/                   # Login page
+│   │   ├── mock/                    # Mock data for testing
+│   │   ├── reports/                 # Reports page
+│   │   ├── users/                   # User management page
+│   │   ├── utils/                   # Utility functions
+│   │   │   └── __tests__/           # Utility tests
+│   │   ├── globals.css              # Global styles + Tailwind
+│   │   ├── layout.tsx               # Root layout with providers
+│   │   ├── page.tsx                 # Home/trade valuation tool
+│   │   └── providers.tsx            # App providers wrapper
+│   │
+│   ├── components/                  # Shared UI components
+│   │   ├── AdminNav.tsx
+│   │   ├── PermissionGuard.tsx
+│   │   ├── UserForm.tsx
+│   │   ├── UserList.tsx
+│   │   ├── ValuationForm.tsx
+│   │   └── Footer.tsx
+│   │
+│   ├── hooks/                       # Custom React hooks
+│   │   └── useVehicleData.ts        # NHTSA VIN decoding hook
+│   │
+│   ├── lib/                         # Frontend utilities
+│   │   └── dealerships.ts           # Dealership list (shared)
+│   │
+│   ├── netlify/                     # Netlify serverless functions
+│   │   └── functions/               # API route functions
+│   │
+│   ├── public/                      # Static assets
+│   │   ├── images/
+│   │   └── favicon.ico
+│   │
+│   ├── test/                        # Test configuration
+│   │   └── setup.ts
+│   │
+│   ├── utils/                       # Utility functions
+│   │   └── formatting.ts
+│   │
+│   ├── .env.example                 # Environment variables template
+│   ├── .env.local                   # Local environment (gitignored)
+│   ├── .eslintrc.json               # ESLint configuration
+│   ├── .prettierrc.json             # Prettier configuration
+│   ├── next.config.mjs              # Next.js config (static export)
+│   ├── package.json                 # Frontend dependencies
+│   ├── postcss.config.mjs           # PostCSS configuration
+│   ├── tailwind.config.ts           # Tailwind CSS configuration
+│   ├── tsconfig.json                # TypeScript configuration
+│   └── vitest.config.ts             # Vitest test configuration
 │
 ├── orchestrator/                     # Express API server
 │   ├── src/
@@ -372,21 +405,30 @@ quirk-trade-tool/
 ├── data/
 │   └── receipts/                    # Appraisal receipts (runtime)
 │
-├── docs/
+├── docs/                            # Documentation
 │   ├── API.md                       # Complete API reference
-│   ├── integration-checklist.md
-│   └── wholesale-pricing-setup/
+│   ├── CI-CD_SETUP_GUIDE.md         # CI/CD workflow documentation
+│   ├── integration-checklist.md     # Pre-launch checklist
+│   ├── QAA_QUICK_SETUP.md          # Quincy Auto Auction setup
+│   ├── QAA_DATA_IMPORT_GUIDE.md    # QAA import guide
+│   ├── QAA_IMPLEMENTATION_SUMMARY.md
+│   └── TESTING_GUIDE.md             # Testing documentation
 │
 ├── postman/
 │   └── Quirk-Trade-Tool-API.postman_collection.json
 │
-├── IMPLEMENTATION_SUMMARY.md        # User management feature summary
-├── USER_PERMISSIONS_GUIDE.md        # Detailed permissions documentation
 ├── AUTH_SETUP_README.md             # Authentication quick start
-├── CONTRIBUTING.md
-├── LICENSE
-├── package.json
-└── pnpm-workspace.yaml
+├── CONTRIBUTING.md                  # Contribution guidelines
+├── CRITICAL_REQUIREMENTS.md         # ⚠️ Non-negotiable requirements
+├── IMPLEMENTATION_SUMMARY.md        # User management summary
+├── LICENSE                          # MIT License
+├── README.md                        # This file
+├── SECURITY.md                      # Security policy
+├── TESTING_GUIDE.md                 # Testing guide
+├── USER_PERMISSIONS_GUIDE.md        # Permissions documentation
+├── netlify.toml                     # Netlify deployment config
+├── package.json                     # Root workspace config
+└── pnpm-workspace.yaml              # pnpm monorepo config
 ```
 
 ---
@@ -402,7 +444,7 @@ quirk-trade-tool/
 
 ```bash
 # Clone the repo
-git clone https://github.com/your-org/quirk-trade-tool.git
+git clone https://github.com/mpalmer79/quirk-trade-tool.git
 cd quirk-trade-tool
 
 # Install dependencies for both frontend and API
@@ -413,9 +455,71 @@ pnpm dev
 ```
 
 **Access the application:**
-- Frontend: https://mpalmer79.github.io/quirk-trade-tool/
-- API: https://mpalmer79.github.io/quirk-trade-tool/admin/
-- Login page: https://mpalmer79.github.io/quirk-trade-tool/login/
+- **Production (Netlify):** https://tradetool.netlify.app
+- **Local Development:** http://localhost:3000
+- **Admin Dashboard:** http://localhost:3000/users
+- **Login Page:** http://localhost:3000/login
+
+---
+
+## 🌐 Deployment
+
+### Netlify Configuration
+
+The frontend is deployed to Netlify as a **static export** (no server-side rendering).
+
+**Key Configuration Files:**
+
+#### `netlify.toml` (Root)
+```toml
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "out"  # Static export output
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--no-audit --no-fund"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+```
+
+#### `frontend/next.config.mjs`
+```javascript
+const nextConfig = {
+  output: 'export',        // Static HTML export
+  basePath: '',            # No basePath for Netlify
+  images: { unoptimized: true },
+  trailingSlash: true,
+};
+```
+
+### GitHub Actions CI/CD
+
+Automated workflows run on every push:
+
+```yaml
+# .github/workflows/ci.yml
+- Lints frontend code
+- Runs TypeScript checks on orchestrator
+- Validates on pull requests and main branch
+```
+
+### Environment Variables
+
+**Netlify Dashboard** → Site settings → Environment variables:
+```env
+NEXT_PUBLIC_API_URL=https://api.yoursite.com
+NEXT_PUBLIC_APP_NAME=Quirk Trade Tool
+```
+
+**For local development** (`.env.local`):
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+```
 
 ---
 
@@ -431,7 +535,7 @@ pnpm dev
 
 ### Quick Login
 
-1. Navigate to http://localhost:3000/login
+1. Navigate to http://localhost:3000/login (or https://tradetool.netlify.app/login)
 2. Click "Quick Test Login" button for any role
 3. Or manually enter email/password
 
@@ -458,7 +562,7 @@ The user management form automatically generates email addresses from names:
 | Mary-Jane Smith | mjsmith@quirkcars.com | ✅ Hyphen removed |
 | Patrick O'Connor Jr | poconnorjr@quirkcars.com | ✅ Full last name |
 
-**Implementation:** File `frontend/app/admin/[slug]/users/page.tsx` (lines 57-87)  
+**Implementation:** `frontend/app/users/page.tsx` (lines 126-142)  
 **Key Change:** Regex pattern `/['-]/g` strips apostrophes and hyphens during email generation
 
 #### How It Works
@@ -684,11 +788,12 @@ CREATE TABLE appraisals (
 |----------|---------|
 | **[CRITICAL_REQUIREMENTS.md](./CRITICAL_REQUIREMENTS.md)** | ⚠️ **Non-negotiable code requirements** |
 | [docs/API.md](./docs/API.md) | Complete API reference with all endpoints |
+| [docs/CI-CD_SETUP_GUIDE.md](./docs/CI-CD_SETUP_GUIDE.md) | GitHub Actions workflow documentation |
 | [USER_PERMISSIONS_GUIDE.md](./USER_PERMISSIONS_GUIDE.md) | Detailed permission system explanation |
 | [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) | User management feature summary |
 | [AUTH_SETUP_README.md](./AUTH_SETUP_README.md) | Authentication quick start guide |
-| [INTEGRATION_EXAMPLES.tsx](./INTEGRATION_EXAMPLES.tsx) | 12 copy-paste code examples |
 | [docs/integration-checklist.md](./docs/integration-checklist.md) | Pre-launch checklist |
+| [docs/QAA_QUICK_SETUP.md](./docs/QAA_QUICK_SETUP.md) | Quincy Auto Auction setup guide |
 
 ---
 
@@ -742,34 +847,16 @@ pnpm format
 
 ---
 
-## 🚢 Deployment
-
-### Environment Variables
-
-**Frontend** (`.env.local`):
-```env
-NEXT_PUBLIC_API_URL=https://api.quirk.com
-NEXT_PUBLIC_APP_NAME=Quirk Trade Tool
-```
-
-**API** (`.env`):
-```env
-NODE_ENV=production
-PORT=4000
-DATABASE_URL=postgresql://user:pass@host/db
-JWT_SECRET=your-secret-key-here
-NHTSA_API_URL=https://vpic.nhtsa.dot.gov/api
-```
-
-### Docker Deployment
-
-See deployment documentation for containerization setup.
-
----
-
 ## 📝 Recent Changes
 
-### v2.1.0 - User Management & Email Generation (Latest) ⭐
+### v2.2.0 - Netlify Deployment (Latest) 🚀
+- ✅ Migrated from GitHub Pages to Netlify
+- ✅ Configured Next.js static export mode
+- ✅ Set up automated CI/CD with GitHub Actions
+- ✅ Fixed import paths and ESLint errors
+- ✅ Optimized build configuration for Netlify
+
+### v2.1.0 - User Management & Email Generation ⭐
 - ✅ User CRUD interface with role-based access
 - ✅ Email auto-generation from names
 - ✅ **Apostrophe/hyphen handling** (Steve O'Brien → sobrien@quirkcars.com)
@@ -819,9 +906,10 @@ This repo ships with **demo provider adapters** that simulate valuation results.
 ## 🆘 Support & Issues
 
 - **Documentation:** Start with [docs/API.md](./docs/API.md) and [USER_PERMISSIONS_GUIDE.md](./USER_PERMISSIONS_GUIDE.md)
-- **Examples:** Check [INTEGRATION_EXAMPLES.tsx](./INTEGRATION_EXAMPLES.tsx)
+- **CI/CD Guide:** See [docs/CI-CD_SETUP_GUIDE.md](./docs/CI-CD_SETUP_GUIDE.md)
 - **Testing:** Use [postman/Quirk-Trade-Tool-API.postman_collection.json](./postman/Quirk-Trade-Tool-API.postman_collection.json)
 - **Bug Reports:** Open issue with detailed reproduction steps
+- **Production Site:** https://tradetool.netlify.app
 
 ---
 
@@ -839,6 +927,8 @@ Import weekly wholesale auction data to enhance trade valuations with real marke
 - **Full Guide:** [docs/QAA_DATA_IMPORT_GUIDE.md](docs/QAA_DATA_IMPORT_GUIDE.md)
 - **Technical Details:** [docs/QAA_IMPLEMENTATION_SUMMARY.md](docs/QAA_IMPLEMENTATION_SUMMARY.md)
 
+---
+
 ## 🎉 Ready to Go!
 
 You now have a complete vehicle valuation and dealership management system:
@@ -849,6 +939,7 @@ You now have a complete vehicle valuation and dealership management system:
 - ✅ User-friendly UI with smart email generation
 - ✅ Comprehensive API
 - ✅ Production-ready architecture
+- ✅ Deployed to Netlify with CI/CD
 
 ---
 
@@ -856,5 +947,5 @@ You now have a complete vehicle valuation and dealership management system:
 
 ---
 
-*Last Updated: November 05, 2025*  
-*Version: 2.1.0*
+*Last Updated: November 10, 2025*  
+*Version: 2.2.0*
