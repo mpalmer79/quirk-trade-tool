@@ -1,11 +1,16 @@
 # netlify.toml
+
 [build]
+  # Build only the frontend workspace/app
   command = "npm --prefix frontend run build"
+  # Next.js static export output
   publish = "frontend/out"
 
 [dev]
+  # Local dev Functions directory
   functions = "netlify/functions"
 
+# Route /api/* to serverless functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
