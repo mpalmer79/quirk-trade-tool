@@ -2,16 +2,13 @@ import type { Handler } from "@netlify/functions";
 
 export const handler: Handler = async (event) => {
   const vin = event.queryStringParameters?.vin;
-  if (!vin) {
-    return { statusCode: 400, body: JSON.stringify({ error: "Missing VIN" }) };
-  }
+  if (!vin) return { statusCode: 400, body: JSON.stringify({ error: "Missing vin" }) };
 
-  const resp = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
-  const body = await resp.text();
-
+  const upstream = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${encodeURIComponent(vin)}?format=json`);
+  const body = await upstream.text();
   return {
-    statusCode: resp.status,
+    statusCode: upstream.status,
     body,
-    headers: { "content-type": resp.headers.get("content-type") || "application/json" }
+    headers: { "content-type": upstream.headers.get("content-type") || "application/json" }
   };
 };
