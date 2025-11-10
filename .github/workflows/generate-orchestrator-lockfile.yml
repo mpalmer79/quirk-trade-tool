@@ -1,0 +1,35 @@
+name: Generate orchestrator/package-lock.json
+
+on:
+  workflow_dispatch: {}   # run it manually from the Actions tab
+
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: orchestrator
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: orchestrator/package-lock.json
+
+      # This resolves dependencies and writes ONLY the lockfile.
+      - name: Generate package-lock.json
+        run: npm install --package-lock-only --no-audit --no-fund
+
+      - name: Show lockfile summary
+        run: |
+          node -e "const f=require('./package-lock.json'); console.log({ name:f.name, lockfileVersion:f.lockfileVersion, deps:Object.keys(f.packages?.['']?.dependencies||{}).length })"
+
+      - name: Commit lockfile
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore(orchestrator): add/update package-lock.json"
+          file_pattern: orchestrator/package-lock.json
