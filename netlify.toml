@@ -1,17 +1,21 @@
-# netlify.toml
+# netlify.toml  (kept at repo root)
 
 [build]
-  command = "npm --prefix frontend run build"
-  publish = "frontend/out"
+  # Tell Netlify the working directory is the frontend app
+  base    = "frontend"
+  command = "npm ci && npm run build"
+  publish = "out"            # resolves to frontend/out
 
-[build.environment]
-  NODE_VERSION = "20"
-  NPM_VERSION  = "10.9.4"
+# Point Functions inside the frontend tree
+[functions]
+  directory = "netlify/functions"   # resolves to frontend/netlify/functions
 
+# Local dev (optional)
 [dev]
   functions = "netlify/functions"
 
+# API proxy to serverless functions
 [[redirects]]
   from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  to   = "/.netlify/functions/:splat"
   status = 200
