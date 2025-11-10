@@ -15,6 +15,7 @@ export const FormSchema = z.object({
   make: z.string().min(1),
   model: z.string().min(1),
   trim: z.string().optional().default(""),
+  bodyStyle: z.string().optional().default(""), // NEW: populate from vPIC Cab Type / Body Class
   mileage: z.coerce.number().int().min(0).max(1_000_000),
   condition: z.coerce.number().int().min(1).max(5),
   options: z.array(z.string()).default([]),
@@ -64,4 +65,5 @@ export type DecodedVin = {
   make?: string;
   model?: string;
   trim?: string;
+  bodyStyle?: string; // NEW
 };
