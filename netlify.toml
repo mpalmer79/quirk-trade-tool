@@ -1,6 +1,6 @@
 [build]
-  command = "npm run build"
-  publish = "dist"       # your front-end build output folder
+  command = "npm run build --workspaces"   # keep if you build multiple workspaces; otherwise your existing build command
+  publish = "frontend/out"                 # or "frontend/.next" if you export statically; adjust to your frontend’s build output
 
 [dev]
   functions = "netlify/functions"
