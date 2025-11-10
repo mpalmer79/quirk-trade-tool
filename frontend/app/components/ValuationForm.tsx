@@ -1,7 +1,12 @@
 'use client';
 
 import React from 'react';
-import { UseFormRegister, FieldErrors, UseFormWatch, UseFormSetValue } from 'react-hook-form';
+import {
+  UseFormRegister,
+  FieldErrors,
+  UseFormWatch,
+  UseFormSetValue
+} from 'react-hook-form';
 import type { FormData, Summary } from '../lib/types';
 
 interface ValuationFormProps {
@@ -30,20 +35,22 @@ export default function ValuationForm({
       setVinError('Please enter a 17-character VIN');
       return;
     }
-    
+
     setIsDecoding(true);
     setVinError('');
-    
+
     try {
-      const response = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`);
+      const response = await fetch(
+        `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVin/${vin}?format=json`
+      );
       const data = await response.json();
-      
+
       if (data.Results && setValue) {
         const getValueByVariableId = (id: number) => {
           const result = data.Results.find((r: any) => r.VariableId === id);
           return result?.Value || '';
         };
-        
+
         const year = parseInt(getValueByVariableId(29)) || 0;
         const make = getValueByVariableId(26);
         const model = getValueByVariableId(28);
@@ -61,7 +68,7 @@ export default function ValuationForm({
         if (trim && trim !== 'Not Applicable') {
           setValue('trim', trim);
         }
-        
+
         if (make && model) {
           setVinError('');
         } else {
@@ -85,7 +92,6 @@ export default function ValuationForm({
         </label>
         <select
           id="storeId"
-          name="storeId"
           {...register('storeId', { required: 'Please select a dealership' })}
           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
@@ -93,7 +99,9 @@ export default function ValuationForm({
           <option value="1">Quirk Chevrolet - Manchester, NH</option>
           <option value="2">Quirk Buick GMC - Braintree, MA</option>
         </select>
-        {errors.storeId && <p className="text-red-500 text-sm mt-1">{errors.storeId.message}</p>}
+        {errors.storeId && (
+          <p className="text-red-500 text-sm mt-1">{errors.storeId.message}</p>
+        )}
       </div>
 
       {/* VIN Input with Decode Button */}
@@ -104,8 +112,7 @@ export default function ValuationForm({
         <div className="flex gap-2">
           <input
             id="vin"
-            name="vin"
-            {...register('vin', { 
+            {...register('vin', {
               required: 'VIN is required',
               minLength: { value: 17, message: 'VIN must be 17 characters' },
               maxLength: { value: 17, message: 'VIN must be 17 characters' }
@@ -114,7 +121,7 @@ export default function ValuationForm({
             className="flex-1 p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             maxLength={17}
             style={{ textTransform: 'uppercase' }}
-            onBlur={(e) => e.target.value = e.target.value.toUpperCase()}
+            onBlur={(e) => (e.target.value = e.target.value.toUpperCase())}
           />
           <button
             type="button"
@@ -137,53 +144,51 @@ export default function ValuationForm({
           </label>
           <input
             id="year"
-            name="year"
-            {...register('year', { 
+            type="number"
+            {...register('year', {
               required: 'Year is required',
               valueAsNumber: true,
               min: { value: 1980, message: 'Year must be 1980 or later' },
               max: { value: new Date().getFullYear() + 1, message: 'Invalid year' }
             })}
-            type="number"
             placeholder="2020"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           {errors.year && <p className="text-red-500 text-sm mt-1">{errors.year.message}</p>}
         </div>
-        
+
         <div>
           <label htmlFor="make" className="block text-sm font-medium mb-2">
             Make <span className="text-red-500">*</span>
           </label>
           <input
             id="make"
-            name="make"
             {...register('make', { required: 'Make is required' })}
             placeholder="Chevrolet"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           {errors.make && <p className="text-red-500 text-sm mt-1">{errors.make.message}</p>}
         </div>
-        
+
         <div>
           <label htmlFor="model" className="block text-sm font-medium mb-2">
             Model <span className="text-red-500">*</span>
           </label>
           <input
             id="model"
-            name="model"
             {...register('model', { required: 'Model is required' })}
             placeholder="Silverado"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           {errors.model && <p className="text-red-500 text-sm mt-1">{errors.model.message}</p>}
         </div>
-        
+
         <div>
-          <label htmlFor="trim" className="block text-sm font-medium mb-2">Trim</label>
+          <label htmlFor="trim" className="block text-sm font-medium mb-2">
+            Trim
+          </label>
           <input
             id="trim"
-            name="trim"
             {...register('trim')}
             placeholder="LT (optional)"
             className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -198,18 +203,19 @@ export default function ValuationForm({
         </label>
         <input
           id="mileage"
-          name="mileage"
-          {...register('mileage', { 
+          type="number"
+          {...register('mileage', {
             required: 'Mileage is required',
             valueAsNumber: true,
             min: { value: 0, message: 'Mileage must be positive' },
             max: { value: 999999, message: 'Mileage seems too high' }
           })}
-          type="number"
           placeholder="50000"
           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
-        {errors.mileage && <p className="text-red-500 text-sm mt-1">{errors.mileage.message}</p>}
+        {errors.mileage && (
+          <p className="text-red-500 text-sm mt-1">{errors.mileage.message}</p>
+        )}
       </div>
 
       {/* Condition */}
@@ -219,10 +225,9 @@ export default function ValuationForm({
         </label>
         <select
           id="condition"
-          name="condition"
-          {...register('condition', { 
+          {...register('condition', {
             required: 'Condition is required',
-            valueAsNumber: true 
+            valueAsNumber: true
           })}
           className="w-full p-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
@@ -233,24 +238,23 @@ export default function ValuationForm({
           <option value={2}>2 - Fair (Noticeable Issues)</option>
           <option value={1}>1 - Poor (Significant Problems)</option>
         </select>
-        {errors.condition && <p className="text-red-500 text-sm mt-1">{errors.condition.message}</p>}
+        {errors.condition && (
+          <p className="text-red-500 text-sm mt-1">{errors.condition.message}</p>
+        )}
       </div>
 
       {/* Options (Optional) */}
       <div>
-        <label className="block text-sm font-medium mb-2">Additional Options</label>
+        <span className="block text-sm font-medium mb-2">Additional Options</span>
         <div className="space-y-2">
-          {['Leather Seats', 'Sunroof', 'Navigation', 'Premium Audio', 'Tow Package'].map(option => (
-            <label key={option} className="flex items-center">
-              <input
-                type="checkbox"
-                value={option}
-                {...register('options')}
-                className="mr-2"
-              />
-              <span className="text-sm">{option}</span>
-            </label>
-          ))}
+          {['Leather Seats', 'Sunroof', 'Navigation', 'Premium Audio', 'Tow Package'].map(
+            (option) => (
+              <label key={option} className="flex items-center">
+                <input type="checkbox" value={option} {...register('options')} className="mr-2" />
+                <span className="text-sm">{option}</span>
+              </label>
+            )
+          )}
         </div>
       </div>
 
