@@ -1,21 +1,24 @@
-# netlify.toml  (kept at repo root)
-
 [build]
-  # Tell Netlify the working directory is the frontend app
-  base    = "frontend"
-  command = "npm ci && npm run build"
-  publish = "out"            # resolves to frontend/out
+  base = "frontend"
+  command = "npm run build"
+  publish = "frontend/out"
+  functions = "frontend/netlify/functions"
 
-# Point Functions inside the frontend tree
 [functions]
-  directory = "netlify/functions"   # resolves to frontend/netlify/functions
+  node_bundler = "esbuild"
+  included_files = ["frontend/netlify/functions/**"]
 
-# Local dev (optional)
-[dev]
-  functions = "netlify/functions"
+# Optional: tame install noise and speed it up a bit
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--no-audit --no-fund"
 
-# API proxy to serverless functions
+# Next.js runtime plugin (recommended)
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Proxy dynamic routes to functions (keep if you use /api/*)
 [[redirects]]
   from = "/api/*"
-  to   = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/:splat"
   status = 200
