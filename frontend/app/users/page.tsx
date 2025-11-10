@@ -6,7 +6,7 @@ import { PermissionGuard } from "@/components/PermissionGuard";
 import { AdminNav } from "@/components/AdminNav";
 import { Permission } from "@/app/lib/auth-types";
 // ✅ FIX: use @lib (not @/lib)
-import { DEALERSHIPS } from "@lib/dealerships";
+import { DEALERSHIPS } from "@/app/lib/dealerships";
 
 import {
   Users,
