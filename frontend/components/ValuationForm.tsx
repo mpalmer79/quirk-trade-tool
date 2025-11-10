@@ -7,8 +7,8 @@ import {
   UseFormWatch,
   UseFormSetValue
 } from 'react-hook-form';
-import type { FormData, Summary } from '../lib/types';
-import { DEALERSHIPS } from '../lib/dealerships';
+import type { FormData, Summary } from '../app/lib/types';
+import { DEALERSHIPS } from '../app/lib/dealerships';
 
 interface ValuationFormProps {
   register: UseFormRegister<FormData>;
