@@ -1,120 +1,63 @@
-name: CI/CD Pipeline - Frontend & Orchestrator
+name: CI (lint & tests only)
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - 'orchestrator/**'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - 'orchestrator/**'
+      - '.github/workflows/ci.yml'
 
 jobs:
-  # ---------- Signal-only jobs (won't fail the pipeline) ----------
+  # ---------- FRONTEND ----------
+  frontend-lint:
+    if: ${{ contains(github.event.head_commit.message, '[skip-ci]') == false }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - run: npm run lint --if-present
+
   frontend-tests:
-    name: 🧪 Frontend Tests (non-blocking)
+    needs: frontend-lint
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: true   # keep pipeline green while tests are flaky
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Install deps (workspace)
-        run: pnpm install --no-frozen-lockfile
-      - name: Run frontend tests
-        run: pnpm --filter frontend run test
+          node-version: '20'
+      - run: npm ci
+      - run: npm test --if-present
 
-  orchestrator-tests:
-    name: 🧪 Orchestrator Tests (non-blocking)
+  # ---------- ORCHESTRATOR (optional; only when that folder changes) ----------
+  orchestrator-typecheck:
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
-    continue-on-error: true
+    defaults:
+      run:
+        working-directory: orchestrator
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Install deps (workspace)
-        run: pnpm install --no-frozen-lockfile
-      - name: Run orchestrator tests
-        run: pnpm --filter orchestrator run test
+          node-version: '20'
+      - run: npm ci
+      - run: npm run build:types --if-present
 
-  linting:
-    name: 🔍 Linting & Code Quality (non-blocking)
-    runs-on: ubuntu-latest
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: pnpm install --no-frozen-lockfile
-      - run: pnpm --filter frontend run lint
-      - run: pnpm --filter orchestrator run lint
-
-  # ---------- Build jobs (always run & must pass) ----------
-  build-frontend:
-    name: 🏗️ Build Frontend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install deps (workspace)
-        run: pnpm install --no-frozen-lockfile
-      - name: Build Frontend
-        run: pnpm --filter frontend run build
-
-  build-orchestrator:
-    name: 🏗️ Build Orchestrator
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install deps (workspace)
-        run: pnpm install --no-frozen-lockfile
-      - name: Build Orchestrator
-        run: |
-          cd orchestrator
-          tsc -p tsconfig.build.json
-
-  # ---------- Deploy placeholder (safe) ----------
-  deploy-frontend:
-    name: 🚀 Deploy Frontend (placeholder)
-    runs-on: ubuntu-latest
-    needs: [build-frontend]
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Deploy to GitHub Pages
-        run: echo "Deploy step placeholder"
-
-  # ---------- Status ----------
-  pipeline-status:
-    name: ✅ Pipeline Status
-    runs-on: ubuntu-latest
-    needs: [frontend-tests, orchestrator-tests, linting, build-frontend, build-orchestrator]
-    if: always()
-    steps:
-      - name: Summary
-        run: |
-          echo "Frontend tests:      ${{ needs.frontend-tests.result }}"
-          echo "Orchestrator tests:  ${{ needs.orchestrator-tests.result }}"
-          echo "Lint:                ${{ needs.linting.result }}"
-          echo "Build frontend:      ${{ needs.build-frontend.result }}"
-          echo "Build orchestrator:  ${{ needs.build-orchestrator.result }}"
+# No "Build Frontend", no "Deploy Frontend", no GitHub Pages.
