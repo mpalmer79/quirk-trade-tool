@@ -1,25 +1,50 @@
+// netlify/functions/jdpower.ts
 import type { Handler } from "@netlify/functions";
 
+// One function that handles both "lookup" (get ucgvehicleid) and "value" (get pricing)
 export const handler: Handler = async (event) => {
-  const API_KEY = process.env.JDPOWER_API_KEY!;
-  const baseUrl = process.env.JDPOWER_BASE_URL || "https://cloud.jdpower.ai/data-api/valuationservices";
+  try {
+    const API_KEY = process.env.JDPOWER_API_KEY!;
+    const BASE = process.env.JDPOWER_BASE_URL || "https://cloud.jdpower.ai/data-api/valuationservices";
 
-  const qs = new URLSearchParams(event.queryStringParameters || {});
-  
-  const upstream = await fetch(`${baseUrl}/valuation/valueByVehicleId?${qs}`, {
-    headers: {
-      "api-key": API_KEY
-      // Or if their spec uses a different header: "Authorization": `Bearer ${API_KEY}`
+    if (!API_KEY) {
+      return { statusCode: 500, body: JSON.stringify({ error: "JDPOWER_API_KEY missing" }) };
     }
-  });
 
-  const body = await upstream.text();
+    const qs = new URLSearchParams(event.queryStringParameters || {});
+    const mode = (qs.get("mode") || "value").toLowerCase();
 
-  return {
-    statusCode: upstream.status,
-    body,
-    headers: {
-      "content-type": upstream.headers.get("content-type") || "application/json"
+    let upstreamUrl = "";
+    if (mode === "lookup") {
+      // Required: year, make, model
+      const modelyear = qs.get("modelyear");
+      const make = qs.get("make");
+      const model = qs.get("model");
+      const period = qs.get("period") || "0"; // current period
+      if (!modelyear || !make || !model) {
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing modelyear/make/model for lookup" }) };
+      }
+      upstreamUrl = `${BASE}/valuation/bodies?period=${encodeURIComponent(period)}&modelyear=${encodeURIComponent(modelyear)}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`;
+    } else {
+      // Required: ucgvehicleid, mileage, region
+      const ucgvehicleid = qs.get("ucgvehicleid");
+      const mileage = qs.get("mileage") || "0";
+      const region = qs.get("region") || "1";
+      const period = qs.get("period") || "0";
+      if (!ucgvehicleid) {
+        return { statusCode: 400, body: JSON.stringify({ error: "Missing ucgvehicleid for value" }) };
+      }
+      upstreamUrl = `${BASE}/valuation/valueByVehicleId?period=${encodeURIComponent(period)}&ucgvehicleid=${encodeURIComponent(ucgvehicleid)}&region=${encodeURIComponent(region)}&mileage=${encodeURIComponent(mileage)}`;
     }
-  };
+
+    const resp = await fetch(upstreamUrl, { headers: { "api-key": API_KEY } });
+    const text = await resp.text();
+    return {
+      statusCode: resp.status,
+      body: text,
+      headers: { "content-type": resp.headers.get("content-type") || "application/json" }
+    };
+  } catch (err: any) {
+    return { statusCode: 500, body: JSON.stringify({ error: String(err?.message || err) }) };
+  }
 };
