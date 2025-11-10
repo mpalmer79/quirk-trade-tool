@@ -3,14 +3,19 @@ const nextConfig = {
   // Keep builds resilient, lint runs separately
   eslint: { ignoreDuringBuilds: true },
 
-  // Static export for Netlify (produces frontend/out)
-  output: 'export',
+  // ✅ REMOVED: output: 'export' - Not needed for Netlify!
+  // Netlify has native Next.js support via @netlify/plugin-nextjs
 
-  // Netlify should be root — no basePath
-  basePath: '',
+  images: {
+    // Netlify Image CDN handles optimization automatically
+    formats: ['image/avif', 'image/webp'],
+  },
 
-  images: { unoptimized: true },
-  trailingSlash: true,
+  // Better development experience
+  reactStrictMode: true,
+
+  // Optional: If you need trailing slashes for your routes
+  // trailingSlash: true,
 };
 
 export default nextConfig;
