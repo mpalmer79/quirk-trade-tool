@@ -3,6 +3,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import ValuationForm from './components/ValuationForm';
+import { Hero } from './components/Hero';
 import type { FormData, Summary } from './lib/types';
 
 // If you later stand up the orchestrator, set this in Pages env:
@@ -79,20 +80,25 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen bg-white">
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Vehicle Valuation</h1>
+    <main className="min-h-screen bg-gray-50">
+      <Hero />
+      <div className="max-w-5xl mx-auto px-4 py-12">
+        <div className="bg-white rounded-xl shadow-xl p-8">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8">
+            Vehicle Trade-In Valuation
+          </h2>
 
-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
-          <ValuationForm
-            register={register}
-            errors={errors}
-            isSubmitting={isSubmitting}
-            watch={watch}
-            setValue={setValue}
-            summary={summary}
-          />
-        </form>
+          <form onSubmit={handleSubmit(onSubmit)} noValidate>
+            <ValuationForm
+              register={register}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              watch={watch}
+              setValue={setValue}
+              summary={summary}
+            />
+          </form>
+        </div>
       </div>
     </main>
   );
