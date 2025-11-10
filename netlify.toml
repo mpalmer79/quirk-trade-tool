@@ -3,8 +3,6 @@
   base = "frontend"
   # Run the Next build (no "next export")
   command = "npm run build"
-  # Publish the Next build output so Netlify's Next runtime can pick it up
-  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
