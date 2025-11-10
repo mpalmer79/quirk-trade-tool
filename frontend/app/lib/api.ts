@@ -3,7 +3,8 @@ import type { FormData, SourceQuote, DepreciationData } from './types';
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, '') || 'http://localhost:4000';
 
-export const apiUrl = (path: string) => `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
+export const apiUrl = (path: string) =>
+  `${API_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
 
 export async function calculateValuation(data: FormData) {
   const payload = {
@@ -12,6 +13,7 @@ export async function calculateValuation(data: FormData) {
     make: data.make,
     model: data.model,
     trim: data.trim || undefined,
+    bodyStyle: data.bodyStyle || undefined, // NEW
     mileage: parseInt(data.mileage.toString()),
     condition: parseInt(data.condition.toString()),
     vin: data.vin || undefined,
