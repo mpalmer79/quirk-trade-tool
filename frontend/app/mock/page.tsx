@@ -10,6 +10,7 @@ type MockForm = {
   make?: string;
   model?: string;
   trim?: string;
+  bodyStyle?: string; // NEW
   mileage?: number;
   condition?: number;
   options?: string[];
@@ -115,6 +116,12 @@ export default function MockReceiptPage() {
               <div className="text-gray-600">Trim</div>
               <div className="font-medium">{form?.trim || '—'}</div>
             </div>
+            {/* NEW: Body Style */}
+            <div>
+              <div className="text-gray-600">Body Style</div>
+              <div className="font-medium">{form?.bodyStyle || '—'}</div>
+            </div>
+            {/* END NEW */}
             <div>
               <div className="text-gray-600">Mileage</div>
               <div className="font-medium">
