@@ -9,14 +9,14 @@
   ],
   "scripts": {
     "install:all": "pnpm install",
-    // Build ONLY the Next.js frontend (what Netlify should run)
+    
     "build": "pnpm --filter ./frontend run build",
-    // Optional: build everything locally if you want
+    
     "build:all": "pnpm -w --recursive run build",
-    // Convenience scripts for local work on the frontend
+   
     "dev": "pnpm --filter ./frontend run dev",
     "start": "pnpm --filter ./frontend run start",
-    // Workspace-wide test/lint (safe to keep)
+   
     "test": "pnpm -w --recursive run test",
     "lint": "pnpm -w --recursive run lint"
   }
