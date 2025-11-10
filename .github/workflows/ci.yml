@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
       - run: npm test --if-present
 
   # ---------- ORCHESTRATOR (optional; only when that folder changes) ----------
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm ci
+      - run: npm install
       - run: npm run build:types --if-present
 
 # No "Build Frontend", no "Deploy Frontend", no GitHub Pages.
