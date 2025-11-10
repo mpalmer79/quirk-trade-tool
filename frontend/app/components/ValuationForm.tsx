@@ -126,7 +126,7 @@ export default function ValuationForm({
           <button
             type="button"
             onClick={handleVinDecode}
-            disabled={isDecoding || !watch('vin') || watch('vin').length !== 17}
+            disabled={isDecoding || !watch('vin') || watch('vin')?.length !== 17}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
           >
             {isDecoding ? 'Decoding...' : 'Decode VIN'}
