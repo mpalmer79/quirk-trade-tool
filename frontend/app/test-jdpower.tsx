@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { jdLookupUcgVehicleId, jdFetchValues } from '../lib/providers/jdpower';
+import { jdLookupUcgVehicleId, jdFetchValues } from './lib/providers/jdpower';
 
 export default function JDPowerTestPage() {
   const [year, setYear] = useState('2022');
