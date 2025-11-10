@@ -1,12 +1,10 @@
 // netlify/functions/jdpower.ts
 import type { Handler } from "@netlify/functions";
 
-// One function that handles both "lookup" (get ucgvehicleid) and "value" (get pricing)
 export const handler: Handler = async (event) => {
   try {
     const API_KEY = process.env.JDPOWER_API_KEY!;
     const BASE = process.env.JDPOWER_BASE_URL || "https://cloud.jdpower.ai/data-api/valuationservices";
-
     if (!API_KEY) {
       return { statusCode: 500, body: JSON.stringify({ error: "JDPOWER_API_KEY missing" }) };
     }
@@ -16,7 +14,7 @@ export const handler: Handler = async (event) => {
 
     let upstreamUrl = "";
     if (mode === "lookup") {
-      // Required: year, make, model
+      // Required for lookup
       const modelyear = qs.get("modelyear");
       const make = qs.get("make");
       const model = qs.get("model");
@@ -26,7 +24,7 @@ export const handler: Handler = async (event) => {
       }
       upstreamUrl = `${BASE}/valuation/bodies?period=${encodeURIComponent(period)}&modelyear=${encodeURIComponent(modelyear)}&make=${encodeURIComponent(make)}&model=${encodeURIComponent(model)}`;
     } else {
-      // Required: ucgvehicleid, mileage, region
+      // Required for value
       const ucgvehicleid = qs.get("ucgvehicleid");
       const mileage = qs.get("mileage") || "0";
       const region = qs.get("region") || "1";
@@ -39,6 +37,7 @@ export const handler: Handler = async (event) => {
 
     const resp = await fetch(upstreamUrl, { headers: { "api-key": API_KEY } });
     const text = await resp.text();
+
     return {
       statusCode: resp.status,
       body: text,
