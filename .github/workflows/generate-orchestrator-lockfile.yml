@@ -1,31 +1,26 @@
-name: Generate orchestrator/package-lock.json
-
-on:
-  workflow_dispatch: {}
-
+# .github/workflows/generate-orchestrator-lockfile.yml
+name: Generate orchestrator package-lock
+on: workflow_dispatch
 jobs:
-  lockfile:
+  gen-lock:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: orchestrator
     steps:
-      - name: Check out repo
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: orchestrator/package-lock.json
-
-      # Create/refresh ONLY the lockfile based on orchestrator/package.json
-      - name: Generate package-lock.json
-        run: npm install --package-lock-only --no-audit --no-fund
-
+      - run: npm install --package-lock-only
       - name: Commit lockfile
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "chore(orchestrator): add/update package-lock.json"
-          file_pattern: orchestrator/package-lock.json
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add package-lock.json
+            git commit -m "chore(orchestrator): add package-lock.json"
+            git push
+          fi
