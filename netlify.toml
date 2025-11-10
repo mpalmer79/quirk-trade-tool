@@ -1,22 +1,8 @@
 [build]
-  # If your Next.js project lives in /frontend, keep this:
   base = "frontend"
-  # Run the Next build (no "next export")
-  command = "npm run build"
-
+  command = "pnpm run build"
+  
 [build.environment]
   NODE_VERSION = "20"
+  NETLIFY_USE_PNPM = "true"
   NEXT_TELEMETRY_DISABLED = "1"
-
-# (Optional) If you want to hard-block the mock route in production at the edge:
-# Remove these if you are using middleware instead.
-# [[redirects]]
-#   from = "/mock"
-#   to = "/"
-#   status = 301
-#   force = true
-# [[redirects]]
-#   from = "/mock/*"
-#   to = "/"
-#   status = 301
-#   force = true
