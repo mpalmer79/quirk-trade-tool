@@ -1,12 +1,12 @@
 [build]
   base = "frontend"
   command = "npm run build"
-  publish = "frontend/out"
-  functions = "frontend/netlify/functions"
+  publish = "out"
+  functions = "netlify/functions"
 
 [functions]
   node_bundler = "esbuild"
-  included_files = ["frontend/netlify/functions/**"]
+  included_files = ["netlify/functions/**"]
 
 # Optional: tame install noise and speed it up a bit
 [build.environment]
