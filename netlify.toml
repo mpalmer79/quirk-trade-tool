@@ -8,6 +8,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
 
 # (Optional) If you want to hard-block the mock route in production at the edge:
 # Remove these if you are using middleware instead.
