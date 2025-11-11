@@ -1,4 +1,5 @@
 import type { FormData, SourceQuote, DepreciationData } from './types';
+import { fetchWithTimeoutAndRetry } from './fetch-with-timeout';
 
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE?.replace(/\/$/, '') || 'http://localhost:4000';
@@ -21,11 +22,19 @@ export async function calculateValuation(data: FormData) {
     zip: data.zip || undefined,
   };
 
-  const response = await fetch(`${API_BASE}/api/valuations/calculate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  const response = await fetchWithTimeoutAndRetry(
+    `${API_BASE}/api/valuations/calculate`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+    {
+      timeoutMs: 45000, // 45 seconds for valuation calculation
+      maxRetries: 2,
+      retryDelay: 1000,
+    }
+  );
 
   if (!response.ok) {
     const errorData = await response.json();

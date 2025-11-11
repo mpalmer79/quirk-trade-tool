@@ -1,24 +1,29 @@
 import type { VinDecodeResult } from './types.js';
+import { fetchWithRetry } from '../lib/retry.js';
 
 // Auto.dev VIN decoder
 // Docs: https://auto.dev/docs
 // Endpoint: https://api.auto.dev/vin/{vin}
 export async function decodeVinWithAutoDev(vin: string): Promise<VinDecodeResult> {
   const apiKey = process.env.AUTODEV_API_KEY;
-  
+
   if (!apiKey) {
     return { vin, errors: ['autodev_api_key_missing'] };
   }
 
   try {
     const url = `https://api.auto.dev/vin/${encodeURIComponent(vin)}`;
-    const res = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      }
-    });
+    const res = await fetchWithRetry(
+      url,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        }
+      },
+      { maxAttempts: 3, initialDelayMs: 1000 }
+    );
 
     if (!res.ok) {
       return { vin, errors: [`autodev_http_${res.status}`] };
