@@ -1,36 +1,21 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { calculateValuation, getPdfReceiptUrl } from '../api';
-
-global.fetch = vi.fn();
+import { calculateValuation } from '../api';
 
 describe('API Client - Critical', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
-  it('should call valuation endpoint with correct data', async () => {
+  it('should return valuation data from API', async () => {
     const mockResponse = {
-      id: 'VAL-123',
-      baseWholesaleValue: 22000,
-      finalWholesaleValue: 19800,
-      quotes: [
-        { source: 'KBB', value: 22000, currency: 'USD' },
-        { source: 'BlackBook', value: 21500, currency: 'USD' },
-      ],
       summary: {
-        low: 21000,
-        high: 23000,
-        avg: 22000,
-        confidence: 'High' as const,
-      },
-      depreciation: {
-        depreciationFactor: 0.9,
-        conditionRating: 3,
-        finalWholesaleValue: 19800,
+        baseWholesale: 25000,
+        conditionAdjustment: -2500,
+        finalWholesale: 22500,
       },
     };
 
-    (global.fetch as any).mockResolvedValueOnce({
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => mockResponse,
     });
@@ -39,31 +24,20 @@ describe('API Client - Critical', () => {
       year: 2020,
       make: 'Honda',
       model: 'Accord',
-      mileage: 45000,
-      condition: 3,
-      storeId: 'quirk-chevy-manchester',
+      trim: 'EX',
+      mileage: 50000,
+      condition: 'good',
+      zipCode: '02114',
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('/api/valuations/calculate'),
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.objectContaining({
-          'Content-Type': 'application/json',
-        }),
-      })
-    );
-
-    expect(result.id).toBe('VAL-123');
-    expect(result.baseWholesaleValue).toBe(22000);
-    expect(result.quotes).toHaveLength(2);
+    expect(result).toEqual(mockResponse);
   });
 
-  it('should throw error on API failure', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
+  it('should throw error on non-ok response', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
-      json: async () => ({ error: 'Internal Server Error' }),
+      statusText: 'Internal Server Error',
     });
 
     await expect(
@@ -71,31 +45,56 @@ describe('API Client - Critical', () => {
         year: 2020,
         make: 'Honda',
         model: 'Accord',
-        mileage: 45000,
-        condition: 3,
-        storeId: 'quirk-chevy-manchester',
+        trim: 'EX',
+        mileage: 50000,
+        condition: 'good',
+        zipCode: '02114',
       })
     ).rejects.toThrow();
   });
 
-  it('should generate correct PDF URL', () => {
-    const url = getPdfReceiptUrl('VAL-123');
-    
-    expect(url).toMatch(/\/api\/receipt\/pdf\/VAL-123$/);
-  });
-
   it('should handle network errors', async () => {
-    (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+    global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
     await expect(
       calculateValuation({
         year: 2020,
         make: 'Honda',
         model: 'Accord',
-        mileage: 45000,
-        condition: 3,
-        storeId: 'quirk-chevy-manchester',
+        trim: 'EX',
+        mileage: 50000,
+        condition: 'good',
+        zipCode: '02114',
       })
     ).rejects.toThrow('Network error');
+  });
+
+  it('should send correct request payload', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ summary: {} }),
+    });
+    global.fetch = mockFetch;
+
+    await calculateValuation({
+      year: 2020,
+      make: 'Honda',
+      model: 'Accord',
+      trim: 'EX',
+      mileage: 50000,
+      condition: 'good',
+      zipCode: '02114',
+    });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/valuations/calculate'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: expect.any(String),
+      })
+    );
   });
 });
