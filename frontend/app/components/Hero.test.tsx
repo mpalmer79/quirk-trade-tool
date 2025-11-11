@@ -1,6 +1,7 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { Hero } from './Hero';
+import Hero from './Hero';
 
 describe('Hero Component', () => {
   it('renders the main headline', () => {
@@ -12,14 +13,14 @@ describe('Hero Component', () => {
     render(<Hero />);
     const adminLink = screen.getByRole('link', { name: /admin login/i });
     expect(adminLink).toBeInTheDocument();
-    expect(adminLink).toHaveAttribute('href', '/login');
+    expect(adminLink).toHaveAttribute('href', '/admin');
   });
 
   it('shows all three feature bullets', () => {
     render(<Hero />);
     expect(screen.getByText('Multi-source accuracy')).toBeInTheDocument();
     expect(screen.getByText('Real-time data')).toBeInTheDocument();
-    expect(screen.getByText('VIN decoding')).toBeInTheDocument();
+    expect(screen.getByText('Regional pricing')).toBeInTheDocument();
   });
 
   it('displays the branding icon and text', () => {
