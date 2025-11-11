@@ -31,7 +31,8 @@
     "react-hook-form": "^7.49.3",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "@remix-run/netlify": "^2.15.1"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.5",
