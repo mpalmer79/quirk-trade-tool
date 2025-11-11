@@ -1,28 +1,21 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ResultsSection } from './ResultsSection';
+import ResultsSection from './ResultsSection';
+
+const mockSummary = {
+  baseWholesale: 25000,
+  conditionAdjustment: -2500,
+  finalWholesale: 22500,
+  depreciation: {
+    excellent: 25000,
+    good: 23000,
+    fair: 20000,
+    poor: 15000,
+  },
+};
 
 describe('ResultsSection Component', () => {
-  const mockSummary = {
-    base: 25000,
-    low: 24000,
-    high: 26000,
-    avg: 25000,
-    confidence: 'High' as const,
-    depreciation: {
-      depreciationFactor: 0.9,
-      conditionRating: 3,
-      finalWholesaleValue: 22500,
-      conditionLabel: 'Good',
-    },
-    quotes: [
-      { source: 'Black Book', value: 22000, currency: 'USD' },
-      { source: 'KBB', value: 23000, currency: 'USD' },
-      { source: 'NADA', value: 22500, currency: 'USD' },
-    ],
-    lastId: 'VAL-12345',
-  };
-
   it('renders the main valuation card title', () => {
     render(<ResultsSection summary={mockSummary} />);
     expect(screen.getByText(/valuation results/i)).toBeInTheDocument();
@@ -75,8 +68,9 @@ describe('ResultsSection Component', () => {
 
     it('should handle missing depreciation', () => {
       const summaryWithoutDepreciation = {
-        ...mockSummary,
-        depreciation: undefined,
+        baseWholesale: 25000,
+        conditionAdjustment: -2500,
+        finalWholesale: 22500,
       };
 
       const { container } = render(<ResultsSection summary={summaryWithoutDepreciation} />);
