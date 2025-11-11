@@ -1,6 +1,7 @@
+import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { FeaturesSection } from './FeaturesSection';
+import FeaturesSection from './FeaturesSection';
 
 describe('FeaturesSection Component', () => {
   it('renders the section title', () => {
@@ -12,14 +13,14 @@ describe('FeaturesSection Component', () => {
     render(<FeaturesSection />);
     expect(screen.getByText('Instant Results')).toBeInTheDocument();
     expect(screen.getByText('Transparent Pricing')).toBeInTheDocument();
-    expect(screen.getByText('Multi-Source Accuracy')).toBeInTheDocument();
+    expect(screen.getByText('Enterprise Ready')).toBeInTheDocument();
   });
 
   it('shows feature descriptions', () => {
     render(<FeaturesSection />);
     expect(screen.getByText(/Get valuations in seconds/i)).toBeInTheDocument();
     expect(screen.getByText(/Clear condition-based depreciation/i)).toBeInTheDocument();
-    expect(screen.getByText(/Aggregated data from 6\+ industry-leading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Secure, scalable infrastructure/i)).toBeInTheDocument();
   });
 
   it('displays the CTA section', () => {
@@ -30,9 +31,9 @@ describe('FeaturesSection Component', () => {
 
   it('shows contact email link', () => {
     render(<FeaturesSection />);
-    const contactLink = screen.getByRole('link', { name: /contact us today/i });
+    const contactLink = screen.getByRole('link', { name: /contact us to get started/i });
     expect(contactLink).toBeInTheDocument();
-    expect(contactLink).toHaveAttribute('href', 'mailto:mpalmer@quirkcars.com');
+    expect(contactLink).toHaveAttribute('href', 'mailto:contact@quirkauto.com');
   });
 
   it('renders feature icons', () => {
@@ -41,6 +42,6 @@ describe('FeaturesSection Component', () => {
     // Check that emoji icons are present (they're just text)
     expect(container.textContent).toContain('⚡');
     expect(container.textContent).toContain('🎯');
-    expect(container.textContent).toContain('🔒');
+    expect(container.textContent).toContain('🏢');
   });
 });
