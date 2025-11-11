@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { filterAutomotiveMakes, filterMotorcycleMakes } from '@/utils/vehicleFilters';
+import { fetchWithTimeout } from '@/app/lib/fetch-with-timeout';
 
 type DecodedVin = {
   year?: number;
@@ -30,9 +31,9 @@ export function useVehicleData() {
       setLoadingMakes(true);
       try {
         const [carsRes, motorcyclesRes, trucksRes] = await Promise.all([
-          fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/passenger%20car?format=json'),
-          fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json'),
-          fetch('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/truck?format=json')
+          fetchWithTimeout('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/passenger%20car?format=json', undefined, 15000),
+          fetchWithTimeout('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/motorcycle?format=json', undefined, 15000),
+          fetchWithTimeout('https://vpic.nhtsa.dot.gov/api/vehicles/GetMakesForVehicleType/truck?format=json', undefined, 15000)
         ]);
 
         const [carsData, motorcyclesData, trucksData] = await Promise.all([
@@ -71,8 +72,10 @@ export function useVehicleData() {
 
     setLoadingModels(true);
     try {
-      const response = await fetch(
-        `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`
+      const response = await fetchWithTimeout(
+        `https://vpic.nhtsa.dot.gov/api/vehicles/GetModelsForMakeYear/make/${encodeURIComponent(make)}/modelyear/${year}?format=json`,
+        undefined,
+        15000
       );
       const data = await response.json();
       const modelNames = (data?.Results ?? [])
@@ -98,10 +101,12 @@ export function useVehicleData() {
 
     // Public VPIC API (works on frontend-only, no backend needed)
     try {
-      const vpic = await fetch(
+      const vpic = await fetchWithTimeout(
         `https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValuesExtended/${encodeURIComponent(
           cleaned
-        )}?format=json`
+        )}?format=json`,
+        undefined,
+        15000
       );
       if (!vpic.ok) return null;
       const data = await vpic.json();

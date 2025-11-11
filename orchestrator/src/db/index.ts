@@ -94,7 +94,12 @@ export async function validateDatabaseConnection(): Promise<boolean> {
 // Export database wrapper with common operations
 export const db = {
   query: pool.query.bind(pool),
-  
+
+  // Get a client from the pool for transactions
+  async getClient() {
+    return await pool.connect();
+  },
+
   async healthCheck(): Promise<boolean> {
     try {
       await pool.query('SELECT 1');
@@ -103,7 +108,7 @@ export const db = {
       return false;
     }
   },
-  
+
   async end(): Promise<void> {
     await pool.end();
   }
