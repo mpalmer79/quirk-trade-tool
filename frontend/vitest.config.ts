@@ -1,10 +1,12 @@
-import { defineConfig } from 'vitest/config';
+import { vitePlugin as remix } from "@remix-run/dev";
+import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
+import { netlifyPlugin } from "@netlify/remix-adapter/plugin";
 
 export default defineConfig({
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./vitest.setup.ts'], // <-- point to the file you actually have
-    css: false,
-  },
+  plugins: [
+    remix(),
+    netlifyPlugin(),
+    tsconfigPaths(),
+  ],
 });
